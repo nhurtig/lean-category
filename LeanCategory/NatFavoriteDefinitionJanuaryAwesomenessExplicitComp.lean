@@ -65,6 +65,9 @@ instance : DecidableEq (ZFin n) := fun a b ↦
 instance : LT (ZFin n) where
   lt := (·.val < ·.val)
 
+instance : Repr (ZFin n) where
+  reprPrec x i := reprPrec x.val i
+
 @[grind]
 def ZFin.succ : ZFin n → ZFin (n + 1)
   | ⟨i, h⟩ => ⟨i + 1, by omega⟩
@@ -95,15 +98,33 @@ lemma ZFin.cast_val : ∀ z : ZFin n, (z.cast h).val = z.val := by
 -- def ZFin.castNat {a : ℤ} {b : ℕ} (h : a = b := by omega) : ZFin a → Fin b
 --   | ⟨i, h⟩ => ⟨i, by omega⟩
 
+@[grind]
 structure BraidGenerator (n : ℤ) where
   sign : Bool
   index : ZFin (n - 1)
 
+instance : Repr (BraidGenerator n) where
+  reprPrec x _ := "σ" ++ (if x.sign then "+" else "-") ++ repr x.index
+
 @[grind]
 inductive BraidWord (n : ℕ) where
   | id : BraidWord n
-  -- | gen : BraidGenerator n → BraidWord n
-  | cons : BraidGenerator n → BraidWord n → BraidWord n
+  | gen : BraidGenerator n → BraidWord n
+  | comp : BraidWord n → BraidWord n → BraidWord n
+
+def BraidWord.repr : BraidWord n → Std.Format
+  | .id => "ε"
+  | .gen g => reprPrec g 0
+  | .comp x y => "(" ++ repr x ++ " ∘ " ++ repr y ++ ")"
+
+instance : Repr (BraidWord n) where
+  reprPrec x _ := x.repr
+
+@[simp]
+def BraidWord.inv : BraidWord n → BraidWord n
+  | .id => .id
+  | .gen ⟨s, i⟩ => .gen ⟨s.not, i⟩
+  | .comp x y => y.inv.comp x.inv
 
 -- def Fin.predSame : (i : Fin n) → i.val ≠ 0 → Fin n
 --   | ⟨i + 1, h⟩, h0 => ⟨i, by omega⟩
@@ -112,24 +133,166 @@ inductive BraidWord (n : ℕ) where
 --   | ⟨i, h⟩, h0 => ⟨i + 1, by omega⟩
 
 @[grind]
-inductive BraidEquiv : BraidWord n → BraidWord n → Prop
-  | refl : (x : BraidWord n) → BraidEquiv x x
-  | symm : BraidEquiv x y → BraidEquiv y x
-  | trans : BraidEquiv x y → BraidEquiv y z → BraidEquiv x z
-  | ignore_head : BraidEquiv x y → BraidEquiv (.cons g x) (.cons g y)
-  | inv : BraidEquiv (.cons ⟨s, i⟩ <| .cons ⟨s.not, i⟩ x) x
-  | comm {x : BraidWord n} {i₁ i₂ : ZFin (n - 1)} : i₁.val - i₂.val > 1 →
-    BraidEquiv (.cons ⟨s₁, i₁⟩ <| .cons ⟨s₂, i₂⟩ x) (.cons ⟨s₂, i₂⟩ <| .cons ⟨s₁, i₁⟩ x)
-  | yb {x : BraidWord n} {i : ZFin (↑n - 2)} : BraidEquiv
-    (.cons ⟨s, i.succ.cast⟩ <| .cons ⟨s, i.castSucc.cast⟩ <| .cons ⟨s, i.succ.cast⟩ x)
-    (.cons ⟨s, i.castSucc.cast⟩ <| .cons ⟨s, i.succ.cast⟩ <| .cons ⟨s, (i.castSucc.cast)⟩ x)
+inductive BraidEquiv (n : ℕ) : BraidWord n → BraidWord n → Prop
+  | refl : (x : BraidWord n) → BraidEquiv n x x
+  | symm : BraidEquiv n x y → BraidEquiv n y x
+  | trans : BraidEquiv n x y → BraidEquiv n y z → BraidEquiv n x z
+  | over_comp : BraidEquiv n x y → BraidEquiv n a b → BraidEquiv n (x.comp a) (y.comp b)
+  | comp_assoc {a b c : BraidWord n} : BraidEquiv n (a.comp (b.comp c)) ((a.comp b).comp c)
+  | id_left : BraidEquiv n ((.id : BraidWord n).comp x) x
+  | id_right : BraidEquiv n (x.comp .id) x
+  | inv {hs : s₁ ≠ s₂} : BraidEquiv n (BraidWord.gen ⟨s₁, i⟩ |>.comp <| .gen ⟨s₂, i⟩) .id
+  | comm {i₁ i₂ : ZFin (↑n - 1)} : i₁.val - i₂.val > 1 →
+    BraidEquiv n (BraidWord.gen ⟨s₁, i₁⟩ |>.comp <| .gen ⟨s₂, i₂⟩)
+                 (BraidWord.gen ⟨s₂, i₂⟩ |>.comp <| .gen ⟨s₁, i₁⟩)
+  | yb {i : ZFin (↑n - 2)} : BraidEquiv n
+    (BraidWord.gen ⟨s, i.succ.cast⟩ |>.comp (.gen ⟨s, i.castSucc.cast⟩) |>.comp <| .gen ⟨s, i.succ.cast⟩)
+    (BraidWord.gen ⟨s, i.castSucc.cast⟩ |>.comp (.gen ⟨s, i.succ.cast⟩) |>.comp <| .gen ⟨s, i.castSucc.cast⟩)
+
+@[grind]
+lemma BraidEquiv.assocHelper {a b c x : BraidWord n} : BraidEquiv n (a.comp (b.comp c)) x ↔ BraidEquiv n ((a.comp b).comp c) x := by
+  grind
 
 @[simp]
 def setoidBraid (n : ℕ) : Setoid (BraidWord n) :=
-  ⟨BraidEquiv, ⟨BraidEquiv.refl, BraidEquiv.symm, BraidEquiv.trans⟩⟩
+  ⟨BraidEquiv n, ⟨BraidEquiv.refl, BraidEquiv.symm, BraidEquiv.trans⟩⟩
 
 def Braid (n : ℕ) := Quotient (setoidBraid n)
 
+@[simp]
+def Braid.comp (x y : Braid n) : Braid n :=
+  Quotient.lift₂ (⟦·.comp ·⟧) (by
+    intros a₁ b₁ a₂ b₂ ha hb
+    apply Quotient.eq.mpr
+    exact BraidEquiv.over_comp ha hb)
+    x y
+
+@[simp]
+def Braid.inv (x : Braid n) : Braid n :=
+  Quotient.lift (⟦·.inv⟧) (by
+    intros a₁ a₂ ha
+    apply Quotient.eq.mpr; simp
+    induction ha
+    all_goals try simp only [BraidWord.inv]
+    all_goals grind)
+    x
+
+@[grind]
+lemma BraidEquiv.internalHelper {a₁ a₂ b₁ b₂ x : BraidWord n} : BraidEquiv n a₁ a₂ → BraidEquiv n b₁ b₂ → (BraidEquiv n (a₁.comp b₁) x ↔ BraidEquiv n (a₂.comp b₂) x) := by
+  grind
+
+@[grind]
+lemma BraidEquiv.internalHelper2 {a b₁ b₂ c x : BraidWord n} : BraidEquiv n b₁ b₂ → (BraidEquiv n ((a.comp b₁).comp c) x ↔ BraidEquiv n ((a.comp b₂).comp c) x) := by
+  grind
+
+@[grind]
+lemma BraidEquiv.internalHelper3 {a b₁ b₂ c x : BraidWord n} : BraidEquiv n b₁ b₂ → (BraidEquiv n (a.comp (b₁.comp c)) x ↔ BraidEquiv n (a.comp (b₂.comp c)) x) := by
+  grind
+
+instance : Group (Braid n) where
+  mul x y := x.comp y
+  mul_assoc := by
+    intros a b c
+    refine Quotient.inductionOn a ?_
+    refine Quotient.inductionOn b ?_
+    refine Quotient.inductionOn c ?_
+    intros a b c
+    simp [HMul.hMul]
+    apply Quotient.eq.mpr; simp
+    constructor
+    apply BraidEquiv.comp_assoc
+  one := ⟦.id⟧
+  one_mul x := by
+    refine Quotient.inductionOn x ?_
+    intro x
+    simp [HMul.hMul]
+    apply Quotient.eq.mpr; simp
+    apply BraidEquiv.id_left
+  mul_one x := by
+    refine Quotient.inductionOn x ?_
+    intro x
+    simp [HMul.hMul]
+    apply Quotient.eq.mpr; simp
+    apply BraidEquiv.id_right
+  inv x := x.inv
+  inv_mul_cancel x := by
+    refine Quotient.inductionOn x ?_
+    intro x
+    simp [HMul.hMul]
+    apply Quotient.eq.mpr; simp
+    induction x
+    all_goals simp only [BraidWord.inv]
+    all_goals try grind
+    case comp x y ihx ihy =>
+      apply BraidEquiv.trans (y := (y.inv.comp (x.inv.comp x)).comp y)
+      · grind
+      · apply BraidEquiv.trans (y := (y.inv.comp .id).comp y)
+        · grind
+        · grind
+
+#check Group
+open CategoryTheory
+#check Groupoid
+
+@[grind]
+structure BraidGroupoidGenerator (dom cod : List α) where
+  sign : Bool
+  left : List α
+  right : List α
+  a : α
+  b : α
+  hdom : dom = left ++ [a, b] ++ right := by grind
+  hcod : cod = left ++ [b, a] ++ right := by grind
+
+@[grind]
+inductive BraidGroupoidWord : List α → List α → Type where
+  | id : BraidGroupoidWord d d
+  | gen : BraidGroupoidGenerator d c → BraidGroupoidWord d c
+  | comp : BraidGroupoidWord x y → BraidGroupoidWord y z → BraidGroupoidWord x z
+
+@[simp]
+def BraidGroupoidWord.inv : BraidGroupoidWord d c → BraidGroupoidWord c d
+  | .id => .id
+  | .gen ⟨s, l, r, a, b, hdom, hcod⟩ => .gen ⟨s.not, l, r, b, a, hcod, hdom⟩
+  | .comp x y => y.inv.comp x.inv
+
+-- def Fin.predSame : (i : Fin n) → i.val ≠ 0 → Fin n
+--   | ⟨i + 1, h⟩, h0 => ⟨i, by omega⟩
+
+-- def Fin.succSame : (i : Fin n) → i.val + 1 < n → Fin n
+--   | ⟨i, h⟩, h0 => ⟨i + 1, by omega⟩
+
+@[grind]
+inductive BraidGroupoidEquiv : (dom cod : List α) → BraidGroupoidWord dom cod → BraidGroupoidWord dom cod → Prop
+  | refl : (x : BraidGroupoidWord d c) → BraidGroupoidEquiv d c x x
+  | symm : BraidGroupoidEquiv d c x y → BraidGroupoidEquiv d c y x
+  | trans : BraidGroupoidEquiv d c x y → BraidGroupoidEquiv d c y z → BraidGroupoidEquiv d c x z
+  | over_comp : BraidGroupoidEquiv d m x y → BraidGroupoidEquiv m c a b → BraidGroupoidEquiv d c (x.comp a) (y.comp b)
+  | comp_assoc {x : BraidGroupoidWord _ _} : BraidGroupoidEquiv d c (x.comp (y.comp z)) ((x.comp y).comp z)
+  | id_left : BraidGroupoidEquiv d c ((.id : BraidGroupoidWord _ _).comp x) x
+  | id_right : BraidGroupoidEquiv d c (x.comp .id) x
+  | inv {hs : g₁.sign ≠ g₂.sign} : BraidGroupoidEquiv d d (BraidGroupoidWord.gen g₁ |>.comp <| .gen g₂) .id
+  | comm : g₁.a ≠ g₁.b →
+    BraidGroupoidEquiv d c (BraidGroupoidWord.gen g₁ |>.comp <| .gen g₂)
+                 (BraidGroupoidWord.gen g₂ |>.comp <| .gen g₁)
+  -- | comm {i₁ i₂ : ZFin (↑n - 1)} : i₁.val - i₂.val > 1 →
+  --   BraidEquiv n (BraidWord.gen ⟨s₁, i₁⟩ |>.comp <| .gen ⟨s₂, i₂⟩)
+  --                (BraidWord.gen ⟨s₂, i₂⟩ |>.comp <| .gen ⟨s₁, i₁⟩)
+  -- | yb {i : ZFin (↑n - 2)} : BraidEquiv n
+  --   (BraidWord.gen ⟨s, i.succ.cast⟩ |>.comp (.gen ⟨s, i.castSucc.cast⟩) |>.comp <| .gen ⟨s, i.succ.cast⟩)
+  --   (BraidWord.gen ⟨s, i.castSucc.cast⟩ |>.comp (.gen ⟨s, i.succ.cast⟩) |>.comp <| .gen ⟨s, i.castSucc.cast⟩)
+
+@[grind]
+lemma BraidEquiv.assocHelper {a b c x : BraidWord n} : BraidEquiv n (a.comp (b.comp c)) x ↔ BraidEquiv n ((a.comp b).comp c) x := by
+  grind
+
+@[simp]
+def setoidBraid (n : ℕ) : Setoid (BraidWord n) :=
+  ⟨BraidEquiv n, ⟨BraidEquiv.refl, BraidEquiv.symm, BraidEquiv.trans⟩⟩
+
+def Braid (n : ℕ) := Quotient (setoidBraid n)
+
+#check List.Perm
 -- GROUPOID TIME
 
 -- def List.toVector (l : List α) : Vector α (l.length) := ⟨l, by rfl⟩
@@ -290,7 +453,7 @@ set_option maxHeartbeats 2000000 in
 def BraidWord.permEq {n : ℕ} {x y : BraidWord n} (heq : BraidEquiv x y) : x.perm = y.perm := by
     induction heq
     all_goals try simp
-    -- all_goals sorry
+    all_goals sorry
     case ignore_head => grind
     case symm => grind
     case trans => grind
@@ -335,6 +498,8 @@ def BraidWord.permEq {n : ℕ} {x y : BraidWord n} (heq : BraidEquiv x y) : x.pe
       case neg => grind only [= ZFin.cast_val, ZFin.ext, = ZFin.succ_val, = ZFin.castSucc_val,
         ZFin.cast]
 
+set_option maxHeartbeats 2000000 in
+-- yucky, but it goes thru
 def Braid.perm {n : ℕ} (x : Braid n) : Equiv.Perm (ZFin n) :=
   Quotient.lift (·.perm) (by
     intros x y heq
