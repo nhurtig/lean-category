@@ -28,259 +28,109 @@ macro_rules
 -- we need to have all types at the same
 -- level (typed list)
 
--- use list-of-generator
-structure BraidGenerator (α : Type) where
-  left : List α
-  sign : Bool -- true is left over right
-  a : α
-  b : α
-  right : List α
+inductive CatWord {β : Type} (α : β → β → Type) : β → β → Type where
+  | id (X : β) : CatWord α X X
+  | gen {X Y : β} (head : α X Y) : CatWord α X Y
+  | comp {X Y Z : β} (f : CatWord α X Y) (g : CatWord α Y Z) : CatWord α X Z
 
-def BraidGenerator.dom (g : BraidGenerator α) :=
-  g.left ++ g.a :: g.b :: g.right
+inductive CatWordEquiv {β : Type} {α : β → β → Type} (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) : (CatWord α X Y) → (CatWord α X Y) → Prop where
+  | refl (w : CatWord α X Y) : CatWordEquiv quiv w w
+  | symm {w₁ w₂ : CatWord α X Y} : CatWordEquiv quiv w₁ w₂ → CatWordEquiv quiv w₂ w₁
+  | trans {w₁ w₂ w₃ : CatWord α X Y} : CatWordEquiv quiv w₁ w₂ → CatWordEquiv quiv w₂ w₃ → CatWordEquiv quiv w₁ w₃
+  | id_comp {w : CatWord α X Y} : CatWordEquiv quiv ((CatWord.id X).comp w) w
+  | comp_id {w : CatWord α X Y} : CatWordEquiv quiv (w.comp (CatWord.id Y)) w
+  | assoc {w₁ : CatWord α W X} {w₂ : CatWord α X Y} {w₃ : CatWord α Y Z} : CatWordEquiv quiv ((w₁.comp w₂).comp w₃) (w₁.comp (w₂.comp w₃))
+  | over_comp {a₁ a₂ : CatWord α X Y} {b₁ b₂ : CatWord α Y Z} : CatWordEquiv quiv a₁ a₂ → CatWordEquiv quiv b₁ b₂ → CatWordEquiv quiv (a₁.comp b₁) (a₂.comp b₂)
+  | quiv {a b : CatWord α X Y} : quiv a b → CatWordEquiv quiv a b
 
-def BraidGenerator.cod (g : BraidGenerator α) :=
-  g.left ++ g.b :: g.a :: g.right
+def setoidWord (α : β → β → Type) (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) (X Y : β) : Setoid (CatWord α X Y) :=
+  ⟨CatWordEquiv quiv, ⟨CatWordEquiv.refl, CatWordEquiv.symm, CatWordEquiv.trans⟩⟩
 
-inductive Word {β : Type} (α : β → β → Type) : β → β → Type where
-  | id (X : β) : Word α X X
-  | gen {X Y : β} (head : α X Y) : Word α X Y
-  | comp {X Y Z : β} (f : Word α X Y) (g : Word α Y Z) : Word α X Z
+def CatMorphism (α : β → β → Type) (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) (X Y : β) := Quotient <| setoidWord α quiv X Y
 
-inductive WordEquiv : (Word α X Y) → (Word α X Y) → Prop where
-  | refl (w : Word α X Y) : WordEquiv w w
-  | symm {w₁ w₂ : Word α X Y} : WordEquiv w₁ w₂ → WordEquiv w₂ w₁
-  | trans {w₁ w₂ w₃ : Word α X Y} : WordEquiv w₁ w₂ → WordEquiv w₂ w₃ → WordEquiv w₁ w₃
-  | id_comp {w : Word α X Y} : WordEquiv (Word.comp (Word.id X) w) w
-  | comp_id {w : Word α X Y} : WordEquiv (Word.comp w (Word.id Y)) w
-  | assoc {w₁ : Word α W X} {w₂ : Word α X Y} {w₃ : Word α Y Z} : WordEquiv (Word.comp (Word.comp w₁ w₂) w₃) (Word.comp w₁ (Word.comp w₂ w₃))
-  | over_comp {a₁ a₂ : Word α X Y} {b₁ b₂ : Word α Y Z} : WordEquiv a₁ a₂ → WordEquiv b₁ b₂ → WordEquiv (Word.comp a₁ b₁) (Word.comp a₂ b₂)
-  -- probably need a rule for lifting equivs across composition, but we'll ignore it for now
-
-def setoidWord (α : β → β → Type) (X Y : β) : Setoid (Word α X Y) :=
-  ⟨WordEquiv, ⟨WordEquiv.refl, WordEquiv.symm, WordEquiv.trans⟩⟩
-
-def CatMorphism (α : β → β → Type) (X Y : β) := Quotient <| setoidWord α X Y
-
-def CatMorphism.comp (w₁ : CatMorphism α X Y) (w₂ : CatMorphism α Y Z) : CatMorphism α X Z :=
+def CatMorphism.comp (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) (w₁ : CatMorphism α quiv X Y) (w₂ : CatMorphism α quiv Y Z) : CatMorphism α quiv X Z :=
   Quotient.liftOn₂ w₁ w₂ (fun w₁ w₂ => ⟦w₁.comp w₂⟧) <| by
     intros a₁ b₁ a₂ b₂ ha hb
     simp
     apply Quotient.sound
-    exact WordEquiv.over_comp ha hb
+    exact CatWordEquiv.over_comp ha hb
 
-def CatMorphism.id (X : β) : CatMorphism α X X := ⟦Word.id X⟧
+def CatMorphism.id (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) (X : β) : CatMorphism α quiv X X := ⟦CatWord.id X⟧
 
-def CatMorphism.gen {X Y : β} (head : α X Y) : CatMorphism α X Y := ⟦Word.gen head⟧
+def CatMorphism.gen (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) {X Y : β} (head : α X Y) : CatMorphism α quiv X Y := ⟦CatWord.gen head⟧
 
 open CategoryTheory
 
-def FreeCategory (α : β → β → Type) : Category β where
-  Hom X Y := CatMorphism α X Y
-  id X := CatMorphism.id X
-  comp f g := CatMorphism.comp f g
+def MyCategory (α : β → β → Type) (quiv : {X Y : β} → CatWord α X Y → CatWord α X Y → Prop) : Category β where
+  Hom X Y := CatMorphism α quiv X Y
+  id X := CatMorphism.id quiv X
+  comp f g := CatMorphism.comp quiv f g
   id_comp f := by
     qind f
     simp [CatMorphism.comp, CatMorphism.id]
     apply Quotient.sound
-    exact WordEquiv.id_comp
+    exact CatWordEquiv.id_comp
   comp_id f := by
     qind f
     simp [CatMorphism.comp, CatMorphism.id]
     apply Quotient.sound
-    exact WordEquiv.comp_id
+    exact CatWordEquiv.comp_id
   assoc f g h := by
     qind f
     qind g
     qind h
     simp [CatMorphism.comp]
     apply Quotient.sound
-    exact WordEquiv.assoc
+    exact CatWordEquiv.assoc
 
-class Isomorphism (α β : Type) extends Morphism α β where
-  inv : α → α
-  inv_dom : ∀ (f : α), dom (inv f) = cod f := by easy
-  inv_cod : ∀ (f : α), cod (inv f) = dom f := by easy
-  inv_inv : ∀ (f : α), inv (inv f) = f := by easy
-
-@[simp]
-lemma Isomorphism.inv_dom' {α β : Type} [I : Isomorphism α β] (f : α) :
-    I.dom (I.inv f) = I.cod f := by
-  simp [I.inv_dom]
-
-@[simp]
-lemma Isomorphism.inv_cod' {α β : Type} [I : Isomorphism α β] (f : α) :
-    I.cod (I.inv f) = I.dom f := by
-  simp [I.inv_cod]
+-- instantiate!
+structure BraidGenerator (α : Type) (dom cod : List α) where
+  left : List α
+  sign : Bool -- true is left over right
+  a : α
+  b : α
+  right : List α
+  hdom : dom = left ++ a :: b :: right
+  hcod : cod = left ++ b :: a :: right
 
 @[simp]
-lemma Isomorphism.inv_inv' {α β : Type} [I : Isomorphism α β] (f : α) :
-    I.inv (I.inv f) = f := by
-  simp [I.inv_inv]
+def BraidGenerator.inv (g : BraidGenerator α X Y) : BraidGenerator α Y X:=
+  ⟨g.left, !g.sign, g.b, g.a, g.right, by simp [g.hcod], by simp [g.hdom]⟩
 
 @[simp]
-lemma Isomorphism.agree_inv_inv {α β : Type} [I : Isomorphism α β] {f g : α} :
-    Morphism.agree f g → Morphism.agree (I.inv g) (I.inv f) := by easy
+lemma BraidGenerator.inv_inv (g : BraidGenerator α X Y) : g.inv.inv = g := by easy
+
+macro "simprfl" : tactic => `(tactic| first | (simp; done) | ((try simp); rfl))
+
+inductive BraidEquiv : CatWord (BraidGenerator α) X Y → CatWord (BraidGenerator α) X Y → Prop where
+  | inv {g : BraidGenerator α X Y} :
+      BraidEquiv ((CatWord.gen g).comp (CatWord.gen g.inv)) (CatWord.id X)
+  | comm {left middle right : List α} {w x y z : α} : BraidEquiv
+      ((CatWord.gen ⟨left, s₁, w, x, middle ++ [y, z] ++ right, by simprfl, by simprfl⟩).comp
+        (CatWord.gen ⟨left ++ [x, w] ++ middle, s₂, y, z, right, by simprfl, by simprfl⟩))
+      ((CatWord.gen ⟨left ++ [w, x] ++ middle, s₂, y, z, right, by simprfl, by simprfl⟩).comp
+        (CatWord.gen ⟨left, s₂, w, x, middle ++ [z, y] ++ right, by simprfl, by simprfl⟩))
+  | yangBaxter {left right : List α} {a b c : α} : BraidEquiv
+      (((CatWord.gen ⟨left, s, a, b, c :: right, by simprfl, by simprfl⟩).comp
+        (CatWord.gen ⟨left ++ [b], s, a, c, right, by simprfl, by simprfl⟩)).comp
+        (CatWord.gen ⟨left, s, b, c, a :: right, by simprfl, by simprfl⟩))
+      (((CatWord.gen ⟨left ++ [a], s, b, c, right, by simprfl, by simprfl⟩).comp
+        (CatWord.gen ⟨left, s, a, c, b :: right, by simprfl, by simprfl⟩)).comp
+        (CatWord.gen ⟨left ++ [c], s, a, b, right, by simprfl, by simprfl⟩))
+
+def BraidGroupoid (α : Type) := MyCategory (BraidGenerator α) BraidEquiv
+
+#check (BraidGroupoid ℕ).Hom
 
 @[simp]
-lemma Isomorphism.agree_inv {α β : Type} [I : Isomorphism α β] {f : α} :
-    Morphism.agree f (I.inv f) := by easy
+def List.forget {α : Type} (l : List α) : List Unit :=
+  l.map (fun _ => ())
 
 @[simp]
-lemma Isomorphism.inv_agree {α β : Type} [I : Isomorphism α β] {f : α} :
-    Morphism.agree (I.inv f) f := by easy
+def BraidGenerator.forget (g : BraidGenerator α X Y) : BraidGenerator Unit X.forget Y.forget :=
+  ⟨g.left.map (fun _ => ()), g.sign, (), (), g.right.map (fun _ => ()), by simp [g.hdom], by simp [g.hcod]⟩
 
 @[simp]
-def BraidGenerator.inv (g : BraidGenerator α) : BraidGenerator α :=
-  ⟨g.left, !g.sign, g.b, g.a, g.right⟩
-
-@[simp, grind]
-lemma BraidGenerator.inv_inv (g : BraidGenerator α) : g.inv.inv = g := by easy
-
-@[simp]
-instance : Isomorphism (BraidGenerator α) (List α) where
-  dom g := g.dom
-  cod g := g.cod
-  inv g := g.inv
-
--- class Extend {α : Type} (β : α → α → Type) [Append α] [Morphism] where
---   extendLeft : (a : α) → (β d c) → (β (a ++ d) (a ++ c))
---   extendRight : (a : α) → (β d c) → (β (d ++ a) (c ++ a))
-
--- instance : Extend (BraidGenerator α) where
---   extendLeft a g := ⟨a ++ g.left, g.sign, g.a, g.b, g.right, by simp [g.hdom], by simp [g.hcod]⟩
---   extendRight a g := ⟨g.left, g.sign, g.a, g.b, g.right ++ a, by simp [g.hdom], by simp [g.hcod]⟩
-
-@[simp]
-def BraidGenerator.forget (g : BraidGenerator α) : BraidGenerator Unit :=
-  ⟨g.left.map (fun _ => ()), g.sign, (), (), g.right.map (fun _ => ())⟩
-
-@[simp]
-lemma BraidGenerator.forget_dom (g : BraidGenerator α) :
-    (BraidGenerator.forget g).dom = (g.dom).map (fun _ => ()) := by
-  simp
-
-@[simp]
-lemma BraidGenerator.forget_cod (g : BraidGenerator α) :
-    (BraidGenerator.forget g).cod = (g.cod).map (fun _ => ()) := by
-  simp
--- (hdom : ∀ b, Morphism.dom (f b) = f' (Morphism.dom b))
-
-inductive PreTypedList (β : Type) (α : Type) where
-  | nil (obj : α) : PreTypedList β α
-  | cons (head : β) (tail : PreTypedList β α) : PreTypedList β α
-
-@[simp]
-def PreTypedList.dom [Morphism β α] : PreTypedList β α → α
-  | .nil obj => obj
-  | .cons head _ => Morphism.dom head
-
-@[simp]
-def PreTypedList.cod [Morphism β α] : PreTypedList β α → α
-  | .nil obj => obj
-  | .cons _ tail => PreTypedList.cod tail
-
-@[simp]
-def PreTypedList.Typed [Morphism β α] : PreTypedList β α → Prop
-  | .nil _ => True
-  | .cons head tail => Morphism.cod head = PreTypedList.dom tail ∧ tail.Typed
-
--- abbrev TypedList (β : Type) (α : Type) [Morphism β α] := {x : PreTypedList β α // x.Typed}
-
-@[simp]
-instance Morphism.list [Morphism β α] : Morphism (PreTypedList β α) α where
-  dom x := x.dom
-  cod x := x.cod
-
-@[simp]
-def PreTypedList.append (x y : PreTypedList β α) : PreTypedList β α :=
-  match x, y with
-  | .nil _, ys => ys
-  | .cons h t, ys => .cons h (t.append ys)
-
-instance : HAppend (PreTypedList β α) (PreTypedList β α) (PreTypedList β α)  where
-  hAppend := PreTypedList.append
-
--- @[simp]
--- def PreTypedList.append [M : Morphism β α] (x y : PreTypedList β α) (heq : M.list.agree x y := by easy) : PreTypedList β α :=
---   match x, y with
---   | .nil _, ys => ys
---   | .cons h t, ys => .cons h (t.append ys)
-
-@[simp, grind]
-def PreTypedList.inv [I : Isomorphism β α] : PreTypedList β α → PreTypedList β α
-  | .nil obj => .nil obj
-  | .cons head tail => tail.inv ++ (PreTypedList.cons (I.inv head) (PreTypedList.nil (I.dom head)))
-
-@[simp]
-lemma PreTypedList.nil_append {x : PreTypedList β α} :
-    (PreTypedList.nil (β := β) (α := α) d) ++ x = x := by
-  induction x
-  all_goals simp [HAppend.hAppend]
-
-@[simp]
-lemma PreTypedList.append_nil {x : PreTypedList β α} [M : Morphism β α] :
-    (x ++ PreTypedList.nil (β := β) (α := α) (M.list.cod x)) = x := by
-  induction x
-  all_goals simp [HAppend.hAppend]
-  all_goals easy
-
-@[grind, simp]
-lemma PreTypedList.dom_cons {a : β} {x : PreTypedList β α} [M : Morphism β α] :
-    M.list.dom (PreTypedList.cons a x) = M.dom a := by
-  induction x
-  all_goals easy
-
-@[grind, simp]
-lemma PreTypedList.cod_cons {a : β} {x : PreTypedList β α} [M : Morphism β α] :
-    M.list.cod (PreTypedList.cons a x) = M.list.cod x := by
-  induction x
-  all_goals easy
-
-@[grind, simp]
-lemma PreTypedList.cons_append {a : β} {x y : PreTypedList β α} :
-    (PreTypedList.cons a x) ++ y = PreTypedList.cons a (x ++ y) := by
-  induction x
-  all_goals simp [HAppend.hAppend, PreTypedList.append]
-
-@[simp]
-lemma PreTypedList.dom_append {x y : PreTypedList β α} [M : Morphism β α] (h : M.list.agree x y) :
-    (x ++ y).dom = x.dom := by
-  induction x
-  all_goals easy
-
-@[simp]
-lemma PreTypedList.cod_append {x y : PreTypedList β α} [M : Morphism β α] :
-    (x ++ y).cod = y.cod := by
-  induction x
-  all_goals easy
-
-@[simp]
-lemma PreTypedList.inv_cod [I : Isomorphism β α] {x : PreTypedList β α} :
-    x.inv.cod = x.dom := by
-  induction x
-  all_goals easy
-
-@[simp]
-lemma PreTypedList.inv_dom [I : Isomorphism β α] {x : PreTypedList β α} (h : x.Typed) :
-    x.inv.dom = x.cod := by
-  induction x
-  case nil => easy
-  case cons =>
-    simp only [PreTypedList.inv]
-    rw [PreTypedList.dom_append (by easy)]
-    easy
-
-@[grind, simp]
-lemma PreTypedList.append_assoc {x y z : PreTypedList β α} :
-    x ++ y ++ z = x ++ (y ++ z) := by
-  induction x
-  case nil obj => simp
-  case cons head tail ih =>
-    simp [HAppend.hAppend, PreTypedList.append] at ⊢ ih
-    rw [ih]
-
-@[simp, grind]
 lemma PreTypedList.inv_append [I : Isomorphism β α] {x y : PreTypedList β α} (h : I.list.agree x y) :
     (x ++ y).inv = y.inv ++ x.inv := by
   induction x
