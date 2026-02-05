@@ -230,6 +230,32 @@ def BraidWord.forget (x : BraidWord α d c) : BraidWord Unit (d.map (fun _ => ()
 lemma BraidWord.forget_append (x : BraidWord α d m) (y : BraidWord α m c) : BraidWord.forget (x ++ y) = BraidWord.forget x ++ BraidWord.forget y := by
   simp
 
+@[simp]
+def BraidEquiv.comm1 (s₁ s₂ : Bool) (l : List α) (w x : α) (m : List α) (y z : α) (r : List α) : BraidWord α (l ++ w :: x :: (m ++ y :: z :: r)) (l ++ x :: w :: (m ++ z :: y :: r)) :=
+  (TypedList.cons ⟨l, s₁, w, x, m ++ y :: z :: r, by easy, by easy⟩
+    (TypedList.cons ⟨l ++ x :: w :: m, s₂, y, z, r, by easy, by easy⟩
+      (TypedList.nil (l ++ x :: w :: (m ++ z :: y :: r)))))
+
+@[simp]
+def BraidEquiv.comm2 (s₁ s₂ : Bool) (l : List α) (w x : α) (m : List α) (y z : α) (r : List α) : BraidWord α (l ++ w :: x :: (m ++ y :: z :: r)) (l ++ x :: w :: (m ++ z :: y :: r)) :=
+  (TypedList.cons ⟨l ++ w :: x :: m, s₂, y, z, r, by easy, by easy⟩
+    (TypedList.cons ⟨l, s₁, w, x, m ++ z :: y :: r, by easy, by easy⟩
+      (TypedList.nil (l ++ x :: w :: (m ++ z :: y :: r)))))
+
+@[simp]
+def BraidEquiv.yb1 (s : Bool) (l : List α) (x y z : α) (r : List α) : BraidWord α (l ++ x :: y :: z :: r) (l ++ z :: y :: x :: r) :=
+  (TypedList.cons ⟨l, s, x, y, z :: r, by easy, by easy⟩
+    (TypedList.cons ⟨l ++ [y], s, x, z, r, by easy, by easy⟩
+      (TypedList.cons ⟨l, s, y, z, x :: r, by easy, by easy⟩
+        (TypedList.nil (l ++ z :: y :: x :: r)))))
+
+@[simp]
+def BraidEquiv.yb2 (s : Bool) (l : List α) (x y z : α) (r : List α) : BraidWord α (l ++ x :: y :: z :: r) (l ++ z :: y :: x :: r) :=
+  (TypedList.cons ⟨l ++ [x], s, y, z, r, by easy, by easy⟩
+    (TypedList.cons ⟨l, s, x, z, y :: r, by easy, by easy⟩
+      (TypedList.cons ⟨l ++ [z], s, x, y, r, by easy, by easy⟩
+        (TypedList.nil (l ++ z :: y :: x :: r)))))
+
 @[grind]
 inductive BraidEquiv : BraidWord α d c → BraidWord α d c → Prop where
   | refl (x : BraidWord α d c) : BraidEquiv x x
@@ -237,28 +263,18 @@ inductive BraidEquiv : BraidWord α d c → BraidWord α d c → Prop where
   | trans {x y z : BraidWord α d c} : BraidEquiv x y → BraidEquiv y z → BraidEquiv x z
   | ignore_head {h : BraidWord α d m} {x y : BraidWord α m c} : BraidEquiv x y → BraidEquiv (h ++ x) (h ++ y)
   | ignore_tail {x y : BraidWord α d m} {t : BraidWord α m c} : BraidEquiv x y → BraidEquiv (x ++ t) (y ++ t)
-  -- | inv (myend : List α) {hmyend : myend = (l ++ [a, b] ++ r)} : s₁ ≠ s₂ → BraidEquiv
-  --   (TypedList.cons ⟨l, s₁, a, b, r, by easy, by easy⟩ (TypedList.cons ⟨l, s₂, b, a, r, by easy, by easy⟩ (TypedList.nil myend)))
-  --   (TypedList.nil myend)
-  | inv (g : BraidGenerator α d c) : BraidEquiv
-    (TypedList.cons g (TypedList.cons g.inv (TypedList.nil d)))
-    (BraidWord.id d)
-  | comm : BraidEquiv
-    (TypedList.cons (BraidGenerator.make l s₁ w x (m ++ y :: z :: r))
-      (TypedList.cons (BraidGenerator.make (l ++ x :: w :: m) s₂ y z r)
-        (TypedList.nil _)))
-    (TypedList.cons ⟨l ++ w :: x :: m, s₂, y, z, r, by easy, by easy⟩
-      (TypedList.cons ⟨l, s₁, w, x, m ++ z :: y :: r, by easy, by easy⟩
-        (TypedList.nil _)))
-  | yb : BraidEquiv
-    (TypedList.cons ⟨l, s, x, y, z :: r, by easy, by easy⟩
-      (TypedList.cons ⟨l ++ [y], s, x, z, r, by easy, by easy⟩
-        (TypedList.cons ⟨l, s, y, z, x :: r, by easy, by easy⟩
-          (TypedList.nil (l ++ z :: y :: x :: r)))))
-    (TypedList.cons ⟨l ++ [x], s, y, z, r, by easy, by easy⟩
-      (TypedList.cons ⟨l, s, x, z, y :: r, by easy, by easy⟩
-        (TypedList.cons ⟨l ++ [z], s, x, y, r, by easy, by easy⟩
-          (TypedList.nil (l ++ z :: y :: x :: r)))))
+  -- | inv (g : BraidGenerator α d c) : x = (TypedList.cons g (TypedList.cons g.inv (TypedList.nil d))) → BraidEquiv x (BraidWord.id d)
+  -- | comm {a b : BraidWord α _ _} : a = (BraidEquiv.comm1 s₁ s₂ l w x m y z r) → b = (BraidEquiv.comm2 s₁ s₂ l w x m y z r) → BraidEquiv a b
+  -- | yb {a b : BraidWord α _ _} : a = (BraidEquiv.yb1 s l x y z r) → b = (BraidEquiv.yb2 s l x y z r) → BraidEquiv a b
+  | inv (g : BraidGenerator α d c) : BraidEquiv (TypedList.cons g (TypedList.cons g.inv (TypedList.nil d))) (BraidWord.id d)
+  | comm : BraidEquiv (BraidEquiv.comm1 s₁ s₂ l w x m y z r) (BraidEquiv.comm2 s₁ s₂ l w x m y z r)
+  | yb : BraidEquiv (BraidEquiv.yb1 s l x y z r) (BraidEquiv.yb2 s l x y z r)
+
+-- forget of comm1 is another comm1
+-- lemma BraidEquiv.forget_comm1 (s₁ s₂ : Bool) (l : List α) (w x : α) (m : List α) (y z : α) (r : List α) :
+--     BraidEquiv (BraidWord.forget (BraidEquiv.comm1 s₁ s₂ l w x m y z r))
+--     (BraidEquiv.comm1 s₁ s₂ (l.map (fun _ => ())) () () (m.map (fun _ => ())) () () (r.map (fun _ => ()))) := by
+--   simp
 
 instance (d c : List α) : Trans (BraidEquiv (α := α) (d := d) (c := c)) (BraidEquiv (α := α) (d := d) (c := c)) (BraidEquiv (α := α) (d := d) (c := c)) where
   trans := BraidEquiv.trans
@@ -281,9 +297,13 @@ lemma BraidWord.inv_comp {α : Type} {d c : List α} (w : BraidWord α d c) : Br
          BraidEquiv _ ((BraidWord.inv tail) ++ (TypedList.nil m) ++ tail) := by
           apply BraidEquiv.ignore_tail
           apply BraidEquiv.ignore_head
-          cases head
-          simp
-          grind
+          apply BraidEquiv.symm
+          calc BraidEquiv (TypedList.nil m) _ := by
+                apply BraidEquiv.symm
+                exact BraidEquiv.inv head.inv
+               BraidEquiv _ _ := by
+                simp
+                apply BraidEquiv.refl
          BraidEquiv _ (TypedList.nil c) := by
           rw [TypedList.append_nil_right]
           exact ih
@@ -302,7 +322,8 @@ lemma BraidWord.comp_inv {α : Type} {d c : List α} (w : BraidWord α d c) : Br
          BraidEquiv _ (TypedList.nil d) := by
           -- cases head
           -- simp
-          apply BraidEquiv.inv
+          apply BraidEquiv.inv head
+          simp
           -- grind only [BraidEquiv.inv]
 
 @[simp, grind]
@@ -329,7 +350,6 @@ def Braid.inv {X Y : List α} (f : Braid α X Y) : Braid α Y X :=
     (fun x => ⟦BraidWord.inv x⟧)
     (by
       intros a b hab
-      simp
       clear f
       apply Quotient.sound ?_
       induction hab
@@ -346,11 +366,16 @@ def Braid.inv {X Y : List α} (f : Braid α X Y) : Braid α Y X :=
       case ignore_tail ih =>
         simp
         exact BraidEquiv.ignore_head ih
-      case inv =>
-        exact BraidEquiv.inv <| by aesop
+      case inv x g hx =>
+        subst x
+        simp
+        apply BraidEquiv.inv g
+        simp
       case comm =>
         simp
-        apply BraidEquiv.symm
+        -- apply BraidEquiv.symm
+        apply BraidEquiv.comm
+
         grind
       case yb =>
         simp
@@ -359,6 +384,10 @@ def Braid.inv {X Y : List α} (f : Braid α X Y) : Braid α Y X :=
 
 @[simp]
 def Braid.id (X : List α) : Braid α X X := ⟦BraidWord.id X⟧
+
+@[simp, grind]
+lemma List.cons_replicate : a :: (List.replicate n a) = List.replicate (n + 1) a := by
+  sorry
 
 @[simp]
 def Braid.forget {d c : List α} (f : Braid α d c) : Braid Unit (d.map (fun _ => ())) (c.map (fun _ => ())) :=
@@ -393,8 +422,28 @@ def Braid.forget {d c : List α} (f : Braid α d c) : Braid Unit (d.map (fun _ =
         -- -- rw [← hrw] at x
         -- -- grind
         -- exact x
-      case comm =>
+      case comm s₁ s₂ l w x m y z r =>
         simp
+        apply BraidEquiv.comm
+        #check Eq.rec
+        #check Eq.ndrec
+        -- have h :
+        --   List.map (fun _ => ())
+        --     (l ++ x :: w :: (m ++ z :: y :: r)) =
+        --     (List.map (fun _ => ()) l) ++ () :: () ::
+        --     (List.map (fun _ => ()) m) ++ () :: () ::
+        --     (List.map (fun _ => ()) r) := by
+        --   simp [List.map_append, List.map_cons]
+        -- simp [List.map_append, List.map_cons, List.map_const]
+        #check List.map_const
+        calc BraidEquiv _ _ := by
+              apply BraidEquiv.refl
+             BraidEquiv _ _ := by
+              apply BraidEquiv.comm (s₁ := s₁) (s₂ := s₂) (l := List.replicate l.length ()) (w := ()) (x := ()) (m := List.replicate m.length ()) (y := ()) (z := ()) (r := List.replicate r.length ())
+             BraidEquiv _ _ := by
+              apply BraidEquiv.refl
+
+        -- simp
         apply BraidEquiv.comm
       case yb =>
         simp
