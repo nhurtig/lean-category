@@ -319,6 +319,48 @@ inductive HomEquiv {α : Type u} : ∀ {X Y : Monoid α}, (X ⟶ᵇ Y) → (X �
                 (((Hom.σ Y Z).whiskerLeft X).comp
                     ((Hom.α_inv X Z Y).comp ((Hom.σ X Z).whiskerRight Y)))
 
+def HomEquiv.project {α β : Type u} {X Y : Monoid α} (map : α → Option β)
+        {f g : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv (f.project map) (g.project map) := by
+    intro h
+    induction h with
+    | refl f => exact HomEquiv.refl _
+    | symm f g h ih => exact HomEquiv.symm _ _ ih
+    | trans hfg hgh ihfg ihgh => exact HomEquiv.trans ihfg ihgh
+    | comp hf hg ihf ihg => exact HomEquiv.comp ihf ihg
+    | whiskerLeft X f f' hf ih => exact HomEquiv.whiskerLeft _ _ _ ih
+    | whiskerRight f f' X hf ih => exact HomEquiv.whiskerRight _ _ _ ih
+    | tensor hf hg ihf ihg => exact HomEquiv.tensor ihf ihg
+    | tensorHom_def f g => exact HomEquiv.tensorHom_def (f.project map) (g.project map)
+    | comp_id f => exact HomEquiv.comp_id (f.project map)
+    | id_comp f => exact HomEquiv.id_comp (f.project map)
+    | assoc f g h => exact HomEquiv.assoc (f.project map) (g.project map) (h.project map)
+    | id_tensorHom_id => exact HomEquiv.id_tensorHom_id
+    | tensorHom_comp_tensorHom f₁ f₂ g₁ g₂ =>
+        exact HomEquiv.tensorHom_comp_tensorHom (f₁.project map) (f₂.project map)
+            (g₁.project map) (g₂.project map)
+    | whiskerLeft_id X Y => exact HomEquiv.whiskerLeft_id (X.project map) (Y.project map)
+    | id_whiskerRight X Y => exact HomEquiv.id_whiskerRight (X.project map) (Y.project map)
+    | α_hom_inv => exact HomEquiv.α_hom_inv
+    | α_inv_hom => exact HomEquiv.α_inv_hom
+    | associator_naturality f₁ f₂ f₃ =>
+        exact HomEquiv.associator_naturality (f₁.project map) (f₂.project map) (f₃.project map)
+    | ρ_hom_inv => exact HomEquiv.ρ_hom_inv
+    | ρ_inv_hom => exact HomEquiv.ρ_inv_hom
+    | ρ_naturality f => exact HomEquiv.ρ_naturality (f.project map)
+    | l_hom_inv => exact HomEquiv.l_hom_inv
+    | l_inv_hom => exact HomEquiv.l_inv_hom
+    | l_naturality f => exact HomEquiv.l_naturality (f.project map)
+    | pentagon => exact HomEquiv.pentagon
+    | triangle => exact HomEquiv.triangle
+    | σ_inv_left => exact HomEquiv.σ_inv_left
+    | σ_inv_right => exact HomEquiv.σ_inv_right
+    | braiding_naturality_right f =>
+        exact HomEquiv.braiding_naturality_right (f.project map)
+    | braiding_naturality_left f Z =>
+        exact HomEquiv.braiding_naturality_left (f.project map) (Z.project map)
+    | hexagon_forward => exact HomEquiv.hexagon_forward
+    | hexagon_reverse => exact HomEquiv.hexagon_reverse
+
 /-- Setoid for braid morphisms. -/
 def setoidHom {α : Type u} (X Y : Monoid α) : Setoid (X ⟶ᵇ Y) :=
     ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
@@ -397,6 +439,35 @@ instance (α : Type u) : BraidedCategory (Monoid α) where
         exact Quotient.sound (HomEquiv.hexagon_reverse (X := X) (Y := Y) (Z := Z))
 
 end BraidInstance
+
+def projectMap {α β : Type u} (map : α → Option β) (X Y : Monoid α) :
+        (X ⟶ Y) → (X.project map ⟶ Y.project map) :=
+    Quotient.lift (fun f => ⟦f.project map⟧) (by
+        intro f g h
+        exact Quotient.sound (HomEquiv.project map h))
+
+def projectFunctor {α β : Type u} (map : α → Option β) : Monoid α ⥤ Monoid β where
+    obj X := X.project map
+    map {X Y} f := projectMap map X Y f
+    map_id X := rfl
+    map_comp {X Y Z} := by
+        rintro ⟨f⟩ ⟨g⟩
+        rfl
+
+@[simp]
+instance projectFunctor_laxMonoidal {α β : Type u} (map : α → Option β) :
+        (projectFunctor map).LaxMonoidal where
+    ε := 𝟙 _
+    μ _ _ := 𝟙 _
+    μ_natural_left := by
+        rintro X Y ⟨f⟩ X'
+        cat_disch
+    μ_natural_right := by
+        rintro X Y X' ⟨f⟩
+        cat_disch
+
+instance projectFunctor_laxBraided {α β : Type u} (map : α → Option β) :
+        (projectFunctor map).LaxBraided where
 
 @[simp]
 theorem mk_comp {α : Type u} {X Y Z : Monoid α} (f : Hom X Y) (g : Hom Y Z) :
@@ -546,10 +617,8 @@ noncomputable instance (α : Type u) : Groupoid (Monoid α) :=
 
 class BraidedGroupoid (C : Type u) [Category C] [MonoidalCategory C] [BraidedCategory C] [Groupoid C]
 
-instance BraidGroupoid (α : Type u) : BraidedGroupoid (Monoid α) where
+instance (α : Type u) : BraidedGroupoid (Monoid α) where
 
 #check Functor
 
 end BraidGroupoid
-
-#check BraidGroupoid.BraidGroupoid

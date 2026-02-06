@@ -1,2 +1,2 @@
 import LeanCategory.Basic
-import LeanCategory.BraidGroupoid
+import LeanCategory.BraidGroupoid2
