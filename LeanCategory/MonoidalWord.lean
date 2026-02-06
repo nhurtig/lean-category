@@ -23,6 +23,19 @@ inductive MonoidalWord (α : Type u) : Type u
     | tensor : MonoidalWord α → MonoidalWord α → MonoidalWord α
     deriving Inhabited, Repr
 
+/-- A label assignment for a fixed tensor-word shape. -/
+inductive MonoidalWord.Match (β : Type u) : MonoidalWord α → Type u
+    | unit : MonoidalWord.Match β .unit
+    | of {a : α} (b : β) : MonoidalWord.Match β (.of a)
+    | tensor {X Y} (mx : MonoidalWord.Match β X) (my : MonoidalWord.Match β Y) :
+        MonoidalWord.Match β (.tensor X Y)
+
+/-- Recover the tensor word over labels from a shape assignment. -/
+def MonoidalWord.Match.toMonoidalWord : MonoidalWord.Match β X → MonoidalWord β
+    | unit => .unit
+    | of b => .of b
+    | tensor mx my => .tensor mx.toMonoidalWord my.toMonoidalWord
+
 /--
 Map labels through a partial function, dropping labels sent to `none`.
 -/
