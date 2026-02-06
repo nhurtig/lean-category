@@ -1,2 +1,3 @@
 import LeanCategory.Basic
+import LeanCategory.MonoidalWord
 import LeanCategory.BraidGroupoid2
