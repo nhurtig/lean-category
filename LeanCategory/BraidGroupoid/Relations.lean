@@ -99,13 +99,9 @@ def HomEquiv.newMatch {α β : Type u} {X Y : MonoidalWord α}
 /-- Enrich braid relations by replacing labels with a chosen assignment. -/
 def HomEquiv.enrich {α β : Type u} {X Y : MonoidalWord α}
         {f g : X ⟶ᵇ Y} (h : HomEquiv f g) (A : X.Match β) :
-    HomEquiv (Hom.enrich f A) ((by (have x : g.newCod A = f.newCod A := by simp [Hom.newCod]; rw [HomEquiv.newMatch h A]); exact x) ▸ Hom.enrich g A) := by
-  induction h
-  case comp =>
-    -- match_simplify A
-    simp [Hom.enrich]
-    sorry
-  all_goals sorry
+        HomEquiv (Hom.enrich f A) ((by (have x : g.newCod A = f.newCod A := by simp [Hom.newCod]; rw [HomEquiv.newMatch h A]); exact x) ▸ Hom.enrich g A) := by
+    induction h
+    all_goals sorry
   -- | refl f =>
   --     exact HomEquiv.refl _
   -- | symm f g h ih =>
