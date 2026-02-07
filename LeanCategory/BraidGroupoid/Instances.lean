@@ -18,7 +18,7 @@ open scoped BraidGroupoid
 
 /-- Setoid for braid morphisms. -/
 def setoidHom {α : Type u} (X Y : MonoidalWord α) : Setoid (X ⟶ᵇ Y) :=
-    ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
+    ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm, HomEquiv.trans⟩⟩
 
 section BraidInstance
 
@@ -62,7 +62,7 @@ instance (α : Type u) : MonoidalCategory (MonoidalWord α) where
             Quotient.sound α_inv_hom⟩
     associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} := by
         rintro ⟨f₁⟩ ⟨f₂⟩ ⟨f₃⟩
-        exact Quotient.sound (associator_naturality _ _ _)
+        exact Quotient.sound (α_naturality _ _ _)
     leftUnitor X :=
         ⟨⟦Hom.l_hom X⟧, ⟦Hom.l_inv X⟧, Quotient.sound l_hom_inv,
             Quotient.sound l_inv_hom⟩
@@ -145,51 +145,11 @@ theorem Hom.inductionOn {α : Type u}
     | σ X Y => exact σ_hom X Y
     | σ_inv X Y => exact σ_inv X Y
     | comp f g hf hg => exact comp _ _ (hf ⟦f⟧) (hg ⟦g⟧)
-    | whiskerLeft X f hf => exact whiskerLeft X _ (hf ⟦f⟧)
-    | whiskerRight f X hf => exact whiskerRight _ X (hf ⟦f⟧)
     | @tensor W X Y Z f g hf hg =>
         have : homMk f ⊗ₘ homMk g = homMk f ▷ X ≫ Y ◁ homMk g :=
             Quotient.sound (HomEquiv.tensorHom_def f g)
         change motive (homMk f ⊗ₘ homMk g)
         rw [this]
         exact comp _ _ (whiskerRight _ _ (hf ⟦f⟧)) (whiskerLeft _ _ (hg ⟦g⟧))
-
-/-- Every morphism in the braid groupoid is an isomorphism. -/
-theorem isIso_quot {α : Type u} {X Y : MonoidalWord α} (f : X ⟶ Y) : IsIso f := by
-    refine Hom.inductionOn (α := α) (t := f)
-        (id := fun X => by simpa using (inferInstance : IsIso (𝟙 X)))
-        (α_hom := fun X Y Z => by
-            simpa using (inferInstance : IsIso (α_ X Y Z).hom))
-        (α_inv := fun X Y Z => by
-            simpa using (inferInstance : IsIso (α_ X Y Z).inv))
-        (l_hom := fun X => by
-            simpa using (inferInstance : IsIso (λ_ X).hom))
-        (l_inv := fun X => by
-            simpa using (inferInstance : IsIso (λ_ X).inv))
-        (ρ_hom := fun X => by
-            simpa using (inferInstance : IsIso (ρ_ X).hom))
-        (ρ_inv := fun X => by
-            simpa using (inferInstance : IsIso (ρ_ X).inv))
-        (σ_hom := fun X Y => by
-            simpa [mk_σ] using (inferInstance : IsIso (β_ X Y).hom))
-        (σ_inv := fun X Y => by
-            simpa [mk_σ_inv] using (inferInstance : IsIso (β_ X Y).inv))
-        (comp := fun f g hf hg ↦ by
-            simpa using (inferInstance : IsIso (f ≫ g)))
-        (whiskerLeft := fun X f hf => by
-            simpa using (inferInstance : IsIso (X ◁ f)))
-        (whiskerRight := fun f Z hf ↦ by
-            simpa using (inferInstance : IsIso (f ▷ Z)))
-
-/-- The braid groupoid instance on `MonoidalWord`. -/
-noncomputable instance (α : Type u) : Groupoid (MonoidalWord α) :=
-    Groupoid.ofIsIso (C := MonoidalWord α) (fun f => isIso_quot (α := α) f)
-
-/-- A shorthand class for braided monoidal groupoids. -/
-class BraidedGroupoid (C : Type u) [Category C] [MonoidalCategory C]
-    [BraidedCategory C] [Groupoid C]
-
-/-- The free braided monoidal groupoid on a type of labels. -/
-instance (α : Type u) : BraidedGroupoid (MonoidalWord α) where
 
 end BraidGroupoid

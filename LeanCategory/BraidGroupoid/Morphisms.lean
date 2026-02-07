@@ -23,13 +23,21 @@ inductive Hom {α : Type u} : MonoidalWord α → MonoidalWord α → Type u
     | σ (X Y : MonoidalWord α) : Hom (X.tensor Y) (Y.tensor X)
     | σ_inv (X Y : MonoidalWord α) : Hom (Y.tensor X) (X.tensor Y)
     | comp {X Y Z} (f : Hom X Y) (g : Hom Y Z) : Hom X Z
-    | whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Hom Y₁ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂)
-    | whiskerRight {X₁ X₂} (f : Hom X₁ X₂) (Y : MonoidalWord α) :
-        Hom (X₁.tensor Y) (X₂.tensor Y)
+    -- | whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Hom Y₁ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂)
+    -- | whiskerRight {X₁ X₂} (f : Hom X₁ X₂) (Y : MonoidalWord α) :
+        -- Hom (X₁.tensor Y) (X₂.tensor Y)
     | tensor {W X Y Z} (f : Hom W Y) (g : Hom X Z) : Hom (W.tensor X) (Y.tensor Z)
 
 /-- Notation for braid morphisms. -/
 scoped[ BraidGroupoid ] infixr:10 " ⟶ᵇ " => Hom
+
+@[simp]
+def Hom.whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Y₁ ⟶ᵇ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂) :=
+    Hom.tensor (Hom.id X) f
+
+@[simp]
+def Hom.whiskerRight {X₁ X₂} (f : X₁ ⟶ᵇ X₂) (Y : MonoidalWord α) : Hom (X₁.tensor Y) (X₂.tensor Y) :=
+    Hom.tensor f (Hom.id Y)
 
 open scoped BraidGroupoid
 
@@ -48,8 +56,8 @@ def Hom.newMatch {α β : Type u} {X Y : MonoidalWord α} :
     | Hom.σ _ _, .tensor A B => .tensor B A
     | Hom.σ_inv _ _, .tensor B A => .tensor A B
     | Hom.comp f g, A => Hom.newMatch g (Hom.newMatch f A)
-    | Hom.whiskerLeft _ f, .tensor A B => .tensor A (Hom.newMatch f B)
-    | Hom.whiskerRight f _, .tensor A B => .tensor (Hom.newMatch f A) B
+    -- | Hom.whiskerLeft _ f, .tensor A B => .tensor A (Hom.newMatch f B)
+    -- | Hom.whiskerRight f _, .tensor A B => .tensor (Hom.newMatch f A) B
     | Hom.tensor f g, .tensor A B => .tensor (Hom.newMatch f A) (Hom.newMatch g B)
 
 /-- The codomain word induced by `Hom.newMatch`. -/
@@ -75,14 +83,15 @@ def Hom.enrich {α β : Type u} {X Y : MonoidalWord α} :
     | Hom.σ_inv _ _, .tensor B A => Hom.σ_inv A.toMonoidalWord B.toMonoidalWord
     | Hom.comp f g, A =>
         Hom.comp (Hom.enrich f A) (Hom.enrich g (Hom.newMatch f A))
-    | Hom.whiskerLeft _ f, .tensor A B =>
-        Hom.whiskerLeft A.toMonoidalWord (Hom.enrich f B)
-    | Hom.whiskerRight f _, .tensor A B =>
-        Hom.whiskerRight (Hom.enrich f A) B.toMonoidalWord
+    -- | Hom.whiskerLeft _ f, .tensor A B =>
+    --     Hom.whiskerLeft A.toMonoidalWord (Hom.enrich f B)
+    -- | Hom.whiskerRight f _, .tensor A B =>
+    --     Hom.whiskerRight (Hom.enrich f A) B.toMonoidalWord
     | Hom.tensor f g, .tensor A B =>
         Hom.tensor (Hom.enrich f A) (Hom.enrich g B)
 
 /-- Formal inverse on generators, reversing composition. -/
+@[simp] -- TODO be cautious of this; IDK if it belongs
 def Hom.inv {α : Type u} {X Y : MonoidalWord α} : Hom X Y → Hom Y X
     | Hom.id X => Hom.id X
     | Hom.α_hom X Y Z => Hom.α_inv X Y Z
@@ -94,8 +103,8 @@ def Hom.inv {α : Type u} {X Y : MonoidalWord α} : Hom X Y → Hom Y X
     | Hom.σ X Y => Hom.σ_inv X Y
     | Hom.σ_inv X Y => Hom.σ X Y
     | Hom.comp f g => Hom.comp (Hom.inv g) (Hom.inv f)
-    | Hom.whiskerLeft X f => Hom.whiskerLeft X (Hom.inv f)
-    | Hom.whiskerRight f X => Hom.whiskerRight (Hom.inv f) X
+    -- | Hom.whiskerLeft X f => Hom.whiskerLeft X (Hom.inv f)
+    -- | Hom.whiskerRight f X => Hom.whiskerRight (Hom.inv f) X
     | Hom.tensor f g => Hom.tensor (Hom.inv f) (Hom.inv g)
 
 end BraidGroupoid

@@ -8,6 +8,9 @@ This file defines the projection of labels along a partial map, as a functor on
 `MonoidalWord` and on braid morphisms.
 -/
 
+open CategoryTheory
+#check Functor.op
+
 universe u
 
 namespace BraidGroupoid
@@ -28,8 +31,6 @@ def Hom.project (map : α → Option β) : (X ⟶ᵇ Y) → (X.project map ⟶�
     | Hom.σ X Y => Hom.σ (X.project map) (Y.project map)
     | Hom.σ_inv X Y => Hom.σ_inv (X.project map) (Y.project map)
     | Hom.comp f g => Hom.comp (f.project map) (g.project map)
-    | Hom.whiskerLeft X f => Hom.whiskerLeft (X.project map) (f.project map)
-    | Hom.whiskerRight f X => Hom.whiskerRight (f.project map) (X.project map)
     | Hom.tensor f g => Hom.tensor (f.project map) (g.project map)
 
 /-- Project braid relations along a label map. -/
@@ -38,13 +39,10 @@ def HomEquiv.project {α β : Type u} {X Y : MonoidalWord α} (map : α → Opti
     intro h
     induction h with
     | refl f => exact HomEquiv.refl _
-    | symm f g h ih => exact HomEquiv.symm _ _ ih
+    | symm h ih => exact HomEquiv.symm ih
     | trans hfg hgh ihfg ihgh => exact HomEquiv.trans ihfg ihgh
     | comp hf hg ihf ihg => exact HomEquiv.comp ihf ihg
-    | whiskerLeft X f f' hf ih => exact HomEquiv.whiskerLeft _ _ _ ih
-    | whiskerRight f f' X hf ih => exact HomEquiv.whiskerRight _ _ _ ih
     | tensor hf hg ihf ihg => exact HomEquiv.tensor ihf ihg
-    | tensorHom_def f g => exact HomEquiv.tensorHom_def (f.project map) (g.project map)
     | comp_id f => exact HomEquiv.comp_id (f.project map)
     | id_comp f => exact HomEquiv.id_comp (f.project map)
     | assoc f g h => exact HomEquiv.assoc (f.project map) (g.project map) (h.project map)
@@ -52,12 +50,10 @@ def HomEquiv.project {α β : Type u} {X Y : MonoidalWord α} (map : α → Opti
     | tensorHom_comp_tensorHom f₁ f₂ g₁ g₂ =>
         exact HomEquiv.tensorHom_comp_tensorHom (f₁.project map) (f₂.project map)
             (g₁.project map) (g₂.project map)
-    | whiskerLeft_id X Y => exact HomEquiv.whiskerLeft_id (X.project map) (Y.project map)
-    | id_whiskerRight X Y => exact HomEquiv.id_whiskerRight (X.project map) (Y.project map)
     | α_hom_inv => exact HomEquiv.α_hom_inv
     | α_inv_hom => exact HomEquiv.α_inv_hom
-    | associator_naturality f₁ f₂ f₃ =>
-        exact HomEquiv.associator_naturality (f₁.project map) (f₂.project map) (f₃.project map)
+    | α_naturality f₁ f₂ f₃ =>
+        exact HomEquiv.α_naturality (f₁.project map) (f₂.project map) (f₃.project map)
     | ρ_hom_inv => exact HomEquiv.ρ_hom_inv
     | ρ_inv_hom => exact HomEquiv.ρ_inv_hom
     | ρ_naturality f => exact HomEquiv.ρ_naturality (f.project map)
