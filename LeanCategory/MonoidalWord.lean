@@ -82,15 +82,18 @@ def MonoidalWord.Match.toMonoidalWord : MonoidalWord.Match β X → MonoidalWord
     | of b => .of b
     | tensor mx my => .tensor mx.toMonoidalWord my.toMonoidalWord
 
+def MonoidalWord.map (f : α → MonoidalWord β) : MonoidalWord α → MonoidalWord β
+    | unit => .unit
+    | of a => f a
+    | tensor x y => .tensor (x.map f) (y.map f)
+
 /--
 Map labels through a partial function, dropping labels sent to `none`.
 -/
-def MonoidalWord.project (f : α → Option β) : MonoidalWord α → MonoidalWord β
-    | MonoidalWord.unit => .unit
-    | MonoidalWord.of a =>
+def MonoidalWord.project (f : α → Option β) : MonoidalWord α → MonoidalWord β :=
+    MonoidalWord.map (fun a =>
         match f a with
         | some b => .of b
-        | none => .unit
-    | MonoidalWord.tensor x y => .tensor (x.project f) (y.project f)
+        | none => .unit)
 
 end BraidGroupoid

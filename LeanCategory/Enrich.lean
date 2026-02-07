@@ -1,3 +1,5 @@
+import LeanCategory.Instances
+
 -- idea: what if braids between two layers have TWO labels each -- one for the below layer
 -- and one for the above? Makes projection EZ. No need for enrich. Gotta make sure that the
 -- labels are unique, though... or do we? Or, maybe there are "color changing" morphisms
@@ -8,3 +10,12 @@
 -- name their adjacent strands.
 
 -- TL;DR no need for enrich!
+
+namespace BraidGroupoid
+
+-- this is POSSIBLE, but really annoying. The braid-layer-braid-layer restriction feels cleaner
+-- def doubleComp {X Y : MonoidalWord (α × β)} {A B : MonoidalWord (β × γ)} {h : Y.map (.of ·.snd) = A.map (.of ·.fst)} (f : X ⟶ᵇ Y) (g : A ⟶ᵇ B) : (X ⟶ᵇ Z)
+
+end BraidGroupoid
+
+def
