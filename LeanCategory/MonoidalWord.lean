@@ -30,16 +30,19 @@ inductive MonoidalWord.Match (β : Type u) : MonoidalWord α → Type u
     | tensor {X Y} (mx : MonoidalWord.Match β X) (my : MonoidalWord.Match β Y) :
         MonoidalWord.Match β (.tensor X Y)
 
--- these 3 are used by match_simplify
+/-- The only match on `unit` is `unit`. -/
+@[simp]
 lemma MonoidalWord.Match.match_unit (A : MonoidalWord.Match β (.unit : MonoidalWord α)) :
     A = .unit := by
   cases A
   rfl
 
+/-- A match on `of` is determined by a label. -/
 lemma MonoidalWord.Match.match_of (A : MonoidalWord.Match β (.of a)) : ∃ b, A = .of b := by
   cases A
   simp
 
+/-- A match on `tensor` splits into matches on each tensor factor. -/
 lemma MonoidalWord.Match.match_tensor (A : MonoidalWord.Match β (.tensor X Y)) :
     ∃ B C, A = .tensor B C := by
   cases A

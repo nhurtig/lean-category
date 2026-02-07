@@ -31,20 +31,22 @@ inductive Hom {α : Type u} : MonoidalWord α → MonoidalWord α → Type u
 /-- Notation for braid morphisms. -/
 scoped[ BraidGroupoid ] infixr:10 " ⟶ᵇ " => Hom
 
+/-- Left whiskering by tensoring with identity. -/
 @[simp]
 def Hom.whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Y₁ ⟶ᵇ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂) :=
     Hom.tensor (Hom.id X) f
 
+/-- Right whiskering by tensoring with identity. -/
 @[simp]
-def Hom.whiskerRight {X₁ X₂} (f : X₁ ⟶ᵇ X₂) (Y : MonoidalWord α) : Hom (X₁.tensor Y) (X₂.tensor Y) :=
+def Hom.whiskerRight {X₁ X₂} (f : X₁ ⟶ᵇ X₂) (Y : MonoidalWord α) :
+        Hom (X₁.tensor Y) (X₂.tensor Y) :=
     Hom.tensor f (Hom.id Y)
 
 open scoped BraidGroupoid
 
 /-- Transport a shape assignment along a braid morphism. -/
--- TODO name is wrong (dang LLM)
 @[simp]
-def Hom.newMatch {α β : Type u} {X Y : MonoidalWord α} :
+def Hom.transport {α β : Type u} {X Y : MonoidalWord α} :
     (X ⟶ᵇ Y) → MonoidalWord.Match (α := α) β X → MonoidalWord.Match (α := α) β Y
     | Hom.id _, A => A
     | Hom.α_hom _ _ _, .tensor (.tensor A B) C => .tensor A (.tensor B C)
@@ -55,15 +57,13 @@ def Hom.newMatch {α β : Type u} {X Y : MonoidalWord α} :
     | Hom.ρ_inv _, A => .tensor A .unit
     | Hom.σ _ _, .tensor A B => .tensor B A
     | Hom.σ_inv _ _, .tensor B A => .tensor A B
-    | Hom.comp f g, A => Hom.newMatch g (Hom.newMatch f A)
-    -- | Hom.whiskerLeft _ f, .tensor A B => .tensor A (Hom.newMatch f B)
-    -- | Hom.whiskerRight f _, .tensor A B => .tensor (Hom.newMatch f A) B
-    | Hom.tensor f g, .tensor A B => .tensor (Hom.newMatch f A) (Hom.newMatch g B)
+    | Hom.comp f g, A => Hom.transport g (Hom.transport f A)
+    | Hom.tensor f g, .tensor A B => .tensor (Hom.transport f A) (Hom.transport g B)
 
-/-- The codomain word induced by `Hom.newMatch`. -/
+/-- The codomain word induced by `Hom.transport`. -/
 def Hom.newCod {α β : Type u} {X Y : MonoidalWord α} :
     (X ⟶ᵇ Y) → MonoidalWord.Match (α := α) β X → MonoidalWord β
-    | f, A => (Hom.newMatch f A).toMonoidalWord
+    | f, A => (Hom.transport f A).toMonoidalWord
 
 /-- Enrich a braid morphism by replacing its labels with a chosen assignment. -/
 def Hom.enrich {α β : Type u} {X Y : MonoidalWord α} :
@@ -82,16 +82,12 @@ def Hom.enrich {α β : Type u} {X Y : MonoidalWord α} :
     | Hom.σ _ _, .tensor A B => Hom.σ A.toMonoidalWord B.toMonoidalWord
     | Hom.σ_inv _ _, .tensor B A => Hom.σ_inv A.toMonoidalWord B.toMonoidalWord
     | Hom.comp f g, A =>
-        Hom.comp (Hom.enrich f A) (Hom.enrich g (Hom.newMatch f A))
-    -- | Hom.whiskerLeft _ f, .tensor A B =>
-    --     Hom.whiskerLeft A.toMonoidalWord (Hom.enrich f B)
-    -- | Hom.whiskerRight f _, .tensor A B =>
-    --     Hom.whiskerRight (Hom.enrich f A) B.toMonoidalWord
+        Hom.comp (Hom.enrich f A) (Hom.enrich g (Hom.transport f A))
     | Hom.tensor f g, .tensor A B =>
         Hom.tensor (Hom.enrich f A) (Hom.enrich g B)
 
 /-- Formal inverse on generators, reversing composition. -/
-@[simp] -- TODO be cautious of this; IDK if it belongs
+@[simp]
 def Hom.inv {α : Type u} {X Y : MonoidalWord α} : Hom X Y → Hom Y X
     | Hom.id X => Hom.id X
     | Hom.α_hom X Y Z => Hom.α_inv X Y Z

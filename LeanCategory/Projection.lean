@@ -9,7 +9,6 @@ This file defines the projection of labels along a partial map, as a functor on
 -/
 
 open CategoryTheory
-#check Functor.op
 
 universe u
 
@@ -35,41 +34,42 @@ def Hom.project (map : α → Option β) : (X ⟶ᵇ Y) → (X.project map ⟶�
 
 /-- Project braid relations along a label map. -/
 def HomEquiv.project {α β : Type u} {X Y : MonoidalWord α} (map : α → Option β)
-        {f g : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv (f.project map) (g.project map) := by
-    intro h
-    induction h with
-    | refl f => exact HomEquiv.refl _
-    | symm h ih => exact HomEquiv.symm ih
-    | trans hfg hgh ihfg ihgh => exact HomEquiv.trans ihfg ihgh
-    | comp hf hg ihf ihg => exact HomEquiv.comp ihf ihg
-    | tensor hf hg ihf ihg => exact HomEquiv.tensor ihf ihg
-    | comp_id f => exact HomEquiv.comp_id (f.project map)
-    | id_comp f => exact HomEquiv.id_comp (f.project map)
-    | assoc f g h => exact HomEquiv.assoc (f.project map) (g.project map) (h.project map)
-    | id_tensorHom_id => exact HomEquiv.id_tensorHom_id
-    | tensorHom_comp_tensorHom f₁ f₂ g₁ g₂ =>
-        exact HomEquiv.tensorHom_comp_tensorHom (f₁.project map) (f₂.project map)
-            (g₁.project map) (g₂.project map)
-    | α_hom_inv => exact HomEquiv.α_hom_inv
-    | α_inv_hom => exact HomEquiv.α_inv_hom
-    | α_naturality f₁ f₂ f₃ =>
-        exact HomEquiv.α_naturality (f₁.project map) (f₂.project map) (f₃.project map)
-    | ρ_hom_inv => exact HomEquiv.ρ_hom_inv
-    | ρ_inv_hom => exact HomEquiv.ρ_inv_hom
-    | ρ_naturality f => exact HomEquiv.ρ_naturality (f.project map)
-    | l_hom_inv => exact HomEquiv.l_hom_inv
-    | l_inv_hom => exact HomEquiv.l_inv_hom
-    | l_naturality f => exact HomEquiv.l_naturality (f.project map)
-    | pentagon => exact HomEquiv.pentagon
-    | triangle => exact HomEquiv.triangle
-    | σ_inv_left => exact HomEquiv.σ_inv_left
-    | σ_inv_right => exact HomEquiv.σ_inv_right
-    | braiding_naturality_right f =>
-        exact HomEquiv.braiding_naturality_right (f.project map)
-    | braiding_naturality_left f Z =>
-        exact HomEquiv.braiding_naturality_left (f.project map) (Z.project map)
-    | hexagon_forward => exact HomEquiv.hexagon_forward
-    | hexagon_reverse => exact HomEquiv.hexagon_reverse
+    {f g : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv (f.project map) (g.project map) := by
+  intro h
+  induction h with
+  | refl f => rfl
+  | symm h ih => symm; assumption
+  | trans hfg hgh ihfg ihgh => apply trans ihfg ihgh
+  | comp hf hg ihf ihg => apply comp ihf ihg
+  | tensor hf hg ihf ihg => apply tensor ihf ihg
+  | comp_id f => apply comp_id (f.project map)
+  | id_comp f => apply id_comp (f.project map)
+  | assoc f g h =>
+      apply assoc (f.project map) (g.project map) (h.project map)
+  | id_tensorHom_id => apply id_tensorHom_id
+  | tensorHom_comp_tensorHom f₁ f₂ g₁ g₂ =>
+      apply tensorHom_comp_tensorHom (f₁.project map) (f₂.project map)
+        (g₁.project map) (g₂.project map)
+  | α_hom_inv => apply α_hom_inv
+  | α_inv_hom => apply α_inv_hom
+  | α_naturality f₁ f₂ f₃ =>
+      apply α_naturality (f₁.project map) (f₂.project map) (f₃.project map)
+  | ρ_hom_inv => apply ρ_hom_inv
+  | ρ_inv_hom => apply ρ_inv_hom
+  | ρ_naturality f => apply ρ_naturality (f.project map)
+  | l_hom_inv => apply l_hom_inv
+  | l_inv_hom => apply l_inv_hom
+  | l_naturality f => apply l_naturality (f.project map)
+  | pentagon => apply pentagon
+  | triangle => apply triangle
+  | σ_inv_left => apply σ_inv_left
+  | σ_inv_right => apply σ_inv_right
+  | braiding_naturality_right f =>
+      apply braiding_naturality_right (f.project map)
+  | braiding_naturality_left f Z =>
+      apply braiding_naturality_left (f.project map) (Z.project map)
+  | hexagon_forward => apply hexagon_forward
+  | hexagon_reverse => apply hexagon_reverse
 
 /--
 The projection functor induced by a partial label map.
