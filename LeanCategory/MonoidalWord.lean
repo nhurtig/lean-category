@@ -30,6 +30,49 @@ inductive MonoidalWord.Match (β : Type u) : MonoidalWord α → Type u
     | tensor {X Y} (mx : MonoidalWord.Match β X) (my : MonoidalWord.Match β Y) :
         MonoidalWord.Match β (.tensor X Y)
 
+-- these 3 are used by match_simplify
+lemma MonoidalWord.Match.match_unit (A : MonoidalWord.Match β (.unit : MonoidalWord α)) :
+    A = .unit := by
+  cases A
+  rfl
+
+lemma MonoidalWord.Match.match_of (A : MonoidalWord.Match β (.of a)) : ∃ b, A = .of b := by
+  cases A
+  simp
+
+lemma MonoidalWord.Match.match_tensor (A : MonoidalWord.Match β (.tensor X Y)) :
+    ∃ B C, A = .tensor B C := by
+  cases A
+  simp
+
+/-!
+## Tactic support for `MonoidalWord.Match`
+-/
+
+/--
+Destruct a `MonoidalWord.Match` term by repeatedly applying `match_unit`,
+`match_of`, and `match_tensor`, rewriting the goal via `subst`.
+
+Usage:
+```
+match_simplify A
+```
+-/
+syntax (name := match_simplify) "match_simplify " ident : tactic
+
+macro_rules
+  | `(tactic| match_simplify $A) =>
+      `(tactic|
+        first
+          | have h := MonoidalWord.Match.match_unit (A := $A); subst $A
+          | obtain ⟨b, h⟩ := MonoidalWord.Match.match_of (A := $A); subst $A
+          | obtain ⟨A1, A2, h⟩ := MonoidalWord.Match.match_tensor (A := $A)
+            subst $A
+            try match_simplify A1
+            try match_simplify A2
+          | fail "match_simplify failed: no applicable match lemmas"
+      )
+
 /-- Recover the tensor word over labels from a shape assignment. -/
 def MonoidalWord.Match.toMonoidalWord : MonoidalWord.Match β X → MonoidalWord β
     | unit => .unit

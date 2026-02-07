@@ -86,4 +86,100 @@ inductive HomEquiv {α : Type u} : ∀ {X Y : MonoidalWord α}, (X ⟶ᵇ Y) →
             (((Hom.σ Y Z).whiskerLeft X).comp
                 ((Hom.α_inv X Z Y).comp ((Hom.σ X Z).whiskerRight Y)))
 
+/-! ## Enrichment -/
+
+/-- `Hom.newMatch` is invariant under `HomEquiv`. -/
+def HomEquiv.newMatch {α β : Type u} {X Y : MonoidalWord α}
+    {f g : X ⟶ᵇ Y} (h : HomEquiv f g) (A : X.Match β) :
+    Hom.newMatch f A = Hom.newMatch g A := by
+  induction h
+  any_goals match_simplify A
+  all_goals cat_disch
+
+/-- Enrich braid relations by replacing labels with a chosen assignment. -/
+def HomEquiv.enrich {α β : Type u} {X Y : MonoidalWord α}
+        {f g : X ⟶ᵇ Y} (h : HomEquiv f g) (A : X.Match β) :
+    HomEquiv (Hom.enrich f A) ((by (have x : g.newCod A = f.newCod A := by simp [Hom.newCod]; rw [HomEquiv.newMatch h A]); exact x) ▸ Hom.enrich g A) := by
+  induction h
+  case comp =>
+    -- match_simplify A
+    simp [Hom.enrich]
+    sorry
+  all_goals sorry
+  -- | refl f =>
+  --     exact HomEquiv.refl _
+  -- | symm f g h ih =>
+  --     exact HomEquiv.symm _ _ (ih A)
+  -- | trans hfg hgh ihfg ihgh =>
+  --     exact HomEquiv.trans (ihfg A) (ihgh A)
+  -- | comp hf hg ihf ihg =>
+  --     have hA : Hom.newMatch _ A = Hom.newMatch _ A := HomEquiv.newMatch hf A
+  --     cases hA
+  --     exact HomEquiv.comp (ihf A) (ihg (Hom.newMatch _ A))
+  -- | whiskerLeft X f f' hf ih =>
+  --     cases A with
+  --     | tensor A1 A2 =>
+  --         exact HomEquiv.whiskerLeft _ _ _ (ih A2)
+  -- | whiskerRight f f' X hf ih =>
+  --     cases A with
+  --     | tensor A1 A2 =>
+  --         exact HomEquiv.whiskerRight _ _ _ (ih A1)
+  -- | tensor hf hg ihf ihg =>
+  --     cases A with
+  --     | tensor A1 A2 =>
+  --         exact HomEquiv.tensor (ihf A1) (ihg A2)
+  -- | tensorHom_def f g =>
+  --     cases A with
+  --     | tensor A1 A2 =>
+  --         exact HomEquiv.tensorHom_def (Hom.enrich f A1) (Hom.enrich g A2)
+  -- | comp_id f =>
+  --     exact HomEquiv.comp_id _
+  -- | id_comp f =>
+  --     exact HomEquiv.id_comp _
+  -- | assoc f g h =>
+  --     exact HomEquiv.assoc _ _ _
+  -- | id_tensorHom_id =>
+  --     exact HomEquiv.id_tensorHom_id
+  -- | tensorHom_comp_tensorHom f1 f2 g1 g2 =>
+  --     exact HomEquiv.tensorHom_comp_tensorHom _ _ _ _
+  -- | whiskerLeft_id X Y =>
+  --     exact HomEquiv.whiskerLeft_id _ _
+  -- | id_whiskerRight X Y =>
+  --     exact HomEquiv.id_whiskerRight _ _
+  -- | α_hom_inv =>
+  --     exact HomEquiv.α_hom_inv
+  -- | α_inv_hom =>
+  --     exact HomEquiv.α_inv_hom
+  -- | associator_naturality f1 f2 f3 =>
+  --     exact HomEquiv.associator_naturality _ _ _
+  -- | ρ_hom_inv =>
+  --     exact HomEquiv.ρ_hom_inv
+  -- | ρ_inv_hom =>
+  --     exact HomEquiv.ρ_inv_hom
+  -- | ρ_naturality f =>
+  --     exact HomEquiv.ρ_naturality _
+  -- | l_hom_inv =>
+  --     exact HomEquiv.l_hom_inv
+  -- | l_inv_hom =>
+  --     exact HomEquiv.l_inv_hom
+  -- | l_naturality f =>
+  --     exact HomEquiv.l_naturality _
+  -- | pentagon =>
+  --     exact HomEquiv.pentagon
+  -- | triangle =>
+  --     exact HomEquiv.triangle
+  -- | σ_inv_left =>
+  --     exact HomEquiv.σ_inv_left
+  -- | σ_inv_right =>
+  --     exact HomEquiv.σ_inv_right
+  -- | braiding_naturality_right f =>
+  --     exact HomEquiv.braiding_naturality_right _
+  -- | braiding_naturality_left f Z =>
+  --     exact HomEquiv.braiding_naturality_left _ _
+  -- | hexagon_forward =>
+  --     exact HomEquiv.hexagon_forward
+  -- | hexagon_reverse =>
+  --     exact HomEquiv.hexagon_reverse
+
+
 end BraidGroupoid

@@ -34,6 +34,8 @@ scoped[ BraidGroupoid ] infixr:10 " ⟶ᵇ " => Hom
 open scoped BraidGroupoid
 
 /-- Transport a shape assignment along a braid morphism. -/
+-- TODO name is wrong (dang LLM)
+@[simp]
 def Hom.newMatch {α β : Type u} {X Y : MonoidalWord α} :
     (X ⟶ᵇ Y) → MonoidalWord.Match (α := α) β X → MonoidalWord.Match (α := α) β Y
     | Hom.id _, A => A
@@ -79,5 +81,21 @@ def Hom.enrich {α β : Type u} {X Y : MonoidalWord α} :
         Hom.whiskerRight (Hom.enrich f A) B.toMonoidalWord
     | Hom.tensor f g, .tensor A B =>
         Hom.tensor (Hom.enrich f A) (Hom.enrich g B)
+
+/-- Formal inverse on generators, reversing composition. -/
+def Hom.inv {α : Type u} {X Y : MonoidalWord α} : Hom X Y → Hom Y X
+    | Hom.id X => Hom.id X
+    | Hom.α_hom X Y Z => Hom.α_inv X Y Z
+    | Hom.α_inv X Y Z => Hom.α_hom X Y Z
+    | Hom.l_hom X => Hom.l_inv X
+    | Hom.l_inv X => Hom.l_hom X
+    | Hom.ρ_hom X => Hom.ρ_inv X
+    | Hom.ρ_inv X => Hom.ρ_hom X
+    | Hom.σ X Y => Hom.σ_inv X Y
+    | Hom.σ_inv X Y => Hom.σ X Y
+    | Hom.comp f g => Hom.comp (Hom.inv g) (Hom.inv f)
+    | Hom.whiskerLeft X f => Hom.whiskerLeft X (Hom.inv f)
+    | Hom.whiskerRight f X => Hom.whiskerRight (Hom.inv f) X
+    | Hom.tensor f g => Hom.tensor (Hom.inv f) (Hom.inv g)
 
 end BraidGroupoid
