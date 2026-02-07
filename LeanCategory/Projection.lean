@@ -20,7 +20,7 @@ open scoped BraidGroupoid
 
 /-- Map a braid morphism by projecting its labels with a partial function. -/
 def Hom.project (map : α → Option β) : (X ⟶ᵇ Y) → (X.project map ⟶ᵇ Y.project map)
-    | Hom.id X => Hom.id (X.project map)
+    | Hom.id X => 1
     | Hom.α_hom X Y Z => Hom.α_hom (X.project map) (Y.project map) (Z.project map)
     | Hom.α_inv X Y Z => Hom.α_inv (X.project map) (Y.project map) (Z.project map)
     | Hom.l_hom X => Hom.l_hom (X.project map)
@@ -78,7 +78,7 @@ The projection functor induced by a partial label map.
 def projectFunctor {α β : Type u} (map : α → Option β) : MonoidalWord α ⥤ MonoidalWord β where
     obj X := X.project map
     map {X Y} f :=
-        Quotient.lift (fun g => ⟦g.project map⟧) (by
+        Quotient.lift (⟦·.project map⟧) (by
             intro g h hg
             exact Quotient.sound (HomEquiv.project map hg)) f
     map_comp {X Y Z} := by

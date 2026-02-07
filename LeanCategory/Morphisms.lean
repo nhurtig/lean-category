@@ -31,16 +31,22 @@ inductive Hom {α : Type u} : MonoidalWord α → MonoidalWord α → Type u
 /-- Notation for braid morphisms. -/
 scoped[ BraidGroupoid ] infixr:10 " ⟶ᵇ " => Hom
 
+instance : HMul (X₁ ⟶ᵇ Y₁) (X₂ ⟶ᵇ Y₂) (X₁ * X₂ ⟶ᵇ Y₁ * Y₂) where
+    hMul := Hom.tensor
+
+instance : One (X ⟶ᵇ X) where
+    one := Hom.id X
+
 /-- Left whiskering by tensoring with identity. -/
 @[simp]
 def Hom.whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Y₁ ⟶ᵇ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂) :=
-    Hom.tensor (Hom.id X) f
+    (1 : X ⟶ᵇ X) * f
 
 /-- Right whiskering by tensoring with identity. -/
 @[simp]
 def Hom.whiskerRight {X₁ X₂} (f : X₁ ⟶ᵇ X₂) (Y : MonoidalWord α) :
         Hom (X₁.tensor Y) (X₂.tensor Y) :=
-    Hom.tensor f (Hom.id Y)
+    (f : X₁ ⟶ᵇ X₂) * (1 : Y ⟶ᵇ Y)
 
 open scoped BraidGroupoid
 
@@ -99,8 +105,6 @@ def Hom.inv {α : Type u} {X Y : MonoidalWord α} : Hom X Y → Hom Y X
     | Hom.σ X Y => Hom.σ_inv X Y
     | Hom.σ_inv X Y => Hom.σ X Y
     | Hom.comp f g => Hom.comp (Hom.inv g) (Hom.inv f)
-    -- | Hom.whiskerLeft X f => Hom.whiskerLeft X (Hom.inv f)
-    -- | Hom.whiskerRight f X => Hom.whiskerRight (Hom.inv f) X
     | Hom.tensor f g => Hom.tensor (Hom.inv f) (Hom.inv g)
 
 end BraidGroupoid

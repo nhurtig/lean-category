@@ -27,7 +27,7 @@ open HomEquiv
 /-- The category structure on `MonoidalWord`, quotienting by braid relations. -/
 instance (α : Type u) : Category.{u} (MonoidalWord α) where
     Hom X Y := Quotient (BraidGroupoid.setoidHom X Y)
-    id X := ⟦Hom.id X⟧
+    id X := ⟦1⟧
     comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
     id_comp := by
         rintro X Y ⟨f⟩
@@ -41,7 +41,7 @@ instance (α : Type u) : Category.{u} (MonoidalWord α) where
 
 /-- The monoidal structure induced by formal tensoring of words and morphisms. -/
 instance (α : Type u) : MonoidalCategory (MonoidalWord α) where
-    tensorObj X Y := MonoidalWord.tensor X Y
+    tensorObj X Y := X * Y
     tensorHom := Quotient.map₂ Hom.tensor (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg)
     whiskerLeft X _ _ f :=
         Quot.map (fun f ↦ Hom.whiskerLeft X f) (fun f f' ↦ .whiskerLeft X f f') f
@@ -98,21 +98,6 @@ instance (α : Type u) : BraidedCategory (MonoidalWord α) where
 
 end BraidInstance
 
-/-- Quotient computation for the braiding. -/
-@[simp]
-theorem mk_σ {α : Type u} {X Y : MonoidalWord α} :
-        (⟦Hom.σ X Y⟧ : (X ⊗ Y) ⟶ (Y ⊗ X)) = (β_ X Y).hom :=
-    rfl
-
-/-- Quotient computation for the inverse braiding. -/
-@[simp]
-theorem mk_σ_inv {α : Type u} {X Y : MonoidalWord α} :
-        (⟦Hom.σ_inv X Y⟧ : (Y ⊗ X) ⟶ (X ⊗ Y)) = (β_ X Y).inv :=
-  rfl
-
-/-- The abbreviation for `⟦f⟧` as a morphism. -/
-abbrev homMk {α : Type u} {X Y : MonoidalWord α} (f : Hom X Y) : X ⟶ Y := ⟦f⟧
-
 /-- Induction principle for morphisms in the quotient category. -/
 theorem Hom.inductionOn {α : Type u}
         {motive : {X Y : MonoidalWord α} → (X ⟶ Y) → Prop} {X Y : MonoidalWord α} (t : X ⟶ Y)
@@ -146,9 +131,9 @@ theorem Hom.inductionOn {α : Type u}
     | σ_inv X Y => exact σ_inv X Y
     | comp f g hf hg => exact comp _ _ (hf ⟦f⟧) (hg ⟦g⟧)
     | @tensor W X Y Z f g hf hg =>
-        have : homMk f ⊗ₘ homMk g = homMk f ▷ X ≫ Y ◁ homMk g :=
+        have : ⟦f⟧ ⊗ₘ ⟦g⟧ = ⟦f⟧ ▷ X ≫ Y ◁ ⟦g⟧ :=
             Quotient.sound (HomEquiv.tensorHom_def f g)
-        change motive (homMk f ⊗ₘ homMk g)
+        change motive (⟦f⟧ ⊗ₘ ⟦g⟧)
         rw [this]
         exact comp _ _ (whiskerRight _ _ (hf ⟦f⟧)) (whiskerLeft _ _ (hg ⟦g⟧))
 

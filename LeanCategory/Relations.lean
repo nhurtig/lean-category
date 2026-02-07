@@ -79,28 +79,45 @@ inductive HomEquiv {α : Type u} : ∀ {X Y : MonoidalWord α}, (X ⟶ᵇ Y) →
     | symm {X Y} {f g : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv g f
     | trans {X Y} {f g h : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 
+instance : HasEquiv (X ⟶ᵇ Y) where
+    Equiv := HomEquiv
+
+@[grind]
+lemma HomEquiv.equiv' : HomEquiv f g → f ≈ g := id
+
 /-- Reflexivity for `HomEquiv`. -/
 @[refl]
 def HomEquiv.refl' {α : Type u} {X Y : MonoidalWord α} (f : X ⟶ᵇ Y) : HomEquiv f f := .refl f
 
+/-- Reflexivity for `HomEquiv`. -/
+@[refl]
+def HomEquiv.refl'' {α : Type u} {X Y : MonoidalWord α} (f : X ⟶ᵇ Y) : f ≈ f := .refl f
+
 /-- Symmetry for `HomEquiv`. -/
 @[symm]
 def HomEquiv.symm' {α : Type u} {X Y : MonoidalWord α} {f g : X ⟶ᵇ Y}
-    (h : HomEquiv f g) : HomEquiv g f := .symm h
+    (h : f ≈ g) : HomEquiv g f := .symm h
+
+/-- Symmetry for `HomEquiv`. -/
+@[symm]
+def HomEquiv.symm'' {α : Type u} {X Y : MonoidalWord α} {f g : X ⟶ᵇ Y}
+    (h : f ≈ g) : g ≈ f := .symm h
 
 instance : Trans (HomEquiv (α := α) (X := X) (Y := Y)) (HomEquiv) (HomEquiv) where
     trans := HomEquiv.trans
+
+instance : Trans (α := X ⟶ᵇ Y) (· ≈ ·) (· ≈ ·) (· ≈ ·) where
+  trans := .trans
 
 instance : Equivalence (HomEquiv (α := α) (X := X) (Y := Y)) where
     refl := HomEquiv.refl
     symm := HomEquiv.symm
     trans := HomEquiv.trans
 
-
 /-- Congruence under left whiskering. -/
 @[grind]
 lemma HomEquiv.whiskerLeft (X : MonoidalWord α) {Y Z} (f f' : Y ⟶ᵇ Z) :
-        HomEquiv f f' → HomEquiv (f.whiskerLeft X) (f'.whiskerLeft X) :=
+        f ≈ f' → f.whiskerLeft X ≈ f'.whiskerLeft X :=
     by
         intro h
         exact HomEquiv.tensor (by rfl) h
@@ -108,7 +125,7 @@ lemma HomEquiv.whiskerLeft (X : MonoidalWord α) {Y Z} (f f' : Y ⟶ᵇ Z) :
 /-- Congruence under right whiskering. -/
 @[grind]
 lemma HomEquiv.whiskerRight {X Y} (f f' : X ⟶ᵇ Y) (Z : MonoidalWord α) :
-        HomEquiv f f' → HomEquiv (f.whiskerRight Z) (f'.whiskerRight Z) :=
+        f ≈ f' → f.whiskerRight Z ≈ f'.whiskerRight Z :=
     by
         intro h
         exact HomEquiv.tensor h (by rfl)
@@ -117,13 +134,13 @@ lemma HomEquiv.whiskerRight {X Y} (f f' : X ⟶ᵇ Y) (Z : MonoidalWord α) :
 @[grind]
 lemma HomEquiv.tensorHom_def {X₁ Y₁ X₂ Y₂ : MonoidalWord α} (f : X₁ ⟶ᵇ Y₁)
     (g : X₂ ⟶ᵇ Y₂) :
-    HomEquiv (f.tensor g) ((f.whiskerRight X₂).comp (g.whiskerLeft Y₁)) := by
+    f.tensor g ≈ ((f.whiskerRight X₂).comp (g.whiskerLeft Y₁)) := by
   simp
   symm
-  calc
-    HomEquiv _ _ := by
+  exact calc
+    _ ≈ _ := by
       apply tensorHom_comp_tensorHom
-    HomEquiv _ _ := by
+    _ ≈ f * g := by
       apply tensor
       · apply comp_id
       · apply id_comp
@@ -131,20 +148,20 @@ lemma HomEquiv.tensorHom_def {X₁ Y₁ X₂ Y₂ : MonoidalWord α} (f : X₁ �
 /-- Left whiskering by identity is identity on the tensor. -/
 @[grind]
 lemma HomEquiv.whiskerLeft_id (X Y : MonoidalWord α) :
-        HomEquiv ((Hom.id Y).whiskerLeft X) (Hom.id (X.tensor Y)) :=
+        ((1 : (Y ⟶ᵇ Y)).whiskerLeft X) ≈ 1 :=
     id_tensorHom_id
 
 /-- Right whiskering by identity is identity on the tensor. -/
 @[grind]
 lemma HomEquiv.id_whiskerRight (X Y : MonoidalWord α) :
-        HomEquiv ((Hom.id X).whiskerRight Y) (Hom.id (X.tensor Y)) :=
+        ((1 : (X ⟶ᵇ X)).whiskerRight Y) ≈ 1 :=
     id_tensorHom_id
 
 /-! ## Enrichment -/
 
 /-- `Hom.transport` is invariant under `HomEquiv`. -/
 def HomEquiv.transport {α β : Type u} {X Y : MonoidalWord α}
-    {f g : X ⟶ᵇ Y} (h : HomEquiv f g) (A : X.Match β) :
+    {f g : X ⟶ᵇ Y} (h : f ≈ g) (A : X.Match β) :
     f.transport A = g.transport A := by
   induction h
   any_goals match_simplify A

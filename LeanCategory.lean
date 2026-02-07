@@ -4,3 +4,5 @@ import LeanCategory.Relations
 import LeanCategory.Instances
 import LeanCategory.Inverse
 import LeanCategory.Projection
+import LeanCategory.CatMorphisms
+import LeanCategory.CatRelations
