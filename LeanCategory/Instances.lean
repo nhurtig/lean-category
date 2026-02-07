@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.BraidGroupoid.Relations
+import LeanCategory.Relations
 
 /-!
 # Braid groupoid instances

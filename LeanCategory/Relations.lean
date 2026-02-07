@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.BraidGroupoid.Morphisms
+import LeanCategory.Morphisms
 
 /-!
 # Braid groupoid relations

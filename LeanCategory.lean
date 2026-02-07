@@ -1,3 +1,6 @@
-import LeanCategory.Basic
 import LeanCategory.MonoidalWord
-import LeanCategory.BraidGroupoid2
+import LeanCategory.Morphisms
+import LeanCategory.Relations
+import LeanCategory.Instances
+import LeanCategory.Inverse
+import LeanCategory.Projection

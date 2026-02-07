@@ -1,6 +1,6 @@
 import Mathlib
 import LeanCategory.MonoidalWord
-import LeanCategory.BraidGroupoid.Instances
+import LeanCategory.Instances
 
 universe u
 

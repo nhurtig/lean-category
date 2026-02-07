@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.BraidGroupoid.Instances
+import LeanCategory.Instances
 
 /-!
 # Projection functor
