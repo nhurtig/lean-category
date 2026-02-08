@@ -81,7 +81,7 @@ instance (α : Type u) : MonoidalCategory (MonoidalWord α) where
 /-- The braided structure coming from the formal crossing generators. -/
 instance (α : Type u) : BraidedCategory (MonoidalWord α) where
     braiding X Y :=
-        ⟨⟦Hom.σ X Y⟧, ⟦Hom.σ_inv X Y⟧,
+        ⟨⟦Hom.σ_hom X Y⟧, ⟦Hom.σ_inv X Y⟧,
             Quotient.sound σ_inv_left, Quotient.sound σ_inv_right⟩
     braiding_naturality_right := by
         rintro X Y Z ⟨f⟩
@@ -98,6 +98,8 @@ instance (α : Type u) : BraidedCategory (MonoidalWord α) where
 
 end BraidInstance
 
+-- TODO learn how to use induction principle
+/-
 /-- Induction principle for morphisms in the quotient category. -/
 theorem Hom.inductionOn {α : Type u}
         {motive : {X Y : MonoidalWord α} → (X ⟶ Y) → Prop} {X Y : MonoidalWord α} (t : X ⟶ Y)
@@ -108,7 +110,7 @@ theorem Hom.inductionOn {α : Type u}
         (l_inv : (X : MonoidalWord α) → motive (λ_ X).inv)
         (ρ_hom : (X : MonoidalWord α) → motive (ρ_ X).hom)
         (ρ_inv : (X : MonoidalWord α) → motive (ρ_ X).inv)
-        (σ_hom : (X Y : MonoidalWord α) → motive (⟦Hom.σ X Y⟧))
+        (σ_hom : (X Y : MonoidalWord α) → motive (⟦Hom.σ_hom X Y⟧))
         (σ_inv : (X Y : MonoidalWord α) → motive (⟦Hom.σ_inv X Y⟧))
         (comp : {X Y Z : MonoidalWord α} → (f : X ⟶ Y) → (g : Y ⟶ Z) →
             motive f → motive g → motive (f ≫ g))
@@ -127,7 +129,7 @@ theorem Hom.inductionOn {α : Type u}
     | l_inv X => exact l_inv X
     | ρ_hom X => exact ρ_hom X
     | ρ_inv X => exact ρ_inv X
-    | σ X Y => exact σ_hom X Y
+    | σ_hom X Y => exact σ_hom X Y
     | σ_inv X Y => exact σ_inv X Y
     | comp f g hf hg => exact comp _ _ (hf ⟦f⟧) (hg ⟦g⟧)
     | @tensor W X Y Z f g hf hg =>
@@ -136,5 +138,6 @@ theorem Hom.inductionOn {α : Type u}
         change motive (⟦f⟧ ⊗ₘ ⟦g⟧)
         rw [this]
         exact comp _ _ (whiskerRight _ _ (hf ⟦f⟧)) (whiskerLeft _ _ (hg ⟦g⟧))
+-/
 
 end BraidGroupoid

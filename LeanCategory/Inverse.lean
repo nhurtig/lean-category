@@ -109,17 +109,17 @@ lemma HomEquiv.inv {α : Type u} {X Y : MonoidalWord α} {f g : X ⟶ᵇ Y} :
       apply id_comp
 
 /-- The groupoid structure on the quotient of braid morphisms. -/
-instance (α : Type u) : Groupoid (MonoidalWord α) where
+instance BraidGroupoid_groupoid (α : Type u) : Groupoid (MonoidalWord α) where
     inv {X Y} f := Quotient.lift (fun g => ⟦g.inv⟧) (by
         intro f g h
         apply Quotient.sound
         apply HomEquiv.inv h) f
     comp_inv f := by
-      induction f using Quotient.inductionOn
+      rcases f with ⟨f⟩
       apply Quotient.sound
       apply HomEquiv.comp_inv
-    inv_comp  f := by
-      induction f using Quotient.inductionOn
+    inv_comp f := by
+      rcases f with ⟨f⟩
       apply Quotient.sound
       apply HomEquiv.inv_comp
 
@@ -127,7 +127,9 @@ instance (α : Type u) : Groupoid (MonoidalWord α) where
 class BraidedGroupoid (C : Type u) [Category C] [MonoidalCategory C]
     [BraidedCategory C] [Groupoid C]
 
-/-- The free braided monoidal groupoid on a type of labels. -/
-instance (α : Type u) : BraidedGroupoid (MonoidalWord α) where
-
 end BraidGroupoid
+
+open BraidGroupoid
+
+/-- The free braided monoidal groupoid on a type of labels. -/
+def BraidGroupoid (α : Type u) : BraidedGroupoid (MonoidalWord α) where

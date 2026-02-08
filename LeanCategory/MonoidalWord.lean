@@ -120,19 +120,32 @@ def MonoidalWord.reverse : MonoidalWord α → MonoidalWord α
     | .of a => .of a
     | .tensor x y => .tensor y.reverse x.reverse
 
-def MonoidalWord.map (f : α → MonoidalWord β) : MonoidalWord α → MonoidalWord β
-    | unit => .unit
+def MonoidalWord.map (f : α → β) : MonoidalWord α → MonoidalWord β
+    | 1 => 1
     | of a => f a
-    | tensor x y => .tensor (x.map f) (y.map f)
+    | x * y => x.map f * y.map f
+
+lemma MonoidalWord.map_comp_map (f : α → β) (g : β → γ) (w : MonoidalWord α) :
+    w.map (g ∘ f) = (w.map f).map g := by
+  induction w
+  case unit => rfl
+  case of => rfl
+  case tensor ihx ihy => simp [map, ihx, ihy]
+
+def MonoidalWord.flatten : MonoidalWord (MonoidalWord α) → MonoidalWord α
+    | 1 => 1
+    | of w => w
+    | x * y => x.flatten * y.flatten
 
 /--
 Map labels through a partial function, dropping labels sent to `none`.
 -/
-def MonoidalWord.project (f : α → Option β) : MonoidalWord α → MonoidalWord β :=
-    MonoidalWord.map (fun a =>
-        match f a with
-        | some b => .of b
-        | none => .unit)
+def MonoidalWord.project (f : α → Option β) : MonoidalWord α → MonoidalWord β
+  | 1 => 1
+  | of a => match f a with
+      | some b => b
+      | none => 1
+  | x * y => x.project f * y.project f
 
 inductive MonoidalWord.equiv : MonoidalWord α → MonoidalWord α → Prop
   | refl X : MonoidalWord.equiv X X

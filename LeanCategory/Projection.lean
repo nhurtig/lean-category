@@ -18,19 +18,20 @@ open CategoryTheory
 open scoped MonoidalCategory
 open scoped BraidGroupoid
 
+-- TODO look into defining Hom.map
 /-- Map a braid morphism by projecting its labels with a partial function. -/
 def Hom.project (map : α → Option β) : (X ⟶ᵇ Y) → (X.project map ⟶ᵇ Y.project map)
-    | Hom.id X => 1
-    | Hom.α_hom X Y Z => Hom.α_hom (X.project map) (Y.project map) (Z.project map)
-    | Hom.α_inv X Y Z => Hom.α_inv (X.project map) (Y.project map) (Z.project map)
-    | Hom.l_hom X => Hom.l_hom (X.project map)
-    | Hom.l_inv X => Hom.l_inv (X.project map)
-    | Hom.ρ_hom X => Hom.ρ_hom (X.project map)
-    | Hom.ρ_inv X => Hom.ρ_inv (X.project map)
-    | Hom.σ X Y => Hom.σ (X.project map) (Y.project map)
-    | Hom.σ_inv X Y => Hom.σ_inv (X.project map) (Y.project map)
-    | Hom.comp f g => Hom.comp (f.project map) (g.project map)
-    | Hom.tensor f g => Hom.tensor (f.project map) (g.project map)
+    | .id X => 1
+    | .α_hom X Y Z => .α_hom (X.project map) (Y.project map) (Z.project map)
+    | .α_inv X Y Z => .α_inv (X.project map) (Y.project map) (Z.project map)
+    | .l_hom X => .l_hom (X.project map)
+    | .l_inv X => .l_inv (X.project map)
+    | .ρ_hom X => .ρ_hom (X.project map)
+    | .ρ_inv X => .ρ_inv (X.project map)
+    | .σ_hom X Y => .σ_hom (X.project map) (Y.project map)
+    | .σ_inv X Y => .σ_inv (X.project map) (Y.project map)
+    | .comp f g => .comp (f.project map) (g.project map)
+    | .tensor f g => .tensor (f.project map) (g.project map)
 
 /-- Project braid relations along a label map. -/
 def HomEquiv.project {α β : Type u} {X Y : MonoidalWord α} (map : α → Option β)

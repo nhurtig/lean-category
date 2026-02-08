@@ -54,28 +54,28 @@ inductive HomEquiv {α : Type u} : ∀ {X Y : MonoidalWord α}, (X ⟶ᵇ Y) →
     | triangle {X Y} :
         HomEquiv ((Hom.α_hom X MonoidalWord.unit Y).comp ((Hom.l_hom Y).whiskerLeft X))
             ((Hom.ρ_hom X).whiskerRight Y)
-    | σ_inv_left {X Y} : HomEquiv ((Hom.σ X Y).comp (Hom.σ_inv X Y)) (Hom.id _)
-    | σ_inv_right {X Y} : HomEquiv ((Hom.σ_inv X Y).comp (Hom.σ X Y)) (Hom.id _)
+    | σ_inv_left {X Y} : HomEquiv ((Hom.σ_hom X Y).comp (Hom.σ_inv X Y)) (Hom.id _)
+    | σ_inv_right {X Y} : HomEquiv ((Hom.σ_inv X Y).comp (Hom.σ_hom X Y)) (Hom.id _)
     | braiding_naturality_right {X Y Z} (f : Y ⟶ᵇ Z) :
         HomEquiv
-            ((Hom.whiskerLeft X f).comp (Hom.σ X Z))
-            ((Hom.σ X Y).comp (Hom.whiskerRight f X))
+            ((Hom.whiskerLeft X f).comp (Hom.σ_hom X Z))
+            ((Hom.σ_hom X Y).comp (Hom.whiskerRight f X))
     | braiding_naturality_left {X Y} (f : X ⟶ᵇ Y) (Z) :
         HomEquiv
-            ((Hom.whiskerRight f Z).comp (Hom.σ Y Z))
-            ((Hom.σ X Z).comp (Hom.whiskerLeft Z f))
+            ((Hom.whiskerRight f Z).comp (Hom.σ_hom Y Z))
+            ((Hom.σ_hom X Z).comp (Hom.whiskerLeft Z f))
     | hexagon_forward {X Y Z} :
         HomEquiv
             ((Hom.α_hom X Y Z).comp
-                ((Hom.σ X (Y.tensor Z)).comp (Hom.α_hom Y Z X)))
-            (((Hom.σ X Y).whiskerRight Z).comp
-                ((Hom.α_hom Y X Z).comp ((Hom.σ X Z).whiskerLeft Y)))
+                ((Hom.σ_hom X (Y.tensor Z)).comp (Hom.α_hom Y Z X)))
+            (((Hom.σ_hom X Y).whiskerRight Z).comp
+                ((Hom.α_hom Y X Z).comp ((Hom.σ_hom X Z).whiskerLeft Y)))
     | hexagon_reverse {X Y Z} :
         HomEquiv
             ((Hom.α_inv X Y Z).comp
-                ((Hom.σ (X.tensor Y) Z).comp (Hom.α_inv Z X Y)))
-            (((Hom.σ Y Z).whiskerLeft X).comp
-                ((Hom.α_inv X Z Y).comp ((Hom.σ X Z).whiskerRight Y)))
+                ((Hom.σ_hom (X.tensor Y) Z).comp (Hom.α_inv Z X Y)))
+            (((Hom.σ_hom Y Z).whiskerLeft X).comp
+                ((Hom.α_inv X Z Y).comp ((Hom.σ_hom X Z).whiskerRight Y)))
     | symm {X Y} {f g : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv g f
     | trans {X Y} {f g h : X ⟶ᵇ Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 

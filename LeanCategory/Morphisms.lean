@@ -20,7 +20,7 @@ inductive Hom {α : Type u} : MonoidalWord α → MonoidalWord α → Type u
     | l_inv (X) : Hom X (MonoidalWord.unit.tensor X)
     | ρ_hom (X) : Hom (X.tensor MonoidalWord.unit) X
     | ρ_inv (X) : Hom X (X.tensor MonoidalWord.unit)
-    | σ (X Y : MonoidalWord α) : Hom (X.tensor Y) (Y.tensor X)
+    | σ_hom (X Y : MonoidalWord α) : Hom (X.tensor Y) (Y.tensor X)
     | σ_inv (X Y : MonoidalWord α) : Hom (Y.tensor X) (X.tensor Y)
     | comp {X Y Z} (f : Hom X Y) (g : Hom Y Z) : Hom X Z
     -- | whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Hom Y₁ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂)
@@ -32,21 +32,21 @@ inductive Hom {α : Type u} : MonoidalWord α → MonoidalWord α → Type u
 scoped[ BraidGroupoid ] infixr:10 " ⟶ᵇ " => Hom
 
 instance : HMul (X₁ ⟶ᵇ Y₁) (X₂ ⟶ᵇ Y₂) (X₁ * X₂ ⟶ᵇ Y₁ * Y₂) where
-    hMul := Hom.tensor
+    hMul := .tensor
 
 instance : One (X ⟶ᵇ X) where
-    one := Hom.id X
+    one := .id X
 
 /-- Left whiskering by tensoring with identity. -/
 @[simp]
-def Hom.whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Y₁ ⟶ᵇ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂) :=
+def Hom.whiskerLeft (X : MonoidalWord α) {Y₁ Y₂} (f : Y₁ ⟶ᵇ Y₂) : X.tensor Y₁ ⟶ᵇ X.tensor Y₂ :=
     (1 : X ⟶ᵇ X) * f
 
 /-- Right whiskering by tensoring with identity. -/
 @[simp]
 def Hom.whiskerRight {X₁ X₂} (f : X₁ ⟶ᵇ X₂) (Y : MonoidalWord α) :
-        Hom (X₁.tensor Y) (X₂.tensor Y) :=
-    (f : X₁ ⟶ᵇ X₂) * (1 : Y ⟶ᵇ Y)
+        X₁.tensor Y ⟶ᵇ X₂.tensor Y :=
+    f * (1 : Y ⟶ᵇ Y)
 
 open scoped BraidGroupoid
 
@@ -54,17 +54,17 @@ open scoped BraidGroupoid
 @[simp]
 def Hom.transport {α β : Type u} {X Y : MonoidalWord α} :
     (X ⟶ᵇ Y) → MonoidalWord.Match (α := α) β X → MonoidalWord.Match (α := α) β Y
-    | Hom.id _, A => A
-    | Hom.α_hom _ _ _, .tensor (.tensor A B) C => .tensor A (.tensor B C)
-    | Hom.α_inv _ _ _, .tensor A (.tensor B C) => .tensor (.tensor A B) C
-    | Hom.l_hom _, .tensor .unit A => A
-    | Hom.l_inv _, A => .tensor .unit A
-    | Hom.ρ_hom _, .tensor A .unit => A
-    | Hom.ρ_inv _, A => .tensor A .unit
-    | Hom.σ _ _, .tensor A B => .tensor B A
-    | Hom.σ_inv _ _, .tensor B A => .tensor A B
-    | Hom.comp f g, A => Hom.transport g (Hom.transport f A)
-    | Hom.tensor f g, .tensor A B => .tensor (Hom.transport f A) (Hom.transport g B)
+    | .id _, A => A
+    | .α_hom _ _ _, .tensor (.tensor A B) C => .tensor A (.tensor B C)
+    | .α_inv _ _ _, .tensor A (.tensor B C) => .tensor (.tensor A B) C
+    | .l_hom _, .tensor .unit A => A
+    | .l_inv _, A => .tensor .unit A
+    | .ρ_hom _, .tensor A .unit => A
+    | .ρ_inv _, A => .tensor A .unit
+    | .σ_hom _ _, .tensor A B => .tensor B A
+    | .σ_inv _ _, .tensor B A => .tensor A B
+    | .comp f g, A => g.transport  (f.transport A)
+    | .tensor f g, .tensor A B => .tensor (f.transport A) (g.transport B)
 
 /-- The codomain word induced by `Hom.transport`. -/
 def Hom.newCod {α β : Type u} {X Y : MonoidalWord α} :
@@ -76,35 +76,35 @@ def Hom.enrich {α β : Type u} {X Y : MonoidalWord α} :
     (f : X ⟶ᵇ Y) →
       (A : MonoidalWord.Match (α := α) β X) →
         (A.toMonoidalWord ⟶ᵇ f.newCod A)
-    | Hom.id _, A => Hom.id (A.toMonoidalWord)
-    | Hom.α_hom _ _ _, .tensor (.tensor A B) C =>
-        Hom.α_hom A.toMonoidalWord B.toMonoidalWord C.toMonoidalWord
-    | Hom.α_inv _ _ _, .tensor A (.tensor B C) =>
-        Hom.α_inv A.toMonoidalWord B.toMonoidalWord C.toMonoidalWord
-    | Hom.l_hom _, .tensor .unit A => Hom.l_hom A.toMonoidalWord
-    | Hom.l_inv _, A => Hom.l_inv A.toMonoidalWord
-    | Hom.ρ_hom _, .tensor A .unit => Hom.ρ_hom A.toMonoidalWord
-    | Hom.ρ_inv _, A => Hom.ρ_inv A.toMonoidalWord
-    | Hom.σ _ _, .tensor A B => Hom.σ A.toMonoidalWord B.toMonoidalWord
-    | Hom.σ_inv _ _, .tensor B A => Hom.σ_inv A.toMonoidalWord B.toMonoidalWord
-    | Hom.comp f g, A =>
-        Hom.comp (Hom.enrich f A) (Hom.enrich g (Hom.transport f A))
-    | Hom.tensor f g, .tensor A B =>
-        Hom.tensor (Hom.enrich f A) (Hom.enrich g B)
+    | .id _, A => .id (A.toMonoidalWord)
+    | .α_hom _ _ _, .tensor (.tensor A B) C =>
+        .α_hom A.toMonoidalWord B.toMonoidalWord C.toMonoidalWord
+    | .α_inv _ _ _, .tensor A (.tensor B C) =>
+        .α_inv A.toMonoidalWord B.toMonoidalWord C.toMonoidalWord
+    | .l_hom _, .tensor .unit A => .l_hom A.toMonoidalWord
+    | .l_inv _, A => .l_inv A.toMonoidalWord
+    | .ρ_hom _, .tensor A .unit => .ρ_hom A.toMonoidalWord
+    | .ρ_inv _, A => .ρ_inv A.toMonoidalWord
+    | .σ_hom _ _, .tensor A B => .σ_hom A.toMonoidalWord B.toMonoidalWord
+    | .σ_inv _ _, .tensor B A => .σ_inv A.toMonoidalWord B.toMonoidalWord
+    | .comp f g, A =>
+        .comp (Hom.enrich f A) (Hom.enrich g (Hom.transport f A))
+    | .tensor f g, .tensor A B =>
+        .tensor (Hom.enrich f A) (Hom.enrich g B)
 
-/-- Formal inverse on generators, reversing composition. -/
+/-- Inverse on generators, reversing composition. -/
 @[simp]
 def Hom.inv {α : Type u} {X Y : MonoidalWord α} : Hom X Y → Hom Y X
-    | Hom.id X => Hom.id X
-    | Hom.α_hom X Y Z => Hom.α_inv X Y Z
-    | Hom.α_inv X Y Z => Hom.α_hom X Y Z
-    | Hom.l_hom X => Hom.l_inv X
-    | Hom.l_inv X => Hom.l_hom X
-    | Hom.ρ_hom X => Hom.ρ_inv X
-    | Hom.ρ_inv X => Hom.ρ_hom X
-    | Hom.σ X Y => Hom.σ_inv X Y
-    | Hom.σ_inv X Y => Hom.σ X Y
-    | Hom.comp f g => Hom.comp (Hom.inv g) (Hom.inv f)
-    | Hom.tensor f g => Hom.tensor (Hom.inv f) (Hom.inv g)
+    | .id X => .id X
+    | .α_hom X Y Z => .α_inv X Y Z
+    | .α_inv X Y Z => .α_hom X Y Z
+    | .l_hom X => .l_inv X
+    | .l_inv X => .l_hom X
+    | .ρ_hom X => .ρ_inv X
+    | .ρ_inv X => .ρ_hom X
+    | .σ_hom X Y => .σ_inv X Y
+    | .σ_inv X Y => .σ_hom X Y
+    | .comp f g => .comp g.inv f.inv
+    | .tensor f g => .tensor f.inv g.inv
 
 end BraidGroupoid

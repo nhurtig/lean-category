@@ -6,3 +6,5 @@ import LeanCategory.Inverse
 import LeanCategory.Projection
 import LeanCategory.CatMorphisms
 import LeanCategory.CatRelations
+import LeanCategory.Enrich
+import LeanCategory.LayerGroupoid
