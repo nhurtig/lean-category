@@ -1,10 +1,11 @@
-import LeanCategory.MonoidalWord
-import LeanCategory.Morphisms
-import LeanCategory.Relations
-import LeanCategory.Instances
-import LeanCategory.Inverse
-import LeanCategory.Projection
-import LeanCategory.CatMorphisms
-import LeanCategory.CatRelations
-import LeanCategory.Enrich
-import LeanCategory.LayerGroupoid
+-- import LeanCategory.MonoidalWord
+-- import LeanCategory.Morphisms
+-- import LeanCategory.Relations
+-- import LeanCategory.Instances
+-- import LeanCategory.Inverse
+-- import LeanCategory.Projection
+-- import LeanCategory.CatMorphisms
+-- import LeanCategory.CatRelations
+-- import LeanCategory.Enrich
+-- import LeanCategory.LayerGroupoid
+import LeanCategory.FreeMonoidal
