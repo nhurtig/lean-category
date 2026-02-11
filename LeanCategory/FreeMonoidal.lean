@@ -4,8 +4,8 @@ variable {V : Type u} [Quiver.{v} (List V)]
 
 inductive Hom : List V → List V → Type max u v
   | of : (X ⟶ Y) → Hom X Y
-  -- | id : (X : List V) → Hom X X
-  | id : (X = Y) → Hom X Y
+  | id : (X : List V) → Hom X X
+  -- | id : (X = Y) → Hom X Y
   | comp {X Y Z} (f : Hom X Y) (g : Hom Y Z) : Hom X Z
   -- | whiskerLeft (X : F C) {Y₁ Y₂} (f : Hom Y₁ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂)
   -- | whiskerRight {X₁ X₂} (f : Hom X₁ X₂) (Y : F C) : Hom (X₁.tensor Y) (X₂.tensor Y)
@@ -19,8 +19,8 @@ notation "S " => StrictMonoidalProduct
 
 instance myThingTODO : CategoryStruct (S V) where
   Hom := Hom
-  id _ := Hom.id rfl
-  -- id := Hom.id
+  -- id _ := Hom.id rfl
+  id := Hom.id
   comp := Hom.comp
 
 -- infixr:10 " ⟶ᵐ " => Hom
@@ -78,22 +78,22 @@ inductive HomEquiv : ∀ {A B : S V}, (A ⟶ B) → (A ⟶ B) → Prop
   | id_comp (f : X ⟶ Y) : HomEquiv ((𝟙 _ ) ≫ f) f
   | assoc (f : W ⟶ X) (g : X ⟶ Y) (h : Y ⟶ Z) :
       HomEquiv ((f ≫ g) ≫ h) (f ≫ (g ≫ h))
-  | tensor_assoc (f : P ⟶ Q) (g : W ⟶ X) (h : Y ⟶ Z) :
-      HomEquiv (((f ⊗ g) ⊗ h) ≫ (.id (mul_assoc Q X Z))) ((.id (mul_assoc P W Y)) ≫ (f ⊗ (g ⊗ h)))
   -- | tensor_assoc (f : P ⟶ Q) (g : W ⟶ X) (h : Y ⟶ Z) :
-  --     HomEquiv (((f ⊗ g) ⊗ h) ≫ (eqToHom (mul_assoc Q X Z))) ((eqToHom (mul_assoc P W Y)) ≫ (f ⊗ (g ⊗ h)))
+      -- HomEquiv (((f ⊗ g) ⊗ h) ≫ (.id (mul_assoc Q X Z))) ((.id (mul_assoc P W Y)) ≫ (f ⊗ (g ⊗ h)))
+  | tensor_assoc (f : P ⟶ Q) (g : W ⟶ X) (h : Y ⟶ Z) :
+      HomEquiv (((f ⊗ g) ⊗ h) ≫ (eqToHom (mul_assoc Q X Z))) ((eqToHom (mul_assoc P W Y)) ≫ (f ⊗ (g ⊗ h)))
   -- | tensor_id_left (f : X ⟶ Y) : HomEquiv (((𝟙 1) ⊗ f)) f
-  | tensor_id_left (f : X ⟶ Y) : HomEquiv (((𝟙 1) ⊗ f) ≫ (.id (one_mul Y))) ((.id (one_mul X)) ≫ f)
-  | tensor_id_right (f : X ⟶ Y) : HomEquiv ((f ⊗ (𝟙 1)) ≫ (.id (mul_one Y))) ((.id (mul_one X)) ≫ f)
-  -- | tensor_id_left (f : X ⟶ Y) : HomEquiv (((𝟙 1) ⊗ f) ≫ (eqToHom (one_mul Y))) ((eqToHom (one_mul X)) ≫ f)
-  -- | tensor_id_right (f : X ⟶ Y) : HomEquiv ((f ⊗ (𝟙 1)) ≫ (eqToHom (mul_one Y))) ((eqToHom (mul_one X)) ≫ f)
+  -- | tensor_id_left (f : X ⟶ Y) : HomEquiv (((𝟙 1) ⊗ f) ≫ (.id (one_mul Y))) ((.id (one_mul X)) ≫ f)
+  -- | tensor_id_right (f : X ⟶ Y) : HomEquiv ((f ⊗ (𝟙 1)) ≫ (.id (mul_one Y))) ((.id (mul_one X)) ≫ f)
+  | tensor_id_left (f : X ⟶ Y) : HomEquiv (((𝟙 1) ⊗ f) ≫ (eqToHom (one_mul Y))) ((eqToHom (one_mul X)) ≫ f)
+  | tensor_id_right (f : X ⟶ Y) : HomEquiv ((f ⊗ (𝟙 1)) ≫ (eqToHom (mul_one Y))) ((eqToHom (mul_one X)) ≫ f)
   | id_tensorHom_id {X Y : S V} : HomEquiv ((𝟙 X) ⊗ (𝟙 Y)) (𝟙 _)
   | tensorHom_comp_tensorHom (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂)
       (g₁ : Y₁ ⟶ Z₁) (g₂ : Y₂ ⟶ Z₂) :
     HomEquiv ((f₁ ⊗ f₂) ≫ (g₁ ⊗ g₂)) ((f₁ ≫ g₁) ⊗ (f₂ ≫ g₂))
 
-  | id_comp_id : HomEquiv (.id p ≫ .id q) (.id (by simp [p, q]))
-  | id_tensor_id : HomEquiv (.id p ⊗ .id q) (.id (by simp [p, q]))
+  -- | id_comp_id : HomEquiv (.id p ≫ .id q) (.id (by simp [p, q]))
+  -- | id_tensor_id : HomEquiv (.id p ⊗ .id q) (.id (by simp [p, q]))
 
   | symm (f g : X ⟶ Y) : HomEquiv f g → HomEquiv g f
   | trans {f g h : X ⟶ Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
@@ -124,8 +124,8 @@ inductive HomEquiv : ∀ {A B : S V}, (A ⟶ B) → (A ⟶ B) → Prop
 
 -- TODO Trans, symm, Equivalence
 
-@[refl]
-lemma HomEquiv.refl' {X Y : S V} (f : X ⟶ Y) : HomEquiv f f := HomEquiv.refl f
+attribute [refl] HomEquiv.refl
+attribute [symm] HomEquiv.symm
 
 @[simp]
 lemma HomEquiv.whiskerLeft (X : S V) {Y Z} {f f' : Y ⟶ Z} :
@@ -150,9 +150,11 @@ lemma HomEquiv.tensorHom_def {X₁ Y₁ X₂ Y₂ : S V} (f : X₁ ⟶ Y₁) (g 
     HomEquiv (f ⊗ g) (f ▷ X₂ ≫ Y₁ ◁ g) := by
   simp
   symm
-  trans
-  tensorhom_comp_tensorhom
-  sorry
+  apply HomEquiv.trans
+  · apply HomEquiv.tensorHom_comp_tensorHom
+  · apply tensor
+    · apply comp_id
+    · apply id_comp
 
 @[simp]
 lemma HomEquiv.whiskerLeft_id (X Y : S V) : HomEquiv (X ◁ (𝟙 Y)) (𝟙 (X * Y)) :=
@@ -231,56 +233,70 @@ theorem eqToHom_awesome [CategoryStruct C] {X Y : C} (p : X = Y) (q : Y = X) :
 
 -- sim. for tensor
 
-#check HomEquiv.id_comp_id
+-- #check HomEquiv.id_comp_id
 
+@[simp]
 lemma hi' {X Y Z : S V} {p : X = Y} {q : Y = Z} : HomEquiv (eqToHom p ≫ eqToHom q) (eqToHom (p.trans q)) := by
   cases p
   cases q
   simp
   apply HomEquiv.comp_id
 
+@[simp]
+lemma hi'' {W X Y Z : S V} {p : W = X} {q : Y = Z} : HomEquiv (eqToHom p ⊗ eqToHom q) (eqToHom (by simp [p, q])) := by
+  cases p
+  cases q
+  simp
+  apply HomEquiv.id_tensorHom_id
+
 instance : MonoidalCategory (S V) where
   tensorObj X Y := X * Y
   tensorHom f g := Quotient.map₂ (· ⊗ ·) (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg) f g
   tensorUnit := 1
   associator X Y Z := {
-    hom := ⟦.id (by simp [mul_assoc])⟧ -- Quotient.mk (eqToHom (mul_assoc X Y Z)),
-    inv := ⟦.id (by simp [mul_assoc])⟧ -- Quotient.mk (eqToHom (mul_assoc X Y Z)),
+    hom := ⟦eqToHom (by simp [mul_assoc])⟧ -- Quotient.mk (eqToHom (mul_assoc X Y Z)),
+    inv := ⟦eqToHom (by simp [mul_assoc])⟧ -- Quotient.mk (eqToHom (mul_assoc X Y Z)),
     hom_inv_id := by
       apply Quotient.sound
       simp
-      apply HomEquiv.id_comp_id
+      apply HomEquiv.id_comp
+      -- apply HomEquiv.id_comp_id
     inv_hom_id := by
       apply Quotient.sound
       simp
-      apply HomEquiv.id_comp_id
+      apply HomEquiv.comp_id
+      -- apply HomEquiv.id_comp_id
   }
   leftUnitor X := {
-    hom := ⟦.id (by simp [one_mul])⟧,
-    inv := ⟦.id (by simp [one_mul])⟧,
+    hom := ⟦eqToHom (by simp [one_mul])⟧,
+    inv := ⟦eqToHom (by simp [one_mul])⟧,
     hom_inv_id := by
       apply Quotient.sound
       simp
-      apply HomEquiv.id_comp_id
+      apply HomEquiv.id_comp
+      -- apply HomEquiv.id_comp_id
     inv_hom_id := by
       apply Quotient.sound
       simp
-      apply HomEquiv.id_comp_id
+      apply HomEquiv.id_comp
+      -- apply HomEquiv.id_comp_id
   }
   -- by
   --   apply eqToIso
   --   exact one_mul X
   rightUnitor X := {
-    hom := ⟦.id (by simp [mul_one])⟧,
-    inv := ⟦.id (by simp [mul_one])⟧,
+    hom := ⟦eqToHom (by simp [mul_one])⟧,
+    inv := ⟦eqToHom (by simp [mul_one])⟧,
     hom_inv_id := by
       apply Quotient.sound
       simp
-      apply HomEquiv.id_comp_id
+      apply HomEquiv.id_comp
+      -- apply HomEquiv.id_comp_id
     inv_hom_id := by
       apply Quotient.sound
       simp
-      apply HomEquiv.id_comp_id
+      apply HomEquiv.id_comp
+      -- apply HomEquiv.id_comp_id
   }
   -- rightUnitor X := by
   --   apply eqToIso
@@ -332,27 +348,32 @@ instance : MonoidalCategory (S V) where
     apply Quotient.sound
     symm
     trans
-    · apply id_comp_id
+    · apply hi'
     · symm
       trans
       · apply comp
-        · apply id_tensor_id
+        · apply hi''
+          rfl
         · apply comp
           · rfl
-          · apply id_tensor_id
+          · apply hi''
+            rfl
       · trans
         · apply comp
           · rfl
-          · apply id_comp_id
-        · apply id_comp_id
+          · apply hi'
+        · apply hi'
   triangle X Y := by
     simp
     apply Quotient.sound
     trans
     · apply comp
       · rfl
-      · apply id_tensor_id
+      · apply hi''
+        · rfl
+        · apply one_mul
     · trans
-      · apply id_comp_id
+      · apply hi'
       · symm
-        apply id_tensor_id
+        apply hi''
+        rfl
