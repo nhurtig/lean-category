@@ -8,4 +8,6 @@
 -- import LeanCategory.CatRelations
 -- import LeanCategory.Enrich
 -- import LeanCategory.LayerGroupoid
-import LeanCategory.FreeMonoidal
+-- import LeanCategory.FreeMonoidal
+import LeanCategory.Egger
+-- import Mathlib
