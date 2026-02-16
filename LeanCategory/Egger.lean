@@ -73,6 +73,6 @@ class TwistedCategory (C : Type u) [Category.{v} C]
        ((𝟙 Q⋆) ⊗ ((χ_ P R⋆).hom ≫ (ς_ (R⋆ ⊗ P)).hom)) ≫ (α_ Q⋆ R⋆ P).inv ≫
        (((χ_ Q R).hom ≫ (ς_ (R ⊗ Q)).hom) ⊗ (𝟙 P)) ≫ (α_ R Q P).hom =
       (((ς_ P⋆).hom ⊗ (ς_ Q⋆).hom) ⊗ (ς_ R⋆).hom) ≫ ((χ_ P Q).hom ⊗ (𝟙 R⋆)) ≫
-        (χ_ _ R).hom ≫ (ς_ _).hom := by cat_disch
+        (χ_ (Q ⊗ P) R).hom ≫ (ς_ (R ⊗ Q ⊗ P)).hom := by cat_disch
 
 end CategoryTheory
