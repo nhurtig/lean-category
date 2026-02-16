@@ -28,7 +28,7 @@ open CategoryTheory
 
 #check StarMul
 -- gives us notation
-instance hism : StarMonoid (S V) where
+instance : StarMonoid (S V) where
   one := (1 : V)
   mul (X Y : V) := (X * Y : V)
   mul_assoc (A B C : V) := mul_assoc A B C
@@ -39,7 +39,7 @@ instance hism : StarMonoid (S V) where
   star_mul (X Y : V) := StarMonoid.star_mul X Y
 
 -- gives us notation
-instance histruct : CategoryStruct (S V) where
+instance : CategoryStruct (S V) where
   Hom (X Y : V) := Hom X Y
   id (X : V) := Hom.id X
   comp := Hom.comp
@@ -69,16 +69,18 @@ infixl:81 " ▷ " => Hom.whiskerRight
 @[grind]
 inductive HomEquiv : ∀ {A B : S V}, (A ⟶ B) → (A ⟶ B) → Prop
   | refl (f : X ⟶ Y) : HomEquiv f f
+  | assoc (f : W ⟶ X) (g : X ⟶ Y) (h : Y ⟶ Z) :
+      HomEquiv ((f ≫ g) ≫ h) (f ≫ (g ≫ h))
+  | comp_id (f : X ⟶ Y) : HomEquiv (f ≫ (𝟙 _)) f
+  | id_comp (f : X ⟶ Y) : HomEquiv ((𝟙 _ ) ≫ f) f
+  -- congruence
   | comp {f f' : X ⟶ Y} {g g' : Y ⟶ Z} :
       HomEquiv f f' → HomEquiv g g' → HomEquiv (f ≫ g) (f' ≫ g')
   | tensor {f f' : W ⟶ X} {g g' : Y ⟶ Z} :
       HomEquiv f f' → HomEquiv g g' → HomEquiv (f ⊗ g) (f' ⊗ g')
   | star {f f' : X ⟶ Y} :
-      HomEquiv f f' → HomEquiv f⋆ g⋆
-  | comp_id (f : X ⟶ Y) : HomEquiv (f ≫ (𝟙 _)) f
-  | id_comp (f : X ⟶ Y) : HomEquiv ((𝟙 _ ) ≫ f) f
-  | assoc (f : W ⟶ X) (g : X ⟶ Y) (h : Y ⟶ Z) :
-      HomEquiv ((f ≫ g) ≫ h) (f ≫ (g ≫ h))
+      HomEquiv f f' → HomEquiv f⋆ f'⋆
+  -- (bi)functoriality
   | id_tensor_id {X Y : S V} : HomEquiv ((𝟙 X) ⊗ (𝟙 Y)) (𝟙 _)
   | tensor_comp_tensor (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂)
       (g₁ : Y₁ ⟶ Z₁) (g₂ : Y₂ ⟶ Z₂) :
@@ -86,83 +88,100 @@ inductive HomEquiv : ∀ {A B : S V}, (A ⟶ B) → (A ⟶ B) → Prop
   | star_id {X : S V}: HomEquiv (𝟙 X)⋆ (𝟙 X⋆)
   | star_comp_star (f : X ⟶ Y) (g : Y ⟶ Z) :
       HomEquiv (f ≫ g)⋆ (f⋆ ≫ g⋆)
-  -- replacing the associator and unitors
+  -- replacing the natural isomorphisms
   | tensor_assoc (f : P ⟶ Q) (g : W ⟶ X) (h : Y ⟶ Z) :
-      HomEquiv (((f ⊗ g) ⊗ h) ≫ (eqToHom (mul_assoc Q X Z))) ((eqToHom (mul_assoc P W Y)) ≫ (f ⊗ (g ⊗ h)))
-  | id_tensor (f : X ⟶ Y) : HomEquiv (((𝟙 1) ⊗ f) ≫ (eqToHom (one_mul Y))) ((eqToHom (one_mul X)) ≫ f)
-  -- | id_tensor (f : X ⟶ Y) : HomEquiv ((𝟙 1) ⊗ f) f
-  | tensor_id (f : X ⟶ Y) : HomEquiv ((f ⊗ (𝟙 1)) ≫ (eqToHom (mul_one Y))) ((eqToHom (mul_one X)) ≫ f)
-  -- TODO something about ⋆ naturality
+      HomEquiv (((f ⊗ g) ⊗ h) ≫ (eqToHom (mul_assoc Q X Z)))
+        ((eqToHom (mul_assoc P W Y)) ≫ (f ⊗ (g ⊗ h)))
+  | id_tensor (f : X ⟶ Y) :
+      HomEquiv (((𝟙 1) ⊗ f) ≫ (eqToHom (one_mul Y))) ((eqToHom (one_mul X)) ≫ f)
+  | tensor_id (f : X ⟶ Y) :
+      HomEquiv ((f ⊗ (𝟙 1)) ≫ (eqToHom (mul_one Y))) ((eqToHom (mul_one X)) ≫ f)
   | star_skew (f : W ⟶ X) (g : Y ⟶ Z) :
-      HomEquiv ((f⋆ ⊗ g⋆) ≫ (eqToHom (StarMonoid.star_mul Z X).symm)) ((eqToHom (StarMonoid.star_mul Y W).symm) ≫ (g ⊗ f)⋆)
+      HomEquiv ((f⋆ ⊗ g⋆) ≫ (eqToHom (StarMonoid.star_mul Z X).symm))
+        ((eqToHom (StarMonoid.star_mul Y W).symm) ≫ (g ⊗ f)⋆)
   | star_inv (f : X ⟶ Y) :
       HomEquiv (f⋆⋆ ≫ (eqToHom (star_involutive Y))) ((eqToHom (star_involutive X)) ≫ f)
+  -- special facts about the twist
   | twist_hom_inv :
       HomEquiv ((ς_hom X) ≫ (ς_inv X)) (𝟙 X)
   | twist_inv_hom :
       HomEquiv ((ς_inv X) ≫ (ς_hom X)) (𝟙 X⋆)
   | twist_naturality (f : X ⟶ Y) :
       HomEquiv (f⋆ ≫ (ς_inv Y)) ((ς_inv X) ≫ f)
+  -- symm/trans last for constructor tactic
   | symm (f g : X ⟶ Y) : HomEquiv f g → HomEquiv g f
   | trans {f g h : X ⟶ Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 
-attribute [grind] HomEquiv.refl
-attribute [grind] HomEquiv.comp
-attribute [grind] HomEquiv.tensor
-attribute [grind] HomEquiv.star
-attribute [grind] HomEquiv.comp_id
-attribute [grind] HomEquiv.id_comp
-attribute [grind] HomEquiv.assoc
-attribute [grind] HomEquiv.id_tensor_id
-attribute [grind] HomEquiv.tensor_comp_tensor
-attribute [grind] HomEquiv.star_id
-attribute [grind] HomEquiv.star_comp_star
-attribute [grind] HomEquiv.tensor_assoc
-attribute [grind] HomEquiv.id_tensor
-attribute [grind] HomEquiv.tensor_id
-attribute [grind] HomEquiv.star_skew
-attribute [grind] HomEquiv.star_inv
-attribute [grind] HomEquiv.twist_hom_inv
-attribute [grind] HomEquiv.twist_inv_hom
-attribute [grind] HomEquiv.twist_naturality
-attribute [grind] HomEquiv.symm
-attribute [grind] HomEquiv.trans
-
 attribute [refl] HomEquiv.refl
 attribute [symm] HomEquiv.symm
-attribute [trans] HomEquiv.trans
 
 instance {A B : S V} : HasEquiv (A ⟶ B) where
   Equiv := HomEquiv
-instance {A B : S V} : Trans (HomEquiv (A := A) (B := B)) (HomEquiv (A := A) (B := B)) (HomEquiv (A := A) (B := B)) where
-  trans := HomEquiv.trans
 
+-- helps grind slog through notation
 @[grind =_]
 lemma HomEquiv.equiv_def {X Y : S V} {f g : X ⟶ Y} : HomEquiv f g ↔ f ≈ g := by
   constructor
   all_goals intros h
   all_goals exact h
 
-@[simp, grind .]
-lemma eqToHom_comp {X Y Z : S V} {p : X = Y} {q : Y = Z} : (eqToHom p ≫ eqToHom q) ≈ (eqToHom (p.trans q)) := by
+lemma eqToHom_comp {X Y Z : S V} {f : X ⟶ Y} {g : Y ⟶ Z} {p : X = Y} {q : Y = Z} :
+    (f ≈ eqToHom p) → (g ≈ eqToHom q) → (f ≫ g) ≈ (eqToHom (p.trans q)) := by
+  intros hf hg
+  apply HomEquiv.trans
+  · exact HomEquiv.comp hf hg
+  · cases p
+    cases q
+    simp
+    grind
+
+lemma eqToHom_tensor {W X Y Z : S V} {f : W ⟶ X} {g : Y ⟶ Z} {p : W = X} {q : Y = Z} :
+    (f ≈ eqToHom p) → (g ≈ eqToHom q) → (f ⊗ g) ≈ (eqToHom (by simp [p, q])) := by
+  intros hf hg
+  apply HomEquiv.trans
+  · exact HomEquiv.tensor hf hg
   cases p
   cases q
   simp
   grind
 
-@[simp, grind .]
-lemma eqToHom_tensor {W X Y Z : S V} {p : W = X} {q : Y = Z} : (eqToHom p ⊗ eqToHom q) ≈ (eqToHom (by simp [p, q])) := by
+lemma eqToHom_star {X Y : S V} {f : X ⟶ Y} {p : X = Y} :
+    (f ≈ eqToHom p) → f⋆ ≈ (eqToHom (by simp [p])) := by
+  intros hf
+  apply HomEquiv.trans
+  · exact HomEquiv.star hf
   cases p
-  cases q
   simp
   grind
+
+-- Attempts to take one step of simplifying a bunch of eqToHom/id to one eqToHom
+macro "reduce_eqToHom_step" : tactic =>
+  `(tactic|
+    first
+      | apply eqToHom_comp
+      | apply eqToHom_tensor
+      | apply eqToHom_star
+      | rfl
+  )
+
+-- shows any combination of eqToHom/id is HomEquiv to a single eqToHom
+macro "reduce_eqToHom" : tactic =>
+  `(tactic|
+    repeat' reduce_eqToHom_step
+  )
+
+-- shows any combinations of eqToHom/id HomEquiv to each other
+macro "eqToHom_eq_eqToHom" : tactic =>
+  `(tactic|
+    apply HomEquiv.trans (by reduce_eqToHom) (by symm; reduce_eqToHom)
+  )
 
 @[simp]
 lemma HomEquiv.whiskerLeft (X : S V) {Y Z} {f f' : Y ⟶ Z} (h : f ≈ f') :
     (X ◁ f) ≈ (X ◁ f') := by grind
 
 @[simp]
-lemma HomEquiv.whiskerRight {X Y} {f f' : X ⟶ Y} (Z : S V) (h : HomEquiv f f') :
+lemma HomEquiv.whiskerRight {X Y} {f f' : X ⟶ Y} (Z : S V) (h : f ≈ f') :
     (f ▷ Z) ≈ (f' ▷ Z) := by grind
 
 @[simp, grind .]
@@ -180,19 +199,11 @@ lemma HomEquiv.id_whiskerRight (X Y : S V) : ((𝟙 X) ▷ Y) ≈ (𝟙 (X * Y))
 instance setoidHom (X Y : S V) : Setoid (X ⟶ Y) :=
 ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
-def myHom (X Y : S V) := Quotient (setoidHom X Y)
-
-@[grind =_]
-lemma myHom_eq {X Y : S V} (f g : X ⟶ Y) : HomEquiv f g ↔ f ≈ g := by
-  constructor
-  all_goals intros h
-  all_goals exact h
-
 open HomEquiv
 
 @[simp]
-instance hicat : Category (S V) where
-  Hom X Y := myHom X Y
+instance : Category (S V) where
+  Hom X Y := Quotient (setoidHom X Y)
   id X := ⟦𝟙 X⟧
   comp f g := Quotient.map₂ (· ≫ ·) (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg) f g
   id_comp {X Y} := by
@@ -208,26 +219,25 @@ instance hicat : Category (S V) where
     apply Quotient.sound
     grind
 
--- TODO a way to lift a star monoid equality to a Hom isomorphism for these natural transformations
-
-def liftEquiv {X Y : S V} (h : X = Y) : X ≅ Y := {
+-- not eqToIso!
+def eqToIso' {X Y : S V} (h : X = Y) : X ≅ Y := {
   hom := ⟦eqToHom h⟧
   inv := ⟦eqToHom h.symm⟧
   hom_inv_id := by
     apply Quotient.sound
-    apply eqToHom_comp
+    exact eqToHom_comp (by rfl) (by rfl)
   inv_hom_id := by
     apply Quotient.sound
-    apply eqToHom_comp
+    exact eqToHom_comp (by rfl) (by rfl)
 }
 
-instance himon : MonoidalCategory (S V) where
+instance : MonoidalCategory (S V) where
   tensorObj X Y := X * Y
   tensorHom f g := Quotient.map₂ (· ⊗ ·) (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg) f g
   tensorUnit := 1
-  associator X Y Z := liftEquiv (mul_assoc X Y Z)
-  leftUnitor X := liftEquiv (one_mul X)
-  rightUnitor X := liftEquiv (mul_one X)
+  associator X Y Z := eqToIso' (mul_assoc X Y Z)
+  leftUnitor X := eqToIso' (one_mul X)
+  rightUnitor X := eqToIso' (mul_one X)
   whiskerLeft X {Y₁ Y₂} f := Quotient.map (X ◁ ·) (fun _ _ hf ↦ HomEquiv.whiskerLeft X hf) f
   whiskerRight {X₁ X₂} f Y := Quotient.map (· ▷ Y) (fun _ _ hf ↦ HomEquiv.whiskerRight Y hf) f
   tensorHom_def {X₁ Y₁ X₂ Y₂} := by
@@ -255,37 +265,16 @@ instance himon : MonoidalCategory (S V) where
     grind
   pentagon W X Y Z := by
     apply Quotient.sound
-    simp
-    trans
-    · apply HomEquiv.comp
-      · apply eqToHom_tensor
-        rfl
-      · apply HomEquiv.trans
-        · apply HomEquiv.comp
-          · rfl
-          · apply eqToHom_tensor
-            rfl
-        · apply eqToHom_comp
-    · grind [eqToHom_tensor, eqToHom_comp]
+    eqToHom_eq_eqToHom
   triangle X Y := by
-    simp
     apply Quotient.sound
-    trans
-    · trans
-      · apply HomEquiv.comp
-        · rfl
-        · apply eqToHom_tensor
-          rfl
-      · apply eqToHom_comp
-    · symm
-      apply eqToHom_tensor
-      rfl
+    eqToHom_eq_eqToHom
 
-instance hiinv : InvolutiveCategory (S V) where
+instance : InvolutiveCategory (S V) where
   starObj X := X⋆
   starHom f := Quotient.map (·⋆) (fun _ _ hf ↦ HomEquiv.star hf) f
-  skewator X Y := liftEquiv (StarMonoid.star_mul Y X).symm
-  involutor X := liftEquiv (star_involutive X)
+  skewator X Y := eqToIso' (StarMonoid.star_mul Y X).symm
+  involutor X := eqToIso' (star_involutive X)
   starHom_id _ := Quotient.sound star_id
   starHom_comp_starHom {X Y Z} := by
     rintro ⟨f⟩ ⟨g⟩
@@ -299,11 +288,17 @@ instance hiinv : InvolutiveCategory (S V) where
     rintro ⟨f⟩
     apply Quotient.sound
     grind
-  f3 := sorry
-  n2 := sorry
-  a := sorry
+  f3 X Y Z := by
+    apply Quotient.sound
+    eqToHom_eq_eqToHom
+  n2 X Y := by
+    apply Quotient.sound
+    eqToHom_eq_eqToHom
+  a X := by
+    apply Quotient.sound
+    eqToHom_eq_eqToHom
 
-instance hitwist : TwistedCategory (S V) where
+instance : TwistedCategory (S V) where
   twist (X : V) := {
     hom := ⟦ς_inv X⟧
     inv := ⟦ς_hom X⟧
@@ -318,4 +313,5 @@ instance hitwist : TwistedCategory (S V) where
     rintro ⟨f⟩
     apply Quotient.sound
     constructor
-  tℓ := sorry
+  tℓ X Y Z := by
+    sorry
