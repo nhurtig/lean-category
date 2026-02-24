@@ -16,7 +16,8 @@ open Category MonoidalCategory
 
 namespace CategoryTheory
 
-class InvolutiveCategoryStruct (C : Type u) [Category.{v} C] [MonoidalCategory.{v} C] where
+class InvolutiveCategoryStruct (C : Type u) [Category.{v} C] extends
+    MonoidalCategoryStruct.{v} C where
   starObj : C → C
   starHom : (X ⟶ Y) → (starObj X ⟶ starObj Y)
   skewator : ∀ X Y : C, (starObj X ⊗ starObj Y) ≅ starObj (Y ⊗ X)
@@ -38,7 +39,7 @@ class InvolutiveCategory (C : Type u)
   -- starObj on monoidal identity 𝟙_?
   starHom_id : ∀ X : C, (𝟙 X)⋆ = 𝟙 X⋆ := by cat_disch
   starHom_comp_starHom : ∀ {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z),
-    f⋆ ≫ g⋆ = (f ≫ g)⋆ := by cat_disch
+      (f ≫ g)⋆ =f⋆ ≫ g⋆ := by cat_disch
   skewator_naturality : ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
       (f⋆ ⊗ g⋆) ≫ (χ_ Y₁ Y₂).hom = (χ_ X₁ X₂).hom ≫ (g ⊗ f)⋆ := by cat_disch
   involutor_naturality : ∀ {X Y : C} (f : X ⟶ Y),
@@ -52,8 +53,13 @@ class InvolutiveCategory (C : Type u)
   a : ∀ R : C,
       (e_ R).hom⋆ = (e_ R⋆).hom := by cat_disch
 
-class TwistedCategoryStruct (C : Type u)
-    [Category.{v} C] [MonoidalCategory.{v} C] [InvolutiveCategory C] where
+attribute [simp] InvolutiveCategory.starHom_id
+attribute [simp] InvolutiveCategory.starHom_comp_starHom
+attribute [simp] InvolutiveCategory.skewator_naturality
+attribute [simp] InvolutiveCategory.involutor_naturality
+
+class TwistedCategoryStruct (C : Type u) [Category.{v} C] extends
+    MonoidalCategoryStruct.{v} C, InvolutiveCategoryStruct C where
   twist : ∀ X : C, X⋆ ≅ X
 
 namespace TwistedCategory
@@ -74,5 +80,7 @@ class TwistedCategory (C : Type u) [Category.{v} C]
        (((χ_ Q R).hom ≫ (ς_ (R ⊗ Q)).hom) ⊗ (𝟙 P)) ≫ (α_ R Q P).hom =
       (((ς_ P⋆).hom ⊗ (ς_ Q⋆).hom) ⊗ (ς_ R⋆).hom) ≫ ((χ_ P Q).hom ⊗ (𝟙 R⋆)) ≫
         (χ_ (Q ⊗ P) R).hom ≫ (ς_ (R ⊗ Q ⊗ P)).hom := by cat_disch
+
+attribute [simp] TwistedCategory.twist_naturality
 
 end CategoryTheory

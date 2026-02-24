@@ -48,7 +48,7 @@ instance : StarMonoid (S V) where
   star_mul X Y := S.ext <| StarMonoid.star_mul X.val Y.val
 
 -- gives us notation
-instance : CategoryStruct (S V) where
+instance (priority := 100) preHom : CategoryStruct (S V) where
   Hom X Y := Hom X.val Y.val
   id X := Hom.id X.val
   comp := Hom.comp
@@ -74,8 +74,6 @@ def Hom.whiskerRight {X₁ X₂ : S V} (f : X₁ ⟶ X₂) (Y : S V) : (X₁ * Y
 
 infixr:81 " ◁ " => Hom.whiskerLeft
 infixl:81 " ▷ " => Hom.whiskerRight
-
-postfix:max "ˢ" => Star.star
 
 @[grind]
 inductive HomEquiv : ∀ {A B : S V}, (A ⟶ B) → (A ⟶ B) → Prop
@@ -120,13 +118,13 @@ inductive HomEquiv : ∀ {A B : S V}, (A ⟶ B) → (A ⟶ B) → Prop
   | twist_naturality (f : X ⟶ Y) :
       HomEquiv (f⋆ ≫ (ς_inv Y)) ((ς_inv X) ≫ f)
   | tℓ (P Q R : S V) : HomEquiv
-      ((((eqToHom (StarMonoid.star_mul Qˢ Pˢ).symm) ≫ (ς_inv (Qˢ * Pˢ))) ⊗ (𝟙 Rˢˢ)) ≫
-        (eqToHom (mul_assoc Qˢ Pˢ Rˢˢ)) ≫ ((𝟙 Qˢ) ⊗ ((eqToHom (StarMonoid.star_mul Rˢ P).symm) ≫
-        (ς_inv (Rˢ * P)))) ≫ (eqToHom (mul_assoc Qˢ Rˢ P).symm) ≫
+      ((((eqToHom (StarMonoid.star_mul Q⋆ P⋆).symm) ≫ (ς_inv (Q⋆ * P⋆))) ⊗ (𝟙 R⋆⋆)) ≫
+        (eqToHom (mul_assoc Q⋆ P⋆ R⋆⋆)) ≫ ((𝟙 Q⋆) ⊗ ((eqToHom (StarMonoid.star_mul R⋆ P).symm) ≫
+        (ς_inv (R⋆ * P)))) ≫ (eqToHom (mul_assoc Q⋆ R⋆ P).symm) ≫
         (((eqToHom (StarMonoid.star_mul R Q).symm) ≫ (ς_inv (R * Q))) ⊗ (𝟙 P)) ≫
         (eqToHom (mul_assoc R Q P)))
-      ((((ς_inv Pˢ) ⊗ (ς_inv Qˢ)) ⊗ (ς_inv Rˢ)) ≫
-        ((eqToHom (StarMonoid.star_mul Q P).symm) ⊗ (𝟙 Rˢ)) ≫
+      ((((ς_inv P⋆) ⊗ (ς_inv Q⋆)) ⊗ (ς_inv R⋆)) ≫
+        ((eqToHom (StarMonoid.star_mul Q P).symm) ⊗ (𝟙 R⋆)) ≫
         (eqToHom (StarMonoid.star_mul R (Q * P)).symm) ≫ (ς_inv (R * (Q * P))))
   -- symm/trans last for constructor tactic
   | symm (f g : X ⟶ Y) : HomEquiv f g → HomEquiv g f
@@ -233,10 +231,10 @@ instance : Category (S V) where
     apply Quotient.sound
     grind
 
--- not eqToIso!
+-- not eqToIso! Can't see much hope of generalizing this one
 def eqToIso' {X Y : S V} (h : X = Y) : X ≅ Y := {
-  hom := ⟦eqToHom h⟧
-  inv := ⟦eqToHom h.symm⟧
+  hom := ⟦@eqToHom _ preHom _ _ h⟧
+  inv := ⟦@eqToHom _ preHom _ _ h.symm⟧
   hom_inv_id := by
     apply Quotient.sound
     exact eqToHom_comp (by rfl) (by rfl)
@@ -245,6 +243,7 @@ def eqToIso' {X Y : S V} (h : X = Y) : X ≅ Y := {
     exact eqToHom_comp (by rfl) (by rfl)
 }
 
+-- TODO use ofTensorHom to dodge the nasty whiskers
 instance : MonoidalCategory (S V) where
   tensorObj X Y := X * Y
   tensorHom f g := Quotient.map₂ (· ⊗ ·) (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg) f g
