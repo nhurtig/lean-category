@@ -2,9 +2,15 @@ import Mathlib
 
 postfix:max "⋆" => Star.star
 
-class StarMonoid (R : Type u) extends Monoid R, InvolutiveStar R where
-  /-- `star` skew-distributes over multiplication. -/
-  star_mul : ∀ r s : R, (r * s)⋆ = s⋆ * r⋆ := by aesop
+class StarMonoid (R : Type u) extends Monoid R, StarMul R
+
+/- structure StarHom (M : Type*) (N : Type*) [Star M] [Star N] where -/
+/-   protected toFun : M → N -/
+/-   protected map_star : ∀ x, toFun (x⋆) = (toFun x)⋆ -/
+
+/- infixr:25 " →⋆ " => StarHom -/
+
+#check StarMonoidHom
 
 def FreeStarMonoid (R : Type u) : StarMonoid (List (R × Bool)) where
   mul r s := r ++ s
