@@ -35,3 +35,19 @@ define projections real quick and easy. But maybe we should leave the jank until
 step.
 
 OPTION 6 DECIDED. CAN KICKED.
+
+Later Nat's interpretation of the above:
+1. define the layer subgroupoid L as a free no-quiver twist thingy over... lists of \kappa and r's
+1. each layer has an "above" and "below" object in L -- a list of \kappa and r's
+1. Layer moves are parameterized by twists from "above" \hom anything
+1. Define \phi, reconstruction object map, which takes a layer, then an L object, and returns a regular object
+1. Note that \phi on "above" is L's codomain
+1. Sim. for \tau or smth on "below"
+
+Can we generalize \phi? It's just a function from objects to objects...
+
+Do we need to extend StarMonoid to a SizedStarMonoid where each element has a \N size? Nah...
+I think we can just have the r's be indexed with \N (unbounded!) and then \phi maps stuff
+with too high of indices to the identity... but how do we index into the sides when they
+aren't too high? Well, they're legit List Strand so we should be good.
+

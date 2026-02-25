@@ -6,14 +6,14 @@ open CategoryTheory
 
 def Carrier := ℕ
 deriving Repr, DecidableEq
-def Loop := ℕ
+def Loop := ℕ -- TODO: loops have twists!
 deriving Repr, DecidableEq
 
 def Strand := Carrier ⊕ Loop
 deriving Repr, DecidableEq
 
-def V := List Strand
-deriving Repr, DecidableEq
+abbrev V := List Strand
+/- deriving Repr, DecidableEq -/
 
 instance : Coe (List Carrier) V where
   coe X := X.map Sum.inl
@@ -173,6 +173,124 @@ def Layer.dom : Layer → V
 def Layer.cod : Layer → V
   | ⟨left, box, right⟩ => left * box.cod * right
 
+-- start of subgroupoid stuff
+
+inductive LayerSubgroupoidGen where
+  | kappa : LayerSubgroupoidGen
+  | left : ℕ → LayerSubgroupoidGen
+  | right : ℕ → LayerSubgroupoidGen
+
+abbrev L := List (LayerSubgroupoidGen × Bool)
+
+@[simp]
+instance : StarMonoid L := FreeStarMonoid LayerSubgroupoidGen
+instance : Quiver L where
+  Hom _ _ := Empty
+
+-- free, no quiver!!!
+#synth TwistedCategory (S L)
+
+-- TODO use this Coe below?
+instance : Coe LayerSubgroupoidGen L where
+  coe x := [(x, false)]
+
+def Layer.layerTypeLeft : Layer → L
+  | ⟨left, _, _⟩ => (List.range left.length).map (fun i ↦ (.left i, false))
+
+def Layer.layerTypeRight : Layer → L
+  | ⟨_, _, right⟩ => (List.range right.length).map (fun i ↦ (.right i, false))
+
+@[simp]
+def Layer.layerTypeStitch : Layer → L
+  | _ => [(.kappa, false)]
+
+@[simp]
+def Layer.layerType (l : Layer) : L :=
+  l.layerTypeLeft * l.layerTypeStitch * l.layerTypeRight
+
+@[simp]
+def Layer.phiGen (l : Layer) (boxHandler : Stitch → V) : LayerSubgroupoidGen → V
+  | .kappa => boxHandler l.box
+  | .left i => match l.left[i]? with
+    | Option.some x => [x]
+    | Option.none => []
+  | .right i => match l.right[i]? with
+    | Option.some x => [x]
+    | Option.none => []
+
+@[simp]
+def Layer.phiStar (l : Layer) (boxHandler : Stitch → V) : LayerSubgroupoidGen × Bool → V
+  | (x, b) =>
+      let v := l.phiGen boxHandler x
+      if b then v⋆ else v
+
+def Layer.phi (l : Layer) (boxHandler : Stitch → V) (x : L) : V :=
+  (x.map <| l.phiStar boxHandler).flatten
+
+@[simp]
+def Layer.phiAbove (l : Layer) : L → V :=
+  l.phi Stitch.cod
+
+@[simp]
+def Layer.phiBelow (l : Layer) : L → V :=
+  l.phi Stitch.dom
+
+@[simp]
+lemma List.map_range_succ : List.map f (List.range (n + 1)) =
+    (List.map f (List.range n)) ++ [f n] := by
+  rw [List.range_succ]
+  simp
+
+@[simp]
+lemma List.getElem?_prefix {l l' : List α} : l' ++ [a] <+: l → l[l'.length]? = .some a := by
+  rintro ⟨s, h⟩
+  subst l
+  simp
+
+@[simp]
+lemma Layer.phi_left {l : Layer} : l.phi f l.layerTypeLeft = l.left := by
+  simp [phi, layerTypeLeft]
+  generalize hx : l.left = x at *
+  have hpre : x <+: l.left := by aesop
+  clear hx
+  induction x using List.reverseRecOn
+  all_goals simp
+  case append_singleton l' a ih =>
+    apply congrArg₂
+    · apply ih
+      refine trans ?_ hpre
+      aesop
+    · rw [List.getElem?_prefix hpre]
+
+@[simp]
+lemma Layer.phi_right {l : Layer} : l.phi f l.layerTypeRight = l.right := by
+  simp [phi, layerTypeRight]
+  generalize hx : l.right = x at *
+  have hpre : x <+: l.right := by aesop
+  clear hx
+  induction x using List.reverseRecOn
+  all_goals simp
+  case append_singleton l' a ih =>
+    apply congrArg₂
+    · apply ih
+      refine trans ?_ hpre
+      aesop
+    · rw [List.getElem?_prefix hpre]
+
+@[simp]
+lemma Layer.phi_mul {l : Layer} : l.phi f (x * y) = l.phi f x * l.phi f y := by
+  simp [HMul.hMul, Mul.mul, phi]
+
+lemma Layer.phiAbove_cod {l : Layer} : l.phiAbove l.layerType = l.cod := by
+  simp
+  simp [phi]
+
+lemma Layer.phiBelow_dom {l : Layer} : l.phiBelow l.layerType = l.dom := by
+  simp
+  simp [phi]
+
+-- end of subgroupoid stuff
+
 -- TODO universes are a hack
 inductive MyHom : N → N → Type 1 where
   | layer : (l : Layer) → MyHom l.dom l.cod
@@ -254,7 +372,7 @@ inductive MyHom.equiv : ∀ {X Y : N}, (X ⟶ Y) → (X ⟶ Y) → Prop where
         (eqToHom (by simp [mul_assoc])) ≫
         (.layer ⟨left, b, middle * t.cod * right⟩) ≫
         (eqToHom (by simp [mul_assoc])))
-  -- layer moves
+  -- TODO layer moves
   | symm (f g) : MyHom.equiv f g → MyHom.equiv g f
   | trans {f g h : X ⟶ Y} : MyHom.equiv f g → MyHom.equiv g h → MyHom.equiv f h
 
@@ -519,8 +637,7 @@ instance : TwistedCategoryStruct N where
         rfl
   }
 
--- TODO next step: prefunctor between S V and N words
--- TODO:
+-- next step: prefunctor between S V and N words that'll eventually be our isomorphism
 
 -- -- not eqToIso' or eqToIso, but morally eqToIso'! TODO generalize eqToIso'
 -- def eqToIso'' {X Y : N} (h : X = Y) : X ≅ Y := {
