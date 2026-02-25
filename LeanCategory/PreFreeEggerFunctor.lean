@@ -15,9 +15,9 @@ open CategoryTheory
 /- #synth Category (S P) -/
 /- #check S P ⥤ S Q -/
 
-#check Hom
-abbrev PHom := @Hom P
-abbrev QHom := @Hom Q
+#check HomAwesome
+abbrev PHom := @HomAwesome P
+abbrev QHom := @HomAwesome Q
 #check QHom
 
 #synth Quiver (S P)
@@ -33,8 +33,8 @@ def Hom.myfunct : PHom X Y → QHom (m X) (m Y)
 
 #synth Quiver (S P)
 #check preHom
-abbrev PHom' := @Hom (S P)
-abbrev QHom' := @Hom (S Q)
+abbrev PHom' := @HomAwesome (S P)
+abbrev QHom' := @HomAwesome (S Q)
 
 #check FreeMonoidalCategory
 -- maybe try lifting m to a S-hom?

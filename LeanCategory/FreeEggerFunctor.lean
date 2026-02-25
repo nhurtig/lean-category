@@ -18,5 +18,5 @@ open CategoryTheory
 
 instance : S P ⥤ S Q where
   obj X := m X.val
-  map {X Y} f := Quotient.lift (⟦Hom.myfunct' m M ·⟧) sorry f
+  map {X Y} f := Quotient.lift (⟦HomAwesome.myfunctS m M ·⟧) sorry f
 
