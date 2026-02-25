@@ -12,6 +12,9 @@ class StarMonoid (R : Type u) extends Monoid R, StarMul R
 
 #check StarMonoidHom
 
+@[simp]
+lemma map_star [StarMonoid P] [StarMonoid Q] {x : P} {m : P →⋆* Q} : m x⋆ = (m x)⋆ := m.map_star' x
+
 def FreeStarMonoid (R : Type u) : StarMonoid (List (R × Bool)) where
   mul r s := r ++ s
   one := []

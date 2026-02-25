@@ -31,22 +31,20 @@ notation "𝟙ᵥ" => prehom.id
 infixr:80 " ≫ᵥ " => prehom.comp
 
 -- synonym for Hom.Tensor that acts on the CategoryStruct notation
-def myTensor {W X Y Z : V} (f : W ⟶ᵥ Y) (g : X ⟶ᵥ Z) : (W * X) ⟶ᵥ  (Y * Z) := Hom.tensor f g
+abbrev myTensor {W X Y Z : V} (f : W ⟶ᵥ Y) (g : X ⟶ᵥ Z) : (W * X) ⟶ᵥ  (Y * Z) := Hom.tensor f g
 infixr:70 " ⊗ᵥ " => myTensor
 
-def myStar {X Y : V} (f : X ⟶ᵥ Y) : X⋆ ⟶ᵥ Y⋆ := Hom.star f
+abbrev myStar {X Y : V} (f : X ⟶ᵥ Y) : X⋆ ⟶ᵥ Y⋆ := Hom.star f
 postfix:max "⋆ᵥ" => myStar
 
-def ς_hom (X : V) := Hom.twist_hom X
-def ς_inv (X : V) := Hom.twist_inv X
+abbrev ς_hom (X : V) := Hom.twist_hom X
+abbrev ς_inv (X : V) := Hom.twist_inv X
 
 -- synonyms to make the monoidal category instance happy (IDK why Mathlib does it this way)
-@[simp, grind]
-def Hom.whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) : (X * Y₁) ⟶ᵥ (X * Y₂) :=
+abbrev Hom.whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) : (X * Y₁) ⟶ᵥ (X * Y₂) :=
   (𝟙ᵥ X) ⊗ᵥ f
 
-@[simp, grind]
-def Hom.whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) : (X₁ * Y) ⟶ᵥ (X₂ * Y) :=
+abbrev Hom.whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) : (X₁ * Y) ⟶ᵥ (X₂ * Y) :=
   f ⊗ᵥ (𝟙ᵥ Y)
 
 infixr:81 " ◁ᵥ " => Hom.whiskerLeft
@@ -58,7 +56,7 @@ inductive HomEquiv : ∀ {A B : V}, (A ⟶ᵥ B) → (A ⟶ᵥ B) → Prop
   | assoc {W X Y Z : V} (f : W ⟶ᵥ X) (g : X ⟶ᵥ Y) (h : Y ⟶ᵥ Z) :
       HomEquiv ((f ≫ᵥ g) ≫ᵥ h) (f ≫ᵥ (g ≫ᵥ h))
   | comp_id (f : X ⟶ᵥ Y) : HomEquiv (f ≫ᵥ (𝟙ᵥ _)) f
-  | id_comp (f : X ⟶ᵥ Y) : HomEquiv ((𝟙ᵥ _ ) ≫ᵥ f) f
+  | id_comp (f : X ⟶ᵥ Y) : HomEquiv ((𝟙ᵥ _) ≫ᵥ f) f
   -- congruence
   | comp {f f' : X ⟶ᵥ Y} {g g' : Y ⟶ᵥ Z} :
       HomEquiv f f' → HomEquiv g g' → HomEquiv (f ≫ᵥ g) (f' ≫ᵥ g')

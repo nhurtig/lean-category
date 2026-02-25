@@ -1,53 +1,61 @@
-import LeanCategory.PreFreeEgger
+import LeanCategory.PreFreeEggerGood
+import LeanCategory.FreeEggerGood
+
+@[simp]
+lemma dist_mul [StarMonoid P] [StarMonoid Q] {x : P} {m : P →⋆* Q} : m (x * y) = (m x) * (m y) := by sorry
 
 variable {P Q : Type u}
-variable [StarMonoid P] [Quiver.{v} P] [StarMonoid Q] [Quiver.{v} Q]
-
-#check MonoidHom
+variable [StarMonoid P] [userP : Quiver.{v} P] [StarMonoid Q] [userQ : Quiver.{v} Q]
 
 variable (m : P →⋆* Q)
 variable (M : {X Y : P} → (X ⟶ Y) → (m X ⟶ m Y))
 
-#check Quiver
-
 open CategoryTheory
 
-/- #synth Category (S P) -/
-/- #check S P ⥤ S Q -/
-
-#check HomAwesome
-abbrev PHom := @HomAwesome P
-abbrev QHom := @HomAwesome Q
-#check QHom
-
-#synth Quiver (S P)
-
-def Hom.myfunct : PHom X Y → QHom (m X) (m Y)
+@[simp]
+def Hom.myfunct {X Y : P} : (X ⟶ᵥ Y) → ((m X) ⟶ᵥ (m Y))
   | .of f => .of <| M f
-  | .id X => .id <| m X
-  | .comp f g => .comp f.myfunct g.myfunct
-  -- TODO: get the eqToHom working. Not working b/c there's no CategoryStruct instance for raw Hom; just for Hom (S V)
-  -- alternative: just define Hom.myfunct' below directly on the (S V) structure
-  | .tensor f g => .comp (.comp (eqToHom sorry) (.tensor f.myfunct g.myfunct)) _
-  | _ => sorry
+  | .id X => 𝟙 <| m X
+  | .comp f g => f.myfunct ≫ g.myfunct
+  /- | .tensor f g => by simpa using f.myfunct ⊗ᵥ g.myfunct -/
+  | tensor f g => eqToHom (by simp) ≫ (f.myfunct ⊗ᵥ g.myfunct) ≫ eqToHom (by simp)
+  /- | .star f => by simpa using f.myfunct⋆ᵥ -/
+  | .star f => eqToHom (by simp) ≫ f.myfunct⋆ᵥ ≫ eqToHom (by simp)
+  /- | .twist_hom X => by simpa using .twist_hom (m X) -/
+  | .twist_hom X => eqToHom (by simp) ≫ .twist_hom (m X) ≫ eqToHom (by simp)
+  | .twist_inv X => eqToHom (by simp) ≫ .twist_inv (m X) ≫ eqToHom (by simp)
 
-#synth Quiver (S P)
-#check preHom
-abbrev PHom' := @HomAwesome (S P)
-abbrev QHom' := @HomAwesome (S Q)
-
+-- TODO maybe we should just prove it straight up on the quotient? That way, we can use
+-- simp to rewrite stuff... just like the monoidal file!
+-- See the mk_* lemmas here:
 #check FreeMonoidalCategory
--- maybe try lifting m to a S-hom?
-variable (m' : (S P) →⋆* (S Q))
-def Hom.myfunct'arst {X Y : S P} : (X ⟶ Y) → ((m' X) ⟶ (m' Y))
-  /- | .id _ => sorry -/
-  /- | .of f => .of <| M f -/
-  /- | .id X => .id <| m X -/
-  | .comp f g => .comp (Hom.myfunct'arst m' f) (Hom.myfunct'arst m' g)
-  /- | .tensor f g => .comp (.comp (eqToHom sorry) (.tensor f.myfunct g.myfunct)) _ -/
-  /- | _ => sorry -/
+-- then the normalizing lemmas here:
+#check MonoidalCategory
 
-def Hom.myfunctS {X Y : S P} : (X ⟶ Y) → ((S.mk <| m X.val) ⟶  ⟨m Y.val⟩) := by
-  simp [Quiver.Hom]
-  exact Hom.myfunct m M
+-- we'll need to completely redo the mk_* lemmas, but we can use the normalizing lemmas for monoidal (just needs
+-- updating w/ the involution/star/twist stuff)
+
+instance proj : P ⥤ Q where
+  obj := m
+  map {X Y} := Quotient.lift (⟦·.myfunct m M⟧) <| by
+    intros f g h
+    simp
+    induction h
+    any_goals simp
+    any_goals grind
+    sorry
+
+def HomEquiv.myfunct {X Y : P} {f g : X ⟶ᵥ Y} (h : f ≈ g) :
+    ((f.myfunct m M) ≈ (g.myfunct m M)) := by
+  induction h
+  any_goals simp
+  any_goals constructor; done
+  any_goals grind
+  /- any_goals constructor <;> grind -/
+  case id_tensor_id =>
+    eqToHom_eq_eqToHom
+  case tensor_comp_tensor =>
+    simp
+    sorry
+  sorry
 
