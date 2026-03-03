@@ -21,7 +21,7 @@ inductive Hom : V → V → Type max u v
 
 open CategoryTheory
 
-instance prehom : CategoryStruct V where
+instance (priority := low) prehom : CategoryStruct V where
   Hom := Hom
   id := Hom.id
   comp := Hom.comp

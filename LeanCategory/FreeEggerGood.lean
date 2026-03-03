@@ -1,12 +1,12 @@
 import LeanCategory.PreFreeEggerGood
 
 variable {V : Type u}
-variable [StarMonoid V] [Quiver.{v} V]
+variable [StarMonoid V] [userQuiver : Quiver.{v} V]
 
 open CategoryTheory
 open HomEquiv
 
-instance : Category V where
+instance quotiented : Category V where
   Hom X Y := Quotient (setoidHom X Y)
   id X := ⟦𝟙 X⟧
   comp f g := Quotient.map₂ (· ≫ ·) (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg) f g
@@ -103,7 +103,8 @@ instance : InvolutiveCategory V where
     apply Quotient.sound
     eqToHom_eq_eqToHom
 
-instance : TwistedCategory V where
+@[simp]
+instance final : TwistedCategory V where
   twist X := {
     hom := ⟦ς_inv X⟧
     inv := ⟦ς_hom X⟧
@@ -121,3 +122,132 @@ instance : TwistedCategory V where
   tℓ X Y Z := by
     apply Quotient.sound
     constructor
+
+#check FreeMonoidalCategory
+
+open MonoidalCategory
+open InvolutiveCategory
+open TwistedCategory
+
+abbrev homMk {X Y : V} (f : X ⟶ᵥ Y) : quotiented.Hom X Y := ⟦f⟧
+
+@[simp]
+def homMkDef {X Y : V} (f : X ⟶ᵥ Y) : quotiented.Hom X Y := ⟦f⟧
+
+abbrev eqToHom' {X Y : V} (h : X = Y) : (X ⟶ᵥ Y) := @eqToHom _ prehom _ _ h
+
+-- TODO does this blow away all the below mk_α and similar? If so, delete them!
+@[simp]
+theorem mk_eqToHom {X Y : V} (h : X = Y) :
+    homMk (eqToHom' h) = eqToHom h := by
+  subst h
+  rfl
+
+@[simp]
+theorem mk_id {X : V} : ⟦𝟙ᵥ X⟧ = 𝟙 X :=
+  rfl
+
+@[simp]
+theorem mk_comp {X Y Z : V} (f : X ⟶ᵥ Y) (g : Y ⟶ᵥ Z) :
+    homMk (f ≫ᵥ g) = ⟦f⟧ ≫ ⟦g⟧ :=
+  rfl
+
+@[simp]
+theorem mk_tensor {X₁ Y₁ X₂ Y₂ : V} (f : X₁ ⟶ᵥ Y₁) (g : X₂ ⟶ᵥ Y₂) :
+    ⟦f ⊗ᵥ g⟧ = @MonoidalCategory.tensorHom V _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+  rfl
+
+@[simp]
+theorem mk_whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) :
+    ⟦X ◁ᵥ f⟧ = X ◁ ⟦f⟧ :=
+  rfl
+
+/- @[simp] -/
+/- theorem mk_whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) : -/
+/-     ⟦f.whiskerLeft X⟧ = MonoidalCategory.whiskerLeft (C := V) (X := X) (f := ⟦f⟧) := -/
+/-   rfl -/
+
+@[simp]
+theorem mk_whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) :
+    ⟦f ▷ᵥ Y⟧ = ⟦f⟧ ▷ Y :=
+  rfl
+
+/- @[simp] -/
+/- theorem mk_whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) : -/
+/-     ⟦f.whiskerRight Y⟧ = MonoidalCategory.whiskerRight (C := V) (f := ⟦f⟧) (Y := Y) := -/
+/-   rfl -/
+
+@[simp]
+theorem mk_star {X Y : V} (f : X ⟶ᵥ Y) :
+    homMk f⋆ᵥ = InvolutiveCategoryStruct.starHom ⟦f⟧ := by
+  simp only [homMk]
+  rfl
+
+/-
+@[simp]
+theorem mk_α_hom {X Y Z : V} : homMk (eqToHom' (by simp [tensorObj, mul_assoc])) = (α_ X Y Z).hom :=
+  rfl
+
+@[simp]
+theorem mk_α_inv {X Y Z : V} : homMk (eqToHom' (by simp [tensorObj, mul_assoc])) = (α_ X Y Z).inv :=
+  rfl
+
+@[simp]
+theorem mk_ρ_hom {X : V} : homMk (eqToHom' (by simp [tensorObj, tensorUnit])) = (ρ_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_ρ_inv {X : V} : homMk (eqToHom' (by simp [tensorObj, tensorUnit])) = (ρ_ X).inv :=
+  rfl
+
+@[simp]
+theorem mk_l_hom {X : V} : homMk (eqToHom' (by simp [tensorObj, tensorUnit])) = (λ_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_l_inv {X : V} : homMk (eqToHom' (by simp [tensorObj, tensorUnit])) = (λ_ X).inv :=
+  rfl
+
+@[simp]
+theorem mk_χ_hom {X Y : V} :
+    homMk (eqToHom' (by simp [tensorObj, InvolutiveCategoryStruct.starObj])) = (χ_ X Y).hom :=
+  rfl
+
+@[simp]
+theorem mk_χ_inv {X Y : V} : 
+    homMk (eqToHom' (by simp [tensorObj, InvolutiveCategoryStruct.starObj])) = (χ_ X Y).inv :=
+  rfl
+
+@[simp]
+theorem mk_e_hom {X : V} : 
+    homMk (eqToHom' (by simp [tensorObj, InvolutiveCategoryStruct.starObj])) = (e_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_e_inv {X : V} : 
+    homMk (eqToHom' (by simp [tensorObj, InvolutiveCategoryStruct.starObj])) = (e_ X).inv :=
+  rfl
+-/
+
+@[simp]
+theorem mk_ς_hom {X : V} : 
+    homMk (ς_inv X) = (ς_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_ς_inv {X : V} : 
+    homMk (ς_hom X) = (ς_ X).inv :=
+  rfl
+
+@[simp]
+theorem tensor_eq_tensor {X Y : V} : X * Y = X ⊗ Y :=
+  rfl
+
+@[simp]
+theorem unit_eq_unit : 1 = 𝟙_ V :=
+  rfl
+
+@[simp]
+theorem star_eq_star {X : V} : Star.star X = InvolutiveCategoryStruct.starObj X := by
+  rfl
+

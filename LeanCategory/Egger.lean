@@ -30,6 +30,9 @@ scoped postfix:max "⋆" => InvolutiveCategoryStruct.starHom
 scoped notation "χ_" => InvolutiveCategoryStruct.skewator
 scoped notation "e_" => InvolutiveCategoryStruct.involutor
 
+#check MonoidalCategoryStruct.tensorHom
+#check MonoidalCategory.tensorHom
+
 end InvolutiveCategory
 
 open InvolutiveCategory
