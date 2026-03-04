@@ -1,10 +1,87 @@
-import LeanCategory.PreFreeEggerGood
+import LeanCategory.PreFreeEgger
 
-variable {V : Type u}
-variable [StarMonoid V] [userQuiver : Quiver.{v} V]
+variable {C : Type u} [userQuiver : Quiver.{v} (F C)]
 
-open CategoryTheory
+namespace CategoryTheory.FreeTwistedCategory
 open HomEquiv
+
+instance categoryFreeTwistedCategory : Category.{max u v} (F C) where
+  Hom X Y := _root_.Quotient (FreeTwistedCategory.setoidHom X Y)
+  id X := ⟦Hom.id X⟧
+  comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
+  id_comp := by
+    rintro X Y ⟨f⟩
+    exact _root_.Quotient.sound (id_comp f)
+  comp_id := by
+    rintro X Y ⟨f⟩
+    exact _root_.Quotient.sound (comp_id f)
+  assoc := by
+    rintro W X Y Z ⟨f⟩ ⟨g⟩ ⟨h⟩
+    exact _root_.Quotient.sound (assoc f g h)
+
+instance : MonoidalCategory (F C) where
+  tensorObj X Y := FreeTwistedCategory.tensor X Y
+  tensorHom := Quotient.map₂ Hom.tensor (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg)
+  whiskerLeft X _ _ f := Quot.map (fun f ↦ Hom.whiskerLeft X f) (fun f f' ↦ .whiskerLeft X f f') f
+  whiskerRight f Y := Quot.map (fun f ↦ Hom.whiskerRight f Y) (fun f f' ↦ .whiskerRight f f' Y) f
+  tensorHom_def {W X Y Z} := by
+    rintro ⟨f⟩ ⟨g⟩
+    exact _root_.Quotient.sound (HomEquiv.tensorHom_def _ _)
+  id_tensorHom_id _ _ := Quot.sound id_tensorHom_id
+  tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂} := by
+    rintro ⟨f₁⟩ ⟨f₂⟩ ⟨g₁⟩ ⟨g₂⟩
+    exact _root_.Quotient.sound (tensorHom_comp_tensorHom _ _ _ _)
+  whiskerLeft_id X Y := Quot.sound (HomEquiv.whiskerLeft_id X Y)
+  id_whiskerRight X Y := Quot.sound (HomEquiv.id_whiskerRight X Y)
+  tensorUnit := FreeTwistedCategory.unit
+  associator X Y Z := ⟨⟦Hom.α_hom X Y Z⟧, ⟦Hom.α_inv X Y Z⟧,
+    _root_.Quotient.sound α_hom_inv, _root_.Quotient.sound α_inv_hom⟩
+  associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} := by
+    rintro ⟨f₁⟩ ⟨f₂⟩ ⟨f₃⟩
+    exact _root_.Quotient.sound (associator_naturality _ _ _)
+  leftUnitor X := ⟨⟦Hom.l_hom X⟧, ⟦Hom.l_inv X⟧,
+    _root_.Quotient.sound l_hom_inv, _root_.Quotient.sound l_inv_hom⟩
+  leftUnitor_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (l_naturality _)
+  rightUnitor X :=
+    ⟨⟦Hom.ρ_hom X⟧, ⟦Hom.ρ_inv X⟧, _root_.Quotient.sound ρ_hom_inv, _root_.Quotient.sound ρ_inv_hom⟩
+  rightUnitor_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (ρ_naturality _)
+  pentagon _ _ _ _ := _root_.Quotient.sound pentagon
+  triangle _ _ := _root_.Quotient.sound triangle
+
+instance : InvolutiveCategory (F C) where
+  starObj X := X.star
+  starHom := Quotient.map Hom.star (fun _ _ hf  ↦ HomEquiv.star hf)
+  starHom_id _ := Quot.sound starHom_id
+  starHom_comp_starHom {X Y Z} := by
+    rintro ⟨f⟩ ⟨g⟩
+    exact _root_.Quotient.sound (starHom_comp_starHom _ _)
+  skewator X Y := ⟨⟦Hom.χ_hom X Y⟧, ⟦Hom.χ_inv X Y⟧, 
+    _root_.Quotient.sound χ_hom_inv, _root_.Quotient.sound χ_inv_hom⟩
+  skewator_naturality {X₁ X₂ Y₁ Y₂} := by
+    rintro ⟨f₁⟩ ⟨f₂⟩
+    exact _root_.Quotient.sound (χ_naturality _ _)
+  involutor X := ⟨⟦Hom.ε_hom X⟧, ⟦Hom.ε_inv X⟧, 
+    _root_.Quotient.sound ε_hom_inv, _root_.Quotient.sound ε_inv_hom⟩
+  involutor_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (HomEquiv.ε_naturality _)
+  f3 _ _ _ := _root_.Quotient.sound f3
+  n2 _ _ := _root_.Quotient.sound n2
+  a _ := _root_.Quotient.sound a
+
+instance : TwistedCategory (F C) where
+  twist X := ⟨⟦Hom.twist_hom X⟧, ⟦Hom.twist_inv X⟧, 
+    _root_.Quotient.sound twist_hom_inv, _root_.Quotient.sound twist_inv_hom⟩
+  twist_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (HomEquiv.twist_naturality _)
+  tℓ _ _ _ := _root_.Quotient.sound tℓ
+
+/-
 
 instance quotiented : Category V where
   Hom X Y := Quotient (setoidHom X Y)
@@ -250,4 +327,7 @@ theorem unit_eq_unit : 1 = 𝟙_ V :=
 @[simp]
 theorem star_eq_star {X : V} : Star.star X = InvolutiveCategoryStruct.starObj X := by
   rfl
+
+-/
+end CategoryTheory.FreeTwistedCategory
 

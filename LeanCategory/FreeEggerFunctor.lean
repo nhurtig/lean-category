@@ -1,131 +1,137 @@
-import LeanCategory.PreFreeEggerFunctor
-import LeanCategory.FreeEggerGood
+import LeanCategory.FreeEgger
 
-open CategoryTheory
+namespace CategoryTheory.FreeTwistedCategory
 
--- TODO maybe we should just prove it straight up on the quotient? That way, we can use
--- simp to rewrite stuff... just like the monoidal file!
--- See the mk_* lemmas here:
-#check FreeMonoidalCategory
--- then the normalizing lemmas here:
-#check MonoidalCategory
+variable {C : Type u} [Quiver.{v} (F C)]
 
--- we'll need to completely redo the mk_* lemmas, but we can use the normalizing lemmas for monoidal (just needs
--- updating w/ the involution/star/twist stuff)
-
-variable {P Q : Type u}
-variable [StarMonoid P] [userP : Quiver.{v} P] [StarMonoid Q] [userQ : Quiver.{v} Q]
-
-variable (m : P →⋆* Q)
-variable (M : {X Y : P} → (X ⟶ Y) → (m X ⟶ m Y))
-
-/- @[simp] -/
-/- theorem mk_id' {X : P} : ⟦𝟙ᵥ X⟧ = 𝟙 X := -/
-/-   rfl -/
-/- set_option trace.simplify.rewrite true -/
-/- set_option diagnostics true -/
-/- set_option diagnostics.threshold 0 -/
-/- set_option trace.Meta.Tactic.simp true -/
-
-/- lemma eqToHomLeftSimpTODOname {X X' Y : P} {h : X = X'} : -/
-
-attribute [simp] mk_tensor
-attribute [aesop safe] mk_tensor
-#check mk_tensor
-#check mk_comp
-/- set_option trace.Meta.Tactic.simp.rewrite true -/
-/- set_option trace.Meta.Tactic.simp true -/
-/- set_option trace.Meta.Tactic.simp.rewrite true -/
-/- set_option trace.Meta.Tactic.simp.discharge true -/
+variable {D : Type u'} [Category.{v'} D] [TwistedCategory D] (m : C → D)
 
 open MonoidalCategory
+open InvolutiveCategory
+open TwistedCategory
+
+def projectObj : F C → D
+  | .of X => m X
+  | .unit => 𝟙_ D
+  | .tensor X Y => X.projectObj ⊗ Y.projectObj
+  | .star X => X.projectObj⋆
+
+variable (M : {X Y : F C} → (X ⟶ Y) → ((X.projectObj m) ⟶ (Y.projectObj m)))
+
+open Hom
+
+def projectMapAux : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (projectObj m X ⟶ projectObj m Y)
+  | _, _, Hom.of f => M f
+  | _, _, Hom.id _ => 𝟙 _
+  | _, _, α_hom _ _ _ => (α_ _ _ _).hom
+  | _, _, α_inv _ _ _ => (α_ _ _ _).inv
+  | _, _, l_hom _ => (λ_ _).hom
+  | _, _, l_inv _ => (λ_ _).inv
+  | _, _, ρ_hom _ => (ρ_ _).hom
+  | _, _, ρ_inv _ => (ρ_ _).inv
+  | _, _, Hom.comp f g => projectMapAux f ≫ projectMapAux g
+  | _, _, Hom.whiskerLeft X p => projectObj m X ◁ projectMapAux p
+  | _, _, Hom.whiskerRight p X => projectMapAux p ▷ projectObj m X
+  | _, _, Hom.tensor f g => projectMapAux f ⊗ₘ projectMapAux g
+  | _, _, Hom.star f => (projectMapAux f)⋆
+  | _, _, χ_hom _ _ => (χ_ _ _).hom
+  | _, _, χ_inv _ _ => (χ_ _ _).inv
+  | _, _, ε_hom _ => (e_ _).hom
+  | _, _, ε_inv _ => (e_ _).inv
+  | _, _, twist_hom _ => (ς_ _).hom
+  | _, _, twist_inv _ => (ς_ _).inv
 
 @[simp]
-lemma my_map_mul : m (X ⊗ Y) = m X ⊗ m Y := by
-  sorry
+def projectMap (X Y : F C) : (categoryFreeTwistedCategory.Hom X Y) →
+    (projectObj m X ⟶ projectObj m Y) :=
+  _root_.Quotient.lift (projectMapAux m M) <| by
+    intro f g h
+    induction h with
+    | refl => rfl
+    | symm _ _ _ hfg' => exact hfg'.symm
+    | trans _ _ hfg hgh => exact hfg.trans hgh
+    | comp _ _ hf hg => dsimp only [projectMapAux]; rw [hf, hg]
+    | whiskerLeft _ _ _ _ hf => dsimp only [projectMapAux, projectObj]; rw [hf]
+    | whiskerRight _ _ _ _ hf => dsimp only [projectMapAux, projectObj]; rw [hf]
+    | tensor _ _ hfg hfg' => dsimp only [projectMapAux]; rw [hfg, hfg']
+    | tensorHom_def f g =>
+        dsimp only [projectMapAux, projectObj]; rw [MonoidalCategory.tensorHom_def]
+    | comp_id => dsimp only [projectMapAux]; rw [Category.comp_id]
+    | id_comp => dsimp only [projectMapAux]; rw [Category.id_comp]
+    | assoc => dsimp only [projectMapAux]; rw [Category.assoc]
+    | id_tensorHom_id => dsimp only [projectMapAux]; rw [MonoidalCategory.id_tensorHom_id]; rfl
+    | tensorHom_comp_tensorHom =>
+      dsimp only [projectMapAux]; rw [MonoidalCategory.tensorHom_comp_tensorHom]
+    | whiskerLeft_id =>
+        dsimp only [projectMapAux, projectObj]
+        rw [MonoidalCategory.whiskerLeft_id]
+    | id_whiskerRight =>
+        dsimp only [projectMapAux, projectObj]
+        rw [MonoidalCategory.id_whiskerRight]
+    | α_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
+    | α_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
+    | associator_naturality =>
+        dsimp only [projectMapAux]; rw [MonoidalCategory.associator_naturality]
+    | ρ_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
+    | ρ_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
+    | ρ_naturality =>
+        dsimp only [projectMapAux, projectObj]
+        rw [MonoidalCategory.rightUnitor_naturality]
+    | l_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
+    | l_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
+    | l_naturality =>
+        dsimp only [projectMapAux, projectObj]
+        rw [MonoidalCategory.leftUnitor_naturality]
+    | pentagon =>
+        dsimp only [projectMapAux, projectObj]
+        rw [MonoidalCategory.pentagon]
+    | triangle =>
+        dsimp only [projectMapAux, projectObj]
+        rw [MonoidalCategory.triangle]
+    -- START NAT'S STUFF
+    | star _ hf => dsimp only [projectMapAux]; rw [hf]
+    | starHom_comp_starHom _ hf =>
+      dsimp only [projectMapAux]; rw [InvolutiveCategory.starHom_comp_starHom]
+    | starHom_id => dsimp only [projectMapAux, projectObj]; rw [InvolutiveCategory.starHom_id]
+    | ε_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
+    | ε_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
+    | ε_naturality =>
+        dsimp only [projectMapAux, projectObj]
+        exact InvolutiveCategory.involutor_naturality _
+    | χ_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
+    | χ_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
+    | χ_naturality =>
+        dsimp only [projectMapAux, projectObj]
+        exact InvolutiveCategory.skewator_naturality _ _
+    | f3 =>
+        dsimp only [projectMapAux, projectObj]
+        exact TwistedCategory.f3 _ _ _
+    | n2 =>
+        dsimp only [projectMapAux, projectObj]
+        exact TwistedCategory.n2 _ _
+    | a =>
+        dsimp only [projectMapAux, projectObj]
+        exact TwistedCategory.a _
+    | twist_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
+    | twist_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
+    | twist_naturality =>
+        dsimp only [projectMapAux, projectObj]
+        exact TwistedCategory.twist_naturality _
+    | tℓ =>
+        dsimp only [projectMapAux, projectObj]
+        exact TwistedCategory.tℓ _ _ _
 
-#check MonoidalCategory
-#check FreeMonoidalCategory
-#check CategoryTheory.eqToIso
+def project : F C ⥤ D where
+  obj := projectObj m
+  map := projectMap m M _ _
+  map_comp := by rintro _ _ _ ⟨_⟩ ⟨_⟩; rfl
 
---eqToHom vs. whisker lemma
-lemma eqToHom_whiskerLeft {h : X' = X} {f : Y₁ ⟶ Y₂} : (eqToHom (by rw [h])) ≫ (X ◁ f) = X' ◁ f := by
-  sorry
+variable {D : Type u'} [Quiver.{v'} (F D)] (m : C → D)
 
-@[reassoc (attr := simp)]
-lemma maybeThis {f : Y₁ ⟶ Y₂} {X₁ X₂ : P} : (m (X₁ ⊗ X₂) ◁ f) = eqToHom (by sorry) ≫ ((MonoidalCategoryStruct.tensorObj (m X₁) (m X₂)) ◁ f) ≫ eqToHom (by sorry) := by
-  sorry
+variable (M : {X Y : F C} → (X ⟶ Y) →
+  ((X.projectObj (FreeTwistedCategory.of <| m ·)) ⟶ (Y.projectObj (FreeTwistedCategory.of <| m ·))))
 
-@[reassoc (attr := simp)]
-lemma maybeThisIdWhisker {f : Y₁ ⟶ Y₂} : (m (𝟙_ P) ◁ f) = eqToHom (by sorry) ≫ ((𝟙_ Q) ◁ f) ≫ eqToHom (by sorry) := by
-  sorry
+def projectFree : F C ⥤ F D := project (FreeTwistedCategory.of <| m ·) (⟦Hom.of <| M ·⟧)
 
-@[reassoc (attr := simp)]
-lemma maybeThisWhiskerId {f : Y₁ ⟶ Y₂} : (f ▷ m (𝟙_ P)) = eqToHom (by sorry) ≫ (f ▷ (𝟙_ Q)) ≫ eqToHom (by sorry) := by
-  sorry
-
-/- @[reassoc (attr := simp)] -/
-/- lemma maybeThisStar {X : P} : (𝟙 (m (InvolutiveCategoryStruct.starObj X))) = eqToHom (by sorry) ≫ (𝟙 (InvolutiveCategoryStruct.starObj (m X))) ≫ eqToHom (by sorry) := by -/
-/-   sorry -/
-
-/- @[reassoc (attr := simp)] -/
-/- lemma maybeThisStar {X : P} : (𝟙 (InvolutiveCategoryStruct.starObj (m X))) = eqToHom (by sorry) ≫ (𝟙 (m (InvolutiveCategoryStruct.starObj X))) ≫ eqToHom (by sorry) := by -/
-/-   sorry -/
-
-@[reassoc (attr := simp)]
-lemma eqToHom_id {X' X : P} {h : X' = X} : (eqToHom h) ≫ (𝟙 X) = eqToHom h := by
-  sorry
-
-#check eqToHom_id
-#check eqToHom_id_assoc
-
-macro "myTODO" : tactic =>
-  `(tactic|
-    repeat (first
-     | simp [MonoidalCategory.tensorHom_def]
-     | rw [mk_tensor]
-     )
-  )
-
-#check eqToHom
-
-instance proj : P ⥤ Q where
-  obj := m
-  map {X Y} := Quotient.lift (⟦·.proj m M⟧) <| by
-    intros f g h
-    simp
-    induction h
-    any_goals myTODO
-    case star_id =>
-      show _ = (@eqToHom Q quotiented.toCategoryStruct _ _ rfl)
-      show _ ≫ (@eqToHom Q quotiented.toCategoryStruct _ _ rfl) ≫ _ = _
-      cat_disch
-    case star_skew =>
-      simp
-      sorry
-    all_goals sorry
-    /- case tensor_comp_tensor => -/
-    /-   rw [MonoidalCategory.whisker_exchange_assoc] -/
-    /- any_goals cat_disch -/
-    /- case comp_id => -/
-    /-   /- simp [CategoryStruct.id] -/ -/
-    /-   /- rw [mk_id] -/ -/
-    /-   rw [Category.comp_id] -/
-    /-   sorry -/
-    /- any_goals grind -/
-    /- sorry -/
-
-def HomEquiv.myfunct {X Y : P} {f g : X ⟶ᵥ Y} (h : f ≈ g) :
-    ((f.myfunct m M) ≈ (g.myfunct m M)) := by
-  induction h
-  any_goals simp
-  any_goals constructor; done
-  any_goals grind
-  /- any_goals constructor <;> grind -/
-  case id_tensor_id =>
-    eqToHom_eq_eqToHom
-  case tensor_comp_tensor =>
-    simp
-    sorry
-  sorry
+end CategoryTheory.FreeTwistedCategory
 
