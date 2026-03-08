@@ -1,12 +1,12 @@
-import LeanCategory.PreFreeEgger
+import LeanCategory.PreFreeEggerQuiver
 
-variable {C : Type u}
+variable {C : Type u} [userQuiver : Quiver.{v} (FQ C)]
 
-namespace CategoryTheory.FreeTwistedCategory
+namespace CategoryTheory.FreeTwistedCategoryQuiver
 open HomEquiv
 
-instance categoryFreeTwistedCategory : Category.{u} (F C) where
-  Hom X Y := _root_.Quotient (FreeTwistedCategory.setoidHom X Y)
+instance categoryFreeTwistedCategoryQuiver : Category.{max u v, u} (FQ C) where
+  Hom X Y := _root_.Quotient (FreeTwistedCategoryQuiver.setoidHom X Y)
   id X := ⟦Hom.id X⟧
   comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
   id_comp := by
@@ -19,8 +19,8 @@ instance categoryFreeTwistedCategory : Category.{u} (F C) where
     rintro W X Y Z ⟨f⟩ ⟨g⟩ ⟨h⟩
     exact _root_.Quotient.sound (assoc f g h)
 
-instance monoidalFreeTwistedCategory : MonoidalCategory (F C) where
-  tensorObj X Y := FreeTwistedCategory.tensor X Y
+instance monoidalFreeTwistedCategoryQuiver : MonoidalCategory (FQ C) where
+  tensorObj X Y := FreeTwistedCategoryQuiver.tensor X Y
   tensorHom := Quotient.map₂ Hom.tensor (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg)
   whiskerLeft X _ _ f := Quot.map (fun f ↦ Hom.whiskerLeft X f) (fun f f' ↦ .whiskerLeft X f f') f
   whiskerRight f Y := Quot.map (fun f ↦ Hom.whiskerRight f Y) (fun f f' ↦ .whiskerRight f f' Y) f
@@ -33,7 +33,7 @@ instance monoidalFreeTwistedCategory : MonoidalCategory (F C) where
     exact _root_.Quotient.sound (tensorHom_comp_tensorHom _ _ _ _)
   whiskerLeft_id X Y := Quot.sound (HomEquiv.whiskerLeft_id X Y)
   id_whiskerRight X Y := Quot.sound (HomEquiv.id_whiskerRight X Y)
-  tensorUnit := FreeTwistedCategory.unit
+  tensorUnit := FreeTwistedCategoryQuiver.unit
   associator X Y Z := ⟨⟦Hom.α_hom X Y Z⟧, ⟦Hom.α_inv X Y Z⟧,
     _root_.Quotient.sound α_hom_inv, _root_.Quotient.sound α_inv_hom⟩
   associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} := by
@@ -52,7 +52,7 @@ instance monoidalFreeTwistedCategory : MonoidalCategory (F C) where
   pentagon _ _ _ _ := _root_.Quotient.sound pentagon
   triangle _ _ := _root_.Quotient.sound triangle
 
-instance involutiveFreeTwistedCategory : InvolutiveCategory (F C) where
+instance involutiveFreeTwistedCategoryQuiver : InvolutiveCategory (FQ C) where
   starObj X := X.star
   starHom := Quotient.map Hom.star (fun _ _ hf  ↦ HomEquiv.star hf)
   starHom_id _ := Quot.sound starHom_id
@@ -73,7 +73,7 @@ instance involutiveFreeTwistedCategory : InvolutiveCategory (F C) where
   n2 _ _ := _root_.Quotient.sound n2
   a _ := _root_.Quotient.sound a
 
-instance freeTwistedCategory : TwistedCategory (F C) where
+instance freeTwistedCategoryQuiver : TwistedCategory (FQ C) where
   twist X := ⟨⟦Hom.twist_hom X⟧, ⟦Hom.twist_inv X⟧, 
     _root_.Quotient.sound twist_hom_inv, _root_.Quotient.sound twist_inv_hom⟩
   twist_naturality {X Y} := by
@@ -82,28 +82,28 @@ instance freeTwistedCategory : TwistedCategory (F C) where
   tℓ _ _ _ := _root_.Quotient.sound tℓ
 
 /-
-def empty : Quiver (F C) where
+def empty : Quiver (FQ C) where
   Hom _ _ := Empty
 
 /- def twistedNoQuiver (C : Type v) := @freeTwistedCategory C empty -/
 
-def categoryFreeTwistedCategoryNoQuiver : Category.{max u 1, u} (F C) :=
-    @categoryFreeTwistedCategory _ empty
+def categoryFreeTwistedCategoryQuiverNoQuiver : Category.{max u 1, u} (FQ C) :=
+    @categoryFreeTwistedCategoryQuiver _ empty
 
-/- #synth Category.{max u 1, u} (F C) -/
+/- #synth Category.{max u 1, u} (FQ C) -/
 
-#check categoryFreeTwistedCategoryNoQuiver
+#check categoryFreeTwistedCategoryQuiverNoQuiver
 -/
 
 
 /-
-instance (priority := low) monoidalFreeTwistedCategoryNoQuiver : MonoidalCategory.{max u 1, u} (F C) :=
-    @monoidalFreeTwistedCategory _ empty
+instance (priority := low) monoidalFreeTwistedCategoryQuiverNoQuiver : MonoidalCategory.{max u 1, u} (FQ C) :=
+    @monoidalFreeTwistedCategoryQuiver _ empty
 
-#check monoidalFreeTwistedCategoryNoQuiver
+#check monoidalFreeTwistedCategoryQuiverNoQuiver
 
-instance arst : TwistedCategory (F C) := @freeTwistedCategory C empty
-instance arst2 : TwistedCategory.{u, 1} (F C) := twistedNoQuiver C
+instance arst : TwistedCategory (FQ C) := @freeTwistedCategory C empty
+instance arst2 : TwistedCategory.{u, 1} (FQ C) := twistedNoQuiver C
 -/
 
 /-
@@ -354,5 +354,5 @@ theorem star_eq_star {X : V} : Star.star X = InvolutiveCategoryStruct.starObj X 
   rfl
 
 -/
-end CategoryTheory.FreeTwistedCategory
+end CategoryTheory.FreeTwistedCategoryQuiver
 

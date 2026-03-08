@@ -1,11 +1,11 @@
 import LeanCategory.PreFreeEgger
 
-variable {C : Type u}
+variable {C : Type u} [userQuiver : Quiver.{v} (F C)]
 
 namespace CategoryTheory.FreeTwistedCategory
 open HomEquiv
 
-instance categoryFreeTwistedCategory : Category.{u} (F C) where
+instance categoryFreeTwistedCategory : Category.{max u v, u} (F C) where
   Hom X Y := _root_.Quotient (FreeTwistedCategory.setoidHom X Y)
   id X := ⟦Hom.id X⟧
   comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
@@ -81,30 +81,20 @@ instance freeTwistedCategory : TwistedCategory (F C) where
     exact _root_.Quotient.sound (HomEquiv.twist_naturality _)
   tℓ _ _ _ := _root_.Quotient.sound tℓ
 
-/-
 def empty : Quiver (F C) where
   Hom _ _ := Empty
 
 /- def twistedNoQuiver (C : Type v) := @freeTwistedCategory C empty -/
 
-def categoryFreeTwistedCategoryNoQuiver : Category.{max u 1, u} (F C) :=
-    @categoryFreeTwistedCategory _ empty
+instance (priority := low) : Category.{max u 1, u} (F C) := 
+    @categoryFreeTwistedCategory C empty
 
-/- #synth Category.{max u 1, u} (F C) -/
+instance (priority := low) : MonoidalCategory (F C) := inferInstance
 
 #check categoryFreeTwistedCategoryNoQuiver
--/
-
-
-/-
-instance (priority := low) monoidalFreeTwistedCategoryNoQuiver : MonoidalCategory.{max u 1, u} (F C) :=
-    @monoidalFreeTwistedCategory _ empty
-
-#check monoidalFreeTwistedCategoryNoQuiver
 
 instance arst : TwistedCategory (F C) := @freeTwistedCategory C empty
 instance arst2 : TwistedCategory.{u, 1} (F C) := twistedNoQuiver C
--/
 
 /-
 

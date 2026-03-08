@@ -1,8 +1,8 @@
-import LeanCategory.FreeEgger
+import LeanCategory.FreeEggerQuiver
 
-namespace CategoryTheory.FreeTwistedCategory
+namespace CategoryTheory.FreeTwistedCategoryQuiver
 
-variable {C : Type u}
+variable {C : Type u} [Quiver.{v} (FQ C)]
 
 variable {D : Type u'} [Category.{v'} D] [TwistedCategory D] (m : C → D)
 
@@ -10,15 +10,18 @@ open MonoidalCategory
 open InvolutiveCategory
 open TwistedCategory
 
-def projectObj : F C → D
+def projectObj : FQ C → D
   | .of X => m X
   | .unit => 𝟙_ D
   | .tensor X Y => X.projectObj ⊗ Y.projectObj
   | .star X => X.projectObj⋆
 
+variable (M : {X Y : FQ C} → (X ⟶ Y) → ((X.projectObj m) ⟶ (Y.projectObj m)))
+
 open Hom
 
-def projectMapAux : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (projectObj m X ⟶ projectObj m Y)
+def projectMapAux : ∀ {X Y : FQ C}, (X ⟶ᵐ Y) → (projectObj m X ⟶ projectObj m Y)
+  | _, _, Hom.of f => M f
   | _, _, Hom.id _ => 𝟙 _
   | _, _, α_hom _ _ _ => (α_ _ _ _).hom
   | _, _, α_inv _ _ _ => (α_ _ _ _).inv
@@ -39,9 +42,9 @@ def projectMapAux : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (projectObj m X ⟶ projec
   | _, _, twist_inv _ => (ς_ _).inv
 
 @[simp]
-def projectMap (X Y : F C) : (categoryFreeTwistedCategory.Hom X Y) →
+def projectMap (X Y : FQ C) : (categoryFreeTwistedCategoryQuiver.Hom X Y) →
     (projectObj m X ⟶ projectObj m Y) :=
-  _root_.Quotient.lift (projectMapAux m) <| by
+  _root_.Quotient.lift (projectMapAux m M) <| by
     intro f g h
     induction h with
     | refl => rfl
@@ -118,14 +121,17 @@ def projectMap (X Y : F C) : (categoryFreeTwistedCategory.Hom X Y) →
         dsimp only [projectMapAux, projectObj]
         exact TwistedCategory.tℓ _ _ _
 
-def project : F C ⥤ D where
+def project : FQ C ⥤ D where
   obj := projectObj m
-  map := projectMap m _ _
+  map := projectMap m M _ _
   map_comp := by rintro _ _ _ ⟨_⟩ ⟨_⟩; rfl
 
-variable {D : Type u'} [Quiver.{v'} (F D)] (m : C → D)
+variable {D : Type u'} [Quiver.{v'} (FQ D)] (m : C → D)
 
-def projectFree : F C ⥤ F D := project (FreeTwistedCategory.of <| m ·)
+variable (M : {X Y : FQ C} → (X ⟶ Y) →
+  ((X.projectObj (FreeTwistedCategoryQuiver.of <| m ·)) ⟶ (Y.projectObj (.of <| m ·))))
 
-end CategoryTheory.FreeTwistedCategory
+def projectFree : FQ C ⥤ FQ D := project (.of <| m ·) (⟦Hom.of <| M ·⟧)
+
+end CategoryTheory.FreeTwistedCategoryQuiver
 
