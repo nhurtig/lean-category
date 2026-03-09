@@ -43,8 +43,8 @@ class InvolutiveCategory (C : Type u)
   involutor_naturality : ∀ {X Y : C} (f : X ⟶ Y),
       f⋆⋆ ≫ (e_ Y).hom = (e_ X).hom ≫ f
   f3 : ∀ P Q R : C,
-      (α_ P⋆ Q⋆ R⋆).hom ≫ ((𝟙 P⋆) ⊗ₘ (χ_ Q R).hom) ≫ (χ_ P (R ⊗ Q)).hom ≫ (α_ R Q P).hom⋆ =
-        ((χ_ P Q).hom ⊗ₘ (𝟙 R⋆)) ≫ (χ_ (Q ⊗ P) R).hom := by cat_disch
+      (α_ P⋆ Q⋆ R⋆).hom ≫ (P⋆ ◁ (χ_ Q R).hom) ≫ (χ_ P (R ⊗ Q)).hom ≫ (α_ R Q P).hom⋆ =
+        ((χ_ P Q).hom ▷ R⋆) ≫ (χ_ (Q ⊗ P) R).hom := by cat_disch
   n2 : ∀ P Q : C,
       (χ_ P⋆ Q⋆).hom ≫ (χ_ Q P).hom⋆ ≫ (e_ (P ⊗ Q)).hom =
         (e_ P).hom ⊗ₘ (e_ Q).hom := by cat_disch
@@ -170,39 +170,23 @@ theorem inv_star {X Y : C} (f : X ⟶ Y) [hf : IsIso f] :
 -- difficult b/c f3 isn't presented in normal form
 @[reassoc (attr := simp), simp]
 theorem f3_inv : ∀ P Q R : C,
-    (α_ R Q P).inv⋆ ≫ (χ_ P (R ⊗ Q)).inv ≫ ((𝟙 P⋆) ⊗ₘ (χ_ Q R).inv) ≫ (α_ P⋆ Q⋆ R⋆).inv =
-      (χ_ (Q ⊗ P) R).inv ≫ ((χ_ P Q).inv ⊗ₘ (𝟙 R⋆)) := by
+    (α_ R Q P).inv⋆ ≫ (χ_ P (R ⊗ Q)).inv ≫ (P⋆ ◁ (χ_ Q R).inv) ≫ (α_ P⋆ Q⋆ R⋆).inv =
+      (χ_ (Q ⊗ P) R).inv ≫ ((χ_ P Q).inv ▷ R⋆) := by
   intros P Q R
-  apply eq_of_inv_eq_inv
-  simp only [IsIso.inv_comp]
-  simp only [inv_star]
-  simp only [inv_tensor]
-  simp only [IsIso.Iso.inv_inv]
-  simp only [IsIso.inv_id]
-  simp only [assoc]
-  exact f3 P Q R
+  exact eq_of_inv_eq_inv (by simp)
 
 @[reassoc (attr := simp), simp]
 theorem n2_inv : ∀ P Q : C,
       (e_ (P ⊗ Q)).inv ≫ (χ_ Q P).inv⋆ ≫ (χ_ P⋆ Q⋆).inv =
         (e_ P).inv ⊗ₘ (e_ Q).inv := by
   intros P Q
-  apply eq_of_inv_eq_inv
-  simp only [IsIso.inv_comp]
-  simp only [inv_star]
-  simp only [inv_tensor]
-  simp only [IsIso.Iso.inv_inv]
-  simp only [assoc]
-  exact n2 P Q
+  exact eq_of_inv_eq_inv (by simp)
 
 @[reassoc (attr := simp), simp]
 theorem a_inv : ∀ R : C,
     (e_ R).inv⋆ = (e_ R⋆).inv := by
   intros R
-  apply eq_of_inv_eq_inv
-  simp only [inv_star]
-  simp only [IsIso.Iso.inv_inv]
-  exact a R
+  exact eq_of_inv_eq_inv (by simp)
 
 /-
   skewator_naturality : ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
@@ -230,6 +214,19 @@ class TwistedCategoryStruct (C : Type u)
 
 scoped notation "ς_" => TwistedCategoryStruct.twist
 
+variable {C : Type u}
+    [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C] [TwistedCategoryStruct C]
+
+def braid (X Y : C) : X ⊗ Y ≅ Y ⊗ X where
+  hom := ((ς_ _).inv ⊗ₘ (ς_ _).inv) ≫
+    (χ_ _ _).hom ≫
+    (ς_ _).hom
+  inv := (ς_ _).inv ≫
+    (χ_ _ _).inv ≫
+    ((ς_ _).hom ⊗ₘ (ς_ _).hom)
+
+scoped notation "σ_" => braid
+
 end TwistedCategory
 
 open TwistedCategory
@@ -239,10 +236,10 @@ class TwistedCategory (C : Type u) [Category.{v} C] [MonoidalCategory C] [Involu
   twist_naturality : ∀ {X Y : C} (f : X ⟶ Y),
       f⋆ ≫ (ς_ Y).hom = (ς_ X).hom ≫ f := by cat_disch
   tℓ : ∀ P Q R : C,
-      (((χ_ P⋆ Q⋆).hom ≫ (ς_ (Q⋆ ⊗ P⋆)).hom) ⊗ₘ (𝟙 R⋆⋆)) ≫ (α_ Q⋆ P⋆ R⋆⋆).hom ≫
-       ((𝟙 Q⋆) ⊗ₘ ((χ_ P R⋆).hom ≫ (ς_ (R⋆ ⊗ P)).hom)) ≫ (α_ Q⋆ R⋆ P).inv ≫
-       (((χ_ Q R).hom ≫ (ς_ (R ⊗ Q)).hom) ⊗ₘ (𝟙 P)) ≫ (α_ R Q P).hom =
-      (((ς_ P⋆).hom ⊗ₘ (ς_ Q⋆).hom) ⊗ₘ (ς_ R⋆).hom) ≫ ((χ_ P Q).hom ⊗ₘ (𝟙 R⋆)) ≫
+      (χ_ P⋆ Q⋆).hom ▷ R⋆⋆ ≫ (ς_ (Q⋆ ⊗ P⋆)).hom ▷ R⋆⋆ ≫ (α_ Q⋆ P⋆ R⋆⋆).hom ≫
+       Q⋆ ◁ (χ_ P R⋆).hom ≫ Q⋆ ◁ (ς_ (R⋆ ⊗ P)).hom ≫ (α_ Q⋆ R⋆ P).inv ≫
+       (χ_ Q R).hom ▷ P ≫ (ς_ (R ⊗ Q)).hom ▷ P ≫ (α_ R Q P).hom =
+      (((ς_ P⋆).hom ⊗ₘ (ς_ Q⋆).hom) ⊗ₘ (ς_ R⋆).hom) ≫ ((χ_ P Q).hom ▷ R⋆) ≫
         (χ_ (Q ⊗ P) R).hom ≫ (ς_ (R ⊗ Q ⊗ P)).hom := by cat_disch
 
 attribute [reassoc (attr := simp), simp] TwistedCategory.twist_naturality
@@ -253,7 +250,7 @@ namespace TwistedCategory
 variable {C : Type u}
     [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C] [TwistedCategory C]
 
-@[reassoc (attr := simp), simp]
+@[reassoc]
 theorem twist_inv_naturality :
     ∀ {X Y : C} (f : X ⟶ Y),
       f ≫ (ς_ Y).inv = (ς_ X).inv ≫ f⋆ := by
@@ -267,22 +264,13 @@ theorem twist_inv_naturality :
 @[reassoc (attr := simp), simp]
 theorem tℓ_inv : ∀ P Q R : C,
     (α_ R Q P).inv ≫  
-      (((ς_ (R ⊗ Q)).inv ≫ (χ_ Q R).inv) ⊗ₘ (𝟙 P)) ≫ (α_ Q⋆ R⋆ P).hom ≫ 
-      ((𝟙 Q⋆) ⊗ₘ ((ς_ (R⋆ ⊗ P)).inv ≫ (χ_ P R⋆).inv)) ≫ (α_ Q⋆ P⋆ R⋆⋆).inv ≫ 
-      (((ς_ (Q⋆ ⊗ P⋆)).inv ≫ (χ_ P⋆ Q⋆).inv) ⊗ₘ (𝟙 R⋆⋆)) =
-    (ς_ (R ⊗ Q ⊗ P)).inv ≫ (χ_ (Q ⊗ P) R).inv ≫ ((χ_ P Q).inv ⊗ₘ (𝟙 R⋆)) ≫
+      (ς_ (R ⊗ Q)).inv ▷ P ≫ (χ_ Q R).inv ▷ P ≫ (α_ Q⋆ R⋆ P).hom ≫ 
+      Q⋆ ◁ (ς_ (R⋆ ⊗ P)).inv ≫ Q⋆ ◁ (χ_ P R⋆).inv ≫ (α_ Q⋆ P⋆ R⋆⋆).inv ≫ 
+      (ς_ (Q⋆ ⊗ P⋆)).inv ▷ R⋆⋆ ≫ (χ_ P⋆ Q⋆).inv ▷ R⋆⋆ =
+    (ς_ (R ⊗ Q ⊗ P)).inv ≫ (χ_ (Q ⊗ P) R).inv ≫ (χ_ P Q).inv ▷ R⋆ ≫
       (((ς_ P⋆).inv ⊗ₘ (ς_ Q⋆).inv) ⊗ₘ (ς_ R⋆).inv) := by
   intros P Q R
-  apply eq_of_inv_eq_inv
-  simp only [IsIso.inv_comp]
-  simp only [inv_tensor]
-  simp only [IsIso.Iso.inv_inv]
-  simp only [IsIso.Iso.inv_hom]
-  simp only [IsIso.inv_id]
-  simp only [assoc]
-  simp only [IsIso.inv_comp]
-  simp only [IsIso.Iso.inv_inv]
-  exact tℓ P Q R
+  exact eq_of_inv_eq_inv (by simp)
 
 end TwistedCategory
 end CategoryTheory

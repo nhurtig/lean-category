@@ -101,8 +101,6 @@ def categoryFreeTwistedCategoryNoQuiver : Category.{max u 1, u} (F C) :=
 
 
 /-
-instance (priority := low) monoidalFreeTwistedCategoryNoQuiver : MonoidalCategory.{max u 1, u} (F C) :=
-    @monoidalFreeTwistedCategory _ empty
 
 #check monoidalFreeTwistedCategoryNoQuiver
 
@@ -386,6 +384,7 @@ macro "simp_mk" : tactic =>
       | rw [star_eq_star']
       | rw [mk_ς_hom]
       | rw [mk_ς_inv]
+      | rw [twist_inv_naturality]
     )
   )
 
@@ -435,8 +434,45 @@ theorem mk_e_inv {X : V} :
   rfl
 -/
 
-#check MonoidalCategory
+instance : Groupoid.{u} (F C) where
+    inv := _root_.Quotient.lift (fun f => ⟦f.inv⟧) <| by
+      intros f g h
+      simp
+      induction h
+      any_goals simp_mk
+      case tensorHom_def =>
+        rw [← tensorHom_def']
+      all_goals aesop_cat
+    comp_inv := by
+      rintro X Y f
+      induction f using Quotient.inductionOn
+      case h f =>
+        rw [Quotient.lift_mk]
+        induction f
+        all_goals simp_mk
+        any_goals cat_disch
+        any_goals first
+          | repeat1 rw [← Category.assoc]
+          | rw [← whiskerLeft_comp]
+          | rw [← comp_whiskerRight]
+          | rw [← InvolutiveCategory.starHom_comp_starHom]
+        all_goals cat_disch
+    inv_comp := by
+      rintro X Y f
+      induction f using Quotient.inductionOn
+      case h f =>
+        rw [Quotient.lift_mk]
+        induction f
+        all_goals simp_mk
+        any_goals cat_disch
+        any_goals first
+          | repeat1 rw [← Category.assoc]
+          | rw [← whiskerLeft_comp]
+          | rw [← comp_whiskerRight]
+          | rw [← InvolutiveCategory.starHom_comp_starHom]
+        all_goals cat_disch
 
+/-
 instance : Groupoid.{u} (F C) :=
   { (inferInstance : Category (F C)) with
     inv := _root_.Quotient.lift (fun f => ⟦f.inv⟧) (by
@@ -453,16 +489,19 @@ instance : Groupoid.{u} (F C) :=
       /-   rw [@mk_ς_inv C X] -/
       /-   aesop_cat -/
       /- case  -/
-      case f3 =>
-        simp_mk
-        sorry
-      case tensorHom_def =>
-        exact MonoidalCategory.tensorHom_def' (homMk _) (homMk _)
-      all_goals sorry
+      /- case f3 => -/
+      /-   simp_mk -/
+      /-   sorry -/
+      /- case f3 P Q R => -/
+      /-   simp_mk -/
+      /-   #check f3_inv -/
+      /-   exact f3_inv P Q R -/
+      /-   sorry -/
       any_goals simp_mk
       any_goals aesop_cat
       all_goals sorry
       ) }
+-/
 
 end CategoryTheory.FreeTwistedCategory
 

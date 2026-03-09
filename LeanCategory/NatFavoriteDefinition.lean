@@ -1,66 +1,141 @@
 import Mathlib
-import LeanCategory.FreeEgger
-import LeanCategory.FreeEggerFunctor
+import LeanCategory.Layer
+
+variable {V : Type u} [stitches : StarQuiver.{v} V]
+
+/- #synth (Quiver (List <| V × Bool)) -/
+-- A CanonicalStitch with a record of the identity strands on its left/right
+-- TODO: maybe make two layers -- one for two+ outs, one for one out
+structure Layer (X Y : F V) where
+  L : F V
+  box : X ⟶ Y
+  R : F V
+
+
+-- if two F V's have the same project, there's a morphism between them in braid land
+-- (w/o twist, but that's not important right now)
+-- TO PROVE THIS: define a "canonical form" for (F V) up to natural isomorphisms.
+-- Show that every F V is ⟶β equivalent to some canonical form.
+-- Show that canonical forms and F V's have the same projection... ugh we'll need to drop the twist
+-- now
+-- wait... if p X = p Y and Y is canonical, that might work
+-- List (V × Bool) IS our canonical representation!
+
+namespace Layer
+
+inductive TopBottom where
+  | Top
+  | Bottom
+
+def boundary {X Y : F V} (l : Layer X Y) : TopBottom → F V
+  | .Top => l.L * Y * l.R
+  | .Bottom => l.L * X * l.R
+
+@[simp]
+lemma boundary_top {X Y : F V} (l : Layer X Y) : boundary l .Top = l.L * Y * l.R := rfl
+
+@[simp]
+lemma boundary_bottom {X Y : F V} (l : Layer X Y) : boundary l .Bottom = l.L * X * l.R := rfl
+
+inductive SubgroupoidGen {X Y : F V} (l : Layer X Y) where
+  | kappa : SubgroupoidGen l -- the primary strand
+  | left : Fin l.L.length → SubgroupoidGen l -- named strands to the left of the stitch
+  | right : Fin l.R.length → SubgroupoidGen l -- named strands to the right of the stitch
+
+scoped notation "S" => SubgroupoidGen
+
+def layerTypeLeft {X Y : F V} (l : Layer X Y) : F (S l) :=
+  l.L.toFin.map .left
+
+def layerTypeRight {X Y : F V} (l : Layer X Y) : F (S l) :=
+  l.R.toFin.map .right
+
+@[simp]
+def layerTypeStitch {X Y : F V} (l : Layer X Y) : F (S l) :=
+  .of .kappa -- TODO do we need to track flippedness in Layer? Nah, I don't think so...
+
+@[simp]
+def layerType {X Y : F V} (l : Layer X Y) : F (S l) :=
+  l.layerTypeLeft * l.layerTypeStitch * l.layerTypeRight
+
+@[simp]
+def phiGen {X Y : F V} (l : Layer X Y) (b : TopBottom) : (S l) → F V
+  | .kappa => match b with
+    | .Top => Y
+    | .Bottom => X
+  | .left i => .of <| l.L.getElem i
+  | .right i => .of <| l.R.getElem i
+
+/-
+def phi {X Y : F V} (l : Layer X Y) (b : TopBottom) (Z : F (S l)) : F V :=
+  (Z.map <| l.phiGen b).flatten
+-/
+
+open CategoryTheory.InvolutiveCategory
+open CategoryTheory.FreeTwistedCategory
+
+omit stitches in
+@[simp]
+lemma phi_involutive_helper {X : F V} : (X.toFin).map (X.getElem ·) = X := by
+  induction X
+  case of =>
+    simp_all
+  case unit =>
+    simp
+  case star X ih =>
+    simp_all
+    apply congrArg
+    apply Eq.trans _ ih
+    clear ih
+    cases X <;> simp_all
+    case star X =>
+      apply congrArg
+      apply congrArg (map · X.toFin)
+      ext i
+      apply congrArg (X.getElem ·)
+      ext
+      simp
+      omega
+    case tensor X Y =>
+      apply congrArg₂
+      any_goals apply congrArg (X.toFin.map ·)
+      any_goals apply congrArg (Y.toFin.map ·)
+      all_goals ext i ; simp
+      all_goals split
+      any_goals omega
+      any_goals apply congrArg (X.getElem ·)
+      any_goals apply congrArg (Y.getElem ·)
+      all_goals ext ; simp ; omega
+  case tensor X Y ih₁ ih₂ =>
+    simp
+    apply congrArg₂
+    any_goals apply Eq.trans _ ih₁
+    any_goals apply Eq.trans _ ih₂
+    any_goals apply congrArg (X.toFin.map ·)
+    any_goals apply congrArg (Y.toFin.map ·)
+    all_goals ext i ; simp
+
+/-
+@[simp]
+lemma phi_mul {X Y : F V} {l : Layer X Y} {A B : F (S l)} : l.phi b (A * B) =
+    (l.phi b A) * (l.phi b B) := by
+  simp [HMul.hMul, phi]
+
+lemma phi_involutive {X Y : F V} {l : Layer X Y} : l.phi b l.layerType = l.boundary b := by
+  cases b <;> simp
+  all_goals
+    unfold Layer.phi ;
+    unfold Layer.phiGen ;
+    try unfold Layer.layerTypeLeft ;
+    try unfold Layer.layerTypeRight ;
+    simp ;
+    unfold Function.comp ;
+    simp
+-/
+
+end Layer
 
 open CategoryTheory
-
-/- def Carrier := ℕ -/
-/- deriving Repr, DecidableEq -/
-/- def Loop := ℕ -- TODO: loops have twists! -/
-/- deriving Repr, DecidableEq -/
-
-/- def Strand := Carrier ⊕ Loop -/
-/- deriving Repr, DecidableEq -/
-
--- the generating objects (for us, strands)
-variable {V : Type u}
-
-/- instance instV_StarMonoid : StarMonoid V where -/
-/-   mul := List.append -/
-/-   mul_assoc := List.append_assoc -/
-/-   one := List.nil -/
-/-   one_mul := List.nil_append -/
-/-   mul_one := List.append_nil -/
-/-   star := List.reverse -/
-/-   star_involutive := List.reverse_reverse -/
-/-   star_mul _ _ := List.reverse_append -/
-
-@[simp]
-def inject (L : List (V × Bool)) : F V :=
-  L.map (fun (v, b) ↦ (if b then (FreeTwistedCategory.of v).star else (FreeTwistedCategory.of v)))
-    |>.foldl .tensor .unit
-
-@[simp]
-instance : MulOne (List <| V × Bool) where
-  one := []
-  mul := List.append
-
-@[simp]
-instance : Star (List <| V × Bool) where
-  star L := (L.map (fun (v, b) ↦ (v, !b))).reverse
-
-/- #check  -/
-postfix:max "⋆" => @Star.star (List <| _ × Bool) _
-
--- are the lists ever used? I don't think so...
-@[simp]
-def project : F V → List (V × Bool)
-  | .unit => []
-  | .star X => (project X)⋆
-  | .tensor X Y => (project X) * (project Y)
-  | .of X => [(X, false)]
-
-variable (v : V)
-
--- TODO inject-project is ID; project-inject is involutive (adjoint stuff)
-
-/- section -/
-/- local instance : Quiver.{v} (F V) where -/
-/-   Hom X Y := { f : ((Z : (List (V × Bool) × List (V × Bool))) × (Z.1 ⟶ Z.2)) // (inject f.1.1 = X ∧ inject f.1.2 = Y) } -/
-
-/- -- this is our category!!! -/
-/- #synth TwistedCategory (F V) -/
-/- end -/
 
 -- this is just the braids
 #check (F V)
@@ -68,13 +143,6 @@ variable (v : V)
 #synth Category (F V)
 #synth Quiver (F V)
 /- #check CategoryTheory.FreeTwistedCategory.twistedFromQuiver -/
-
-#check (F V)
-#check Bool
-
-
-  -- hdom : dom = left * box.dom * right := by grind
-  -- hcod : cod = left * box.cod * right := by grind
 
 -- β is the free category without a quiver
 -- set up notation b/c we'll be introducing
@@ -98,31 +166,7 @@ postfix:max "⋆β" => βtwist.starHom
 
 
 -- the stitches (lacking restriction on dom/cod size from paper)
-variable [stitches : Quiver.{v} (F V)] {stitchStar : {X Y : F V} → (X ⟶ Y) → (X.star ⟶ Y.star)}
-
-/- #synth (Quiver (List <| V × Bool)) -/
--- A CanonicalStitch with a record of the identity strands on its left/right
--- TODO: maybe make two layers -- one for two+ outs, one for one out
-structure Layer (X Y : F V) where
-  L : F V
-  box : X ⟶ Y
-  R : F V
-
-
--- if two F V's have the same project, there's a morphism between them in braid land
--- (w/o twist, but that's not important right now)
--- TO PROVE THIS: define a "canonical form" for (F V) up to natural isomorphisms.
--- Show that every F V is ⟶β equivalent to some canonical form.
--- Show that canonical forms and F V's have the same projection... ugh we'll need to drop the twist
--- now
--- wait... if p X = p Y and Y is canonical, that might work
--- List (V × Bool) IS our canonical representation!
-
-open MonoidalCategory
-#check Iso
-
-
-#check CategoryStruct
+/- variable {stitchStar : {X Y : F V} → (X ⟶ Y) → (X.star ⟶ Y.star)} -/
 
 inductive MyHom : F V → F V → Type (max u v 2) where
   | layer : (l : Layer X Y) →
@@ -138,28 +182,9 @@ instance (priority := low) preHom : CategoryStruct (F V) where
   id := (MyHom.braid <| 𝟙β ·)
   comp := MyHom.comp
 
-inductive TopBottom where
-  | Top
-  | Bottom
+namespace Layer
 
-@[simp]
-def Layer.boundary {X Y : F V} (l : Layer X Y) : TopBottom → F V
-  | .Top => l.L * Y * l.R
-  | .Bottom => l.L * X * l.R
-
-/- @[simp] -/
-/- def Layer.cod : Layer → V -/
-/-   | ⟨left, box, right⟩ => left * box.cod * right -/
-
--- start of subgroupoid stuff
-
-inductive LayerSubgroupoidGen {X Y : F V} (l : Layer X Y) where
-  | kappa : LayerSubgroupoidGen l -- the primary strand
-  | left : Fin l.L.length → LayerSubgroupoidGen l -- named strands to the left of the stitch
-  | right : Fin l.R.length → LayerSubgroupoidGen l -- named strands to the right of the stitch
-
-notation "S" => LayerSubgroupoidGen
-
+-- the subgroupoid
 def Lcat {X Y : F V} {l : Layer X Y} : Category.{0} (F (S l)) := inferInstance
 infixr:10 " ⟶L " => Lcat.Hom
 notation "𝟙L" => Lcat.id
@@ -175,159 +200,128 @@ postfix:max "⋆L" => Ltwist.starObj
 postfix:max "⋆L" => Ltwist.starHom
 
 
-def Layer.layerTypeLeft {X Y : F V} (l : Layer X Y) : F (S l) :=
-  l.L.toFin.map .left
-
-def Layer.layerTypeRight {X Y : F V} (l : Layer X Y) : F (S l) :=
-  l.R.toFin.map .right
-
-@[simp]
-def Layer.layerTypeStitch {X Y : F V} (l : Layer X Y) : F (S l) :=
-  .of .kappa -- TODO do we need to track flippedness in Layer? Nah, I don't think so...
-
-@[simp]
-def Layer.layerType {X Y : F V} (l : Layer X Y) : F (S l) :=
-  l.layerTypeLeft * l.layerTypeStitch * l.layerTypeRight
-
--- boxHandler was used for above/below
-@[simp]
-def Layer.phiGen {X Y : F V} (l : Layer X Y) (above : TopBottom) : (S l) → F V
-  | .kappa => match above with
-    | .Top => Y
-    | .Bottom => X
-  | .left i => .of <| l.L.getElem i
-  | .right i => .of <| l.R.getElem i
-
-def Layer.phi {X Y : F V} (l : Layer X Y) (above : TopBottom) (Z : F (S l)) : F V :=
-  (Z.map <| l.phiGen above).flatten
-
-/- @[simp] -/
-/- lemma List.map_range_succ : List.map f (List.range (n + 1)) = -/
-/-     (List.map f (List.range n)) ++ [f n] := by -/
-/-   rw [List.range_succ] -/
-/-   simp -/
-
-/- @[simp] -/
-/- lemma List.getElem?_prefix {l l' : List α} : l' ++ [a] <+: l → l[l'.length]? = .some a := by -/
-/-   rintro ⟨s, h⟩ -/
-/-   subst l -/
-/-   simp -/
-
-@[simp]
-lemma Layer.phi_involutive_helper {X : F V} : (X.toFin).map (X.getElem ·) = X := by
-  induction X
-  case of =>
-    simp_all
-  case unit =>
-    simp
-  case star X ih =>
-    simp_all
-    apply Eq.trans _ ih
-    clear ih
-    cases X <;> simp_all
-    case star X =>
-      apply congrArg (X.toFin.map ·)
-      ext i
-      apply congrArg (X.getElem ·)
-      ext
-      simp
-      omega
-    case tensor X Y =>
-      constructor
-      any_goals apply congrArg (X.toFin.map ·)
-      any_goals apply congrArg (Y.toFin.map ·)
-      all_goals ext i ; simp
-      all_goals split
-      any_goals omega
-      any_goals apply congrArg (X.getElem ·)
-      any_goals apply congrArg (Y.getElem ·)
-      all_goals ext ; simp ; omega
-  case tensor X Y ih₁ ih₂ =>
-    simp
-    constructor
-    any_goals apply Eq.trans _ ih₁
-    any_goals apply Eq.trans _ ih₂
-    any_goals apply congrArg (X.toFin.map ·)
-    any_goals apply congrArg (Y.toFin.map ·)
-    all_goals ext i ; simp
-
-/-
-@[simp]
-lemma Layer.phi_left {X Y : F V} {l : Layer X Y} : l.phi b l.layerTypeLeft = l.L := by
-  simp [phi, layerTypeLeft]
-  induction l.L
-
-  generalize hx : l.L = x at *
-  have hpre : x ⊆ l.L := by subst hx; exact FreeTwistedCategory.Subset.rfl
-  clear hx
-  induction x <;> simp_all
-  case of x =>
-    unfold Subset at hpre
-    unfold FreeTwistedCategory.instHasSubset at hpre
-    simp at hpre
-    cases hpre
-    case inl h =>
-      rw [← h]
-      simp
-    case inr h =>
-      rw [h.choose_spec]
-      simp
-  case star X ih =>
-    cases hpre
-    case inl h =>
-      simp
-      rw [← h]
-      simp
-
-@[simp]
-lemma Layer.phi_right {l : Layer} : l.phi f l.layerTypeRight = l.right := by
-  simp [phi, layerTypeRight]
-  generalize hx : l.right = x at *
-  have hpre : x <+: l.right := by aesop
-  clear hx
-  induction x using List.reverseRecOn
-  all_goals simp
-  case append_singleton l' a ih =>
-    apply congrArg₂
-    · apply ih
-      refine trans ?_ hpre
-      aesop
-    · rw [List.getElem?_prefix hpre]
--/
-
-@[simp]
-lemma Layer.phi_mul {X Y : F V} {l : Layer X Y} {A B : F (S l)} : l.phi b (A * B) =
-    (l.phi b A) * (l.phi b B) := by
-  simp [HMul.hMul, phi]
-
-lemma Layer.phi_involutive {X Y : F V} {l : Layer X Y} : l.phi b l.layerType = l.boundary b := by
-  cases b <;> simp
-  all_goals
-    unfold Layer.phi ;
-    unfold Layer.phiGen ;
-    try unfold Layer.layerTypeLeft ;
-    try unfold Layer.layerTypeRight ;
-    simp ;
-    unfold Function.comp ;
-    simp
-
 -- TODO a way to map F (S l) words (Y) with domain l.layerType into MyHom
 -- words (aka F V) from l's bottom boundary (Y's domain) to Y's codomain in the
 -- bottom projection to a modified l to Y's codomain in the top projection to to l's top boundary
 -- (Y's domain)
+
+-- well, there already should be a functor from F (S l) to F V in projectFree, given (S l) → V
+open FreeTwistedCategory
+#check projectFree
+-- okay... what's our function (S l) → V? DNE... we need to map κ to F V
+#check project
+-- ok. So we want to have D := F V, and then we can use a function S l → F V
+-- what's our function S l → F V? That's phiGen
+#check phiGen
+
+-- every layer begets a functor from its subgroupoid to its above/below space:
+-- TODO call this phi, rename the others
+instance φ {X Y : F V} (l : Layer X Y) (b : TopBottom) : F (S l) ⥤ F V := project (phiGen l b)
+
+open MonoidalCategory
+
+/- lemma phi_involutive {X Y : F V} {l : Layer X Y} : l.phi b l.layerType = l.boundary b := by -/
+-- TODO logic for this lemma is scattered everywhere
+@[simp]
+lemma phi_obj_layerType {X Y : F V} (l : Layer X Y) :
+    (l.φ b).obj l.layerType = l.boundary b := by
+  unfold φ
+  unfold project
+  cases b <;> simp
+  all_goals apply congrArg₂
+  any_goals apply congrArg₂
+  any_goals rfl
+  any_goals unfold layerTypeLeft
+  any_goals unfold layerTypeRight
+  all_goals unfold phiGen
+  all_goals simp
+  all_goals unfold Function.comp
+  all_goals simp
+
+#check Functor
+/- variable {X Y : F V} {l : Layer X Y} {b : TopBottom} {d : F (S l)} {f : l.layerType ⟶ d} -/
+/- #check (l.φ b).obj l.layerType -/
+/- #check (l.φ b).obj 1 -/
+/- #check (l.φ b).map f -/
+/- #check inv <| (l.φ b).map f -/
+
+@[simp]
+def layerMoveBraid {X Y : F V} (l : Layer X Y) {Z : F (S l)} (s : l.layerType ⟶ Z) (b : TopBottom) :
+    (l.boundary b) ⟶β (l.φ b).obj Z :=
+   (l.phi_obj_layerType) ▸ (l.φ b).map s -- TODO consider using eqToHom if something goes south
+
+-- sorta like a functor for F (S l) into the category of layers...
+-- yeah! Layer X Y (fixed box) forms a category, where morphisms
+-- are movements between the left/right and reassociations
+
+-- we should probably just map to a Layer X Y, and then later prove
+-- that the boundaries are good
+@[simp]
+def preLayerMoveLayer {X Y : F V} (l : Layer X Y) {Z : F (S l)} : (l.layerType ⟶ᵐ Z) → Layer X Y
+  | .id _ => l
+  | .comp f g => (l.preLayerMoveLayer f).preLayerMoveLayer g
+  | _ => sorry
+
+-- AAHHHHH! Make each Layer contain its own subgroupoid type, and define a layer's
+-- MyHom type using the injection φ! Now Layers can contain multiple, duplicated, boxes (who cares,
+-- this is easy to reconfigure, right?). Actually, that could technically break the isomorphism.
+-- Maybe we need a Layer split/merge rule if we do this... a Layer can split over tensor...
+-- but this messes with the indices and the left/right-ness. Maybe a Layer doesn't necessarily
+-- have unique strand IDs, but the generators are of a different type? Yeah, each Layer
+-- has its own type for strand IDs, and its own strand projection into the real world. This
+-- way, when they merge they just do an ⊕ of their types. The ⊕ has some nasty commutative
+-- conversion junk, but the nice thing is that it's lost on the functor into the quivered
+-- category, which is what we want to canonicalize anyways. Very annoying that all the index
+-- work seems to have been for naught, though.
+
+-- So a Layer is indexed by some type; we'll call it α. It has an object (F α), and a projection
+-- α → TopBottom → F V. In the F V category of MyHom, we run map then flatten to get the
+-- domain and codomain. We could even have EVERYTHING be a stitch! The identity strands are
+-- just really tiny ones.
+
+-- No, this doesn't work. If we use ⊕ to merge/split, then something that isn't using ⊕ can't split.
+-- It's also unclear how we'd represent the boxes themselves within the layer. Okay, do we
+-- need to use ⊕? Yeah, I think we do...
+
+-- Okay, forget about that. What about the "category of layers"? Objects would be Layer X Y.
+-- Morphisms can mess with the left, mess with the right, star the box, and exchange
+-- the box with something to move between the left and right. So it's on a triple?
+-- Objects would be (F V) × Bool × (F V). This feels an awful like the F (S l) category...
+-- Or, the objects could just be Layer X Y!. This IS the subgroupoid, just a silly
+-- representation of it!!! Do we even need the Bool in the middle? I don't really think
+-- so... we only need to track the objects when they change how morphisms might be able
+-- to be applied. So then the morphisms are a twist on the box, morphisms on either side,
+-- and exchanges between either side: ((A ⊗ B), C) → (A, B ⊗ C). Ugh, there's gonna be
+-- all this junk about naturality and stuff. But do we care? We just need to say that
+-- it's a category, right? Yeah, the injection φ gives it semantics, this is just
+-- typed syntax.
+
+-- So say s is a morphism ℓ₁ ⟶ ℓ₂, each Layer X Y. Then we can use φ, parameterized by
+-- some b : TopBottom, to turn s into morphisms in F V: ℓ₁.boundary b ⟶β ℓ₂.boundary b.
+-- Invert the top one, we have on the bottom ℓ₁.dom →β ℓ₂.dom, compose with ℓ₂, then
+-- ℓ₂.cod →β ℓ₁.cod!!!! DONE!
+
+-- we'll need Quotient.liftOn, right?
+def layerMoveLayer {X Y : F V} (l : Layer X Y) {Z : F (S l)} (s : l.layerType ⟶ Z) :
+    (l.φ .Bottom).obj Z ⟶ⁿ (l.φ .Top).obj Z := by
+  #check Quotient.liftOn
+  apply Quotient.liftOn s
+
+  sorry
+
+
 --
 -- extra condition that Y's domain is well-behaved? Not necessary! It MUST be well-behaved!!!
 -- this is why the theory is nice
 --
--- notably, our no-quiver representations are groupoids... gotta show that real quick TODO
+-- notably, our no-quiver representations are groupoids
 
-#synth Category (F (S _))
-
--- end of subgroupoid stuff
+end Layer
 
 
-#check CategoryTheory.Cat.isoOfEquiv -- we want to use this
-open CategoryTheory.InvolutiveCategory -- for the ⋆ notation
+open MonoidalCategory
+open InvolutiveCategory -- for the ⋆ notation
+open TwistedCategory -- why not
 
 macro "pure_iso_step_forwards" : tactic =>
   `(tactic|
