@@ -4,7 +4,8 @@ namespace CategoryTheory.FreeTwistedCategoryQuiver
 
 variable {C : Type u} [Quiver.{v} (FQ C)]
 
-variable {D : Type u'} [Category.{v'} D] [TwistedCategory D] (m : C → D)
+variable {D : Type u'}
+    [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D] [TwistedCategory D] (m : C → D)
 
 open MonoidalCategory
 open InvolutiveCategory
@@ -105,13 +106,13 @@ def projectMap (X Y : FQ C) : (categoryFreeTwistedCategoryQuiver.Hom X Y) →
         exact InvolutiveCategory.skewator_naturality _ _
     | f3 =>
         dsimp only [projectMapAux, projectObj]
-        exact TwistedCategory.f3 _ _ _
+        exact f3 _ _ _
     | n2 =>
         dsimp only [projectMapAux, projectObj]
-        exact TwistedCategory.n2 _ _
+        exact n2 _ _
     | a =>
         dsimp only [projectMapAux, projectObj]
-        exact TwistedCategory.a _
+        exact a _
     | twist_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id]
     | twist_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id]
     | twist_naturality =>

@@ -385,6 +385,7 @@ macro "simp_mk" : tactic =>
       | rw [mk_ς_hom]
       | rw [mk_ς_inv]
       | rw [twist_inv_naturality]
+      | fail "Nothing to do!"
     )
   )
 

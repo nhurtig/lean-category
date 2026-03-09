@@ -13,17 +13,17 @@ section
 variable (C : Type u)
 
 inductive FreeTwistedCategoryQuiver : Type u
-  | of : C → FreeTwistedCategoryQuiver 
-  | unit : FreeTwistedCategoryQuiver 
-  | tensor : FreeTwistedCategoryQuiver  → FreeTwistedCategoryQuiver  → FreeTwistedCategoryQuiver 
-  | star : FreeTwistedCategoryQuiver  → FreeTwistedCategoryQuiver 
+  | of : C → FreeTwistedCategoryQuiver
+  | unit : FreeTwistedCategoryQuiver
+  | tensor : FreeTwistedCategoryQuiver → FreeTwistedCategoryQuiver → FreeTwistedCategoryQuiver
+  | star : FreeTwistedCategoryQuiver → FreeTwistedCategoryQuiver
   deriving Inhabited
 
 end
 
-namespace FreeTwistedCategoryQuiver 
+namespace FreeTwistedCategoryQuiver
 
-notation "FQ" => FreeTwistedCategoryQuiver 
+notation "FQ" => FreeTwistedCategoryQuiver
 
 variable [userQuiver : Quiver.{v} (FQ C)]
 
@@ -120,9 +120,9 @@ inductive HomEquiv : ∀ {X Y : FQ C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   | ε_naturality {X Y : FQ C} (f : X ⟶ᵐ Y) :
     HomEquiv (f.star.star.comp (Hom.ε_hom Y)) ((Hom.ε_hom X).comp f)
   | f3 {P Q R : FQ C} : HomEquiv ((Hom.α_hom P.star Q.star R.star).comp <|
-    ((Hom.id P.star).tensor (Hom.χ_hom Q R)).comp <|
+    ((Hom.χ_hom Q R).whiskerLeft P.star).comp <|
     (Hom.χ_hom P (R * Q)).comp (Hom.α_hom R Q P).star)
-    (((Hom.χ_hom P Q).tensor (Hom.id R.star)).comp (Hom.χ_hom (Q * P) R))
+    (((Hom.χ_hom P Q).whiskerRight R.star).comp (Hom.χ_hom (Q * P) R))
   | n2 {P Q : FQ C} : HomEquiv ((Hom.χ_hom P.star Q.star).comp <|
     (Hom.χ_hom Q P).star.comp (Hom.ε_hom (P * Q)))
     ((Hom.ε_hom P).tensor (Hom.ε_hom Q))
@@ -131,190 +131,25 @@ inductive HomEquiv : ∀ {X Y : FQ C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   | twist_inv_hom {X} : HomEquiv ((Hom.twist_inv X).comp (Hom.twist_hom X)) (Hom.id _)
   | twist_naturality {X Y : FQ C} (f : X ⟶ᵐ Y) :
     HomEquiv (f.star.comp (Hom.twist_hom Y)) ((Hom.twist_hom X).comp f)
-  | tℓ {P Q R : FQ C} : HomEquiv ((((Hom.χ_hom P.star Q.star).comp <|
-    (Hom.twist_hom (Q.star * P.star))).tensor (Hom.id R.star.star)).comp <|
-    (Hom.α_hom Q.star P.star R.star.star).comp <|
-    ((Hom.id Q.star).tensor ((Hom.χ_hom P R.star).comp (Hom.twist_hom (R.star * P)))).comp <|
+  | tℓ {P Q R : FQ C} : HomEquiv
+    (((Hom.χ_hom P.star Q.star).whiskerRight R.star.star).comp <|
+      ((Hom.twist_hom (Q.star * P.star)).whiskerRight R.star.star).comp <|
+      (Hom.α_hom Q.star P.star R.star.star).comp <|
+      ((Hom.χ_hom P R.star).whiskerLeft Q.star).comp <|
+      ((Hom.twist_hom (R.star * P)).whiskerLeft Q.star).comp <|
       (Hom.α_inv Q.star R.star P).comp <|
-      (((Hom.χ_hom Q R).comp (Hom.twist_hom (R * Q))).tensor (Hom.id P)).comp (Hom.α_hom R Q P))
+      ((Hom.χ_hom Q R).whiskerRight P).comp <|
+      ((Hom.twist_hom (R * Q)).whiskerRight P).comp <|
+      (Hom.α_hom R Q P))
     ((((Hom.twist_hom P.star).tensor (Hom.twist_hom Q.star)).tensor (Hom.twist_hom R.star)).comp <|
-      ((Hom.χ_hom P Q).tensor (Hom.id R.star)).comp <| (Hom.χ_hom (Q * P) R).comp
+      ((Hom.χ_hom P Q).whiskerRight R.star).comp <|
+      (Hom.χ_hom (Q * P) R).comp
       (Hom.twist_hom (R * (Q * P))))
 
 def setoidHom (X Y : FQ C) : Setoid (X ⟶ᵐ Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
 attribute [instance] setoidHom
-
-/-
-open CategoryTheory
-
-instance (priority := low) prehom : CategoryStruct V where
-  Hom := Hom
-  id := Hom.id
-  comp := Hom.comp
-
-infixr:10 " ⟶ᵥ  " => prehom.Hom
-notation "𝟙ᵥ" => prehom.id
-infixr:80 " ≫ᵥ " => prehom.comp
-
--- synonym for Hom.Tensor that acts on the CategoryStruct notation
-abbrev myTensor {W X Y Z : V} (f : W ⟶ᵥ Y) (g : X ⟶ᵥ Z) : (W * X) ⟶ᵥ  (Y * Z) := Hom.tensor f g
-infixr:70 " ⊗ᵥ " => myTensor
-
-abbrev myStar {X Y : V} (f : X ⟶ᵥ Y) : X⋆ ⟶ᵥ Y⋆ := Hom.star f
-postfix:max "⋆ᵥ" => myStar
-
-abbrev ς_hom (X : V) := Hom.twist_hom X
-abbrev ς_inv (X : V) := Hom.twist_inv X
-
--- synonyms to make the monoidal category instance happy (IDK why Mathlib does it this way)
-abbrev Hom.whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) : (X * Y₁) ⟶ᵥ (X * Y₂) :=
-  (𝟙ᵥ X) ⊗ᵥ f
-
-abbrev Hom.whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) : (X₁ * Y) ⟶ᵥ (X₂ * Y) :=
-  f ⊗ᵥ (𝟙ᵥ Y)
-
-infixr:81 " ◁ᵥ " => Hom.whiskerLeft
-infixl:81 " ▷ᵥ " => Hom.whiskerRight
-
-@[grind]
-inductive HomEquiv : ∀ {A B : V}, (A ⟶ᵥ B) → (A ⟶ᵥ B) → Prop
-  | refl (f : X ⟶ᵥ  Y) : HomEquiv f f
-  | assoc {W X Y Z : V} (f : W ⟶ᵥ X) (g : X ⟶ᵥ Y) (h : Y ⟶ᵥ Z) :
-      HomEquiv ((f ≫ᵥ g) ≫ᵥ h) (f ≫ᵥ (g ≫ᵥ h))
-  | comp_id (f : X ⟶ᵥ Y) : HomEquiv (f ≫ᵥ (𝟙ᵥ _)) f
-  | id_comp (f : X ⟶ᵥ Y) : HomEquiv ((𝟙ᵥ _) ≫ᵥ f) f
-  -- congruence
-  | comp {f f' : X ⟶ᵥ Y} {g g' : Y ⟶ᵥ Z} :
-      HomEquiv f f' → HomEquiv g g' → HomEquiv (f ≫ᵥ g) (f' ≫ᵥ g')
-  | tensor {f f' : W ⟶ᵥ X} {g g' : Y ⟶ᵥ Z} :
-      HomEquiv f f' → HomEquiv g g' → HomEquiv (f ⊗ᵥ g) (f' ⊗ᵥ g')
-  | star {f f' : X ⟶ᵥ Y} :
-      HomEquiv f f' → HomEquiv f⋆ᵥ f'⋆ᵥ
-  -- (bi)functoriality
-  | id_tensor_id {X Y : V} : HomEquiv ((𝟙ᵥ X) ⊗ᵥ (𝟙ᵥ Y)) (𝟙ᵥ _)
-  | tensor_comp_tensor (f₁ : X₁ ⟶ᵥ Y₁) (f₂ : X₂ ⟶ᵥ Y₂)
-      (g₁ : Y₁ ⟶ᵥ Z₁) (g₂ : Y₂ ⟶ᵥ Z₂) :
-      HomEquiv ((f₁ ⊗ᵥ f₂) ≫ᵥ (g₁ ⊗ᵥ g₂)) ((f₁ ≫ᵥ g₁) ⊗ᵥ (f₂ ≫ᵥ g₂))
-  | star_id {X : V}: HomEquiv (𝟙ᵥ X)⋆ᵥ (𝟙ᵥ X⋆)
-  | star_comp_star (f : X ⟶ᵥ Y) (g : Y ⟶ᵥ Z) :
-      HomEquiv (f ≫ᵥ g)⋆ᵥ (f⋆ᵥ ≫ᵥ g⋆ᵥ)
-  -- replacing the natural isomorphisms
-  | tensor_assoc (f : P ⟶ᵥ Q) (g : W ⟶ᵥ X) (h : Y ⟶ᵥ Z) :
-      HomEquiv (((f ⊗ᵥ g) ⊗ᵥ h) ≫ (eqToHom (mul_assoc Q X Z)))
-        ((eqToHom (mul_assoc P W Y)) ≫ᵥ (f ⊗ᵥ(g ⊗ᵥ h)))
-  | id_tensor (f : X ⟶ᵥ Y) :
-      HomEquiv (((𝟙ᵥ 1) ⊗ᵥ f) ≫ᵥ (eqToHom (one_mul Y))) ((eqToHom (one_mul X)) ≫ f)
-  | tensor_id (f : X ⟶ᵥ Y) :
-      HomEquiv ((f ⊗ᵥ (𝟙ᵥ 1)) ≫ᵥ (eqToHom (mul_one Y))) ((eqToHom (mul_one X)) ≫ f)
-  | star_skew (f : W ⟶ᵥ X) (g : Y ⟶ᵥ Z) :
-      HomEquiv ((f⋆ᵥ ⊗ᵥ g⋆ᵥ) ≫ᵥ (eqToHom (StarMul.star_mul Z X).symm))
-        ((eqToHom (StarMul.star_mul Y W).symm) ≫ (g ⊗ᵥ f)⋆ᵥ)
-  | star_inv (f : X ⟶ᵥ Y) :
-      HomEquiv (f⋆ᵥ⋆ᵥ ≫ (eqToHom (star_involutive Y))) ((eqToHom (star_involutive X)) ≫ᵥ f)
-  -- special facts about the twist
-  | twist_hom_inv :
-      HomEquiv ((ς_hom X) ≫ᵥ (ς_inv X)) (𝟙ᵥ X)
-  | twist_inv_hom :
-      HomEquiv ((ς_inv X) ≫ᵥ (ς_hom X)) (𝟙 X⋆)
-  | twist_naturality (f : X ⟶ᵥ Y) :
-      HomEquiv (f⋆ᵥ ≫ᵥ (ς_inv Y)) ((ς_inv X) ≫ᵥ f)
-  | tℓ (P Q R : V) : HomEquiv
-      ((((eqToHom (StarMul.star_mul Q⋆ P⋆).symm) ≫ (ς_inv (Q⋆ * P⋆))) ⊗ᵥ (𝟙 R⋆⋆)) ≫
-        (eqToHom (mul_assoc Q⋆ P⋆ R⋆⋆)) ≫ ((𝟙 Q⋆) ⊗ᵥ ((eqToHom (StarMul.star_mul R⋆ P).symm) ≫
-        (ς_inv (R⋆ * P)))) ≫ (eqToHom (mul_assoc Q⋆ R⋆ P).symm) ≫
-        (((eqToHom (StarMul.star_mul R Q).symm) ≫ (ς_inv (R * Q))) ⊗ᵥ (𝟙 P)) ≫
-        (eqToHom (mul_assoc R Q P)))
-      ((((ς_inv P⋆) ⊗ᵥ (ς_inv Q⋆)) ⊗ᵥ (ς_inv R⋆)) ≫
-        ((eqToHom (StarMul.star_mul Q P).symm) ⊗ᵥ (𝟙 R⋆)) ≫
-        (eqToHom (StarMul.star_mul R (Q * P)).symm) ≫ (ς_inv (R * (Q * P))))
-  -- symm/trans last for constructor tactic
-  | symm (f g : X ⟶ᵥ Y) : HomEquiv f g → HomEquiv g f
-  | trans {f g h : X ⟶ᵥ Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
-
-attribute [refl] HomEquiv.refl
-attribute [symm] HomEquiv.symm
-
-instance {A B : V} : HasEquiv (A ⟶ᵥ B) where
-  Equiv := HomEquiv
-
--- helps grind slog through notation
-@[grind =_]
-lemma HomEquiv.equiv_def {X Y : V} {f g : X ⟶ᵥ Y} : HomEquiv f g ↔ f ≈ g := by
-  constructor
-  all_goals intros h
-  all_goals exact h
-
-lemma eqToHom_comp {X Y Z : V} {f : X ⟶ᵥ Y} {g : Y ⟶ᵥ Z} {p : X = Y} {q : Y = Z} :
-    (f ≈ eqToHom p) → (g ≈ eqToHom q) → (f ≫ᵥ g) ≈ (eqToHom (p.trans q)) := by
-  intros hf hg
-  apply HomEquiv.trans
-  · exact HomEquiv.comp hf hg
-  · cases p
-    cases q
-    simp
-    grind
-
-lemma eqToHom_tensor {W X Y Z : V} {f : W ⟶ᵥ X} {g : Y ⟶ᵥ Z} {p : W = X} {q : Y = Z} :
-    (f ≈ eqToHom p) → (g ≈ eqToHom q) → (f ⊗ᵥ g) ≈ (eqToHom (by simp [p, q])) := by
-  intros hf hg
-  apply HomEquiv.trans
-  · exact HomEquiv.tensor hf hg
-  · cases p
-    cases q
-    simp
-    grind
-
-lemma eqToHom_star {X Y : V} {f : X ⟶ᵥ Y} {p : X = Y} :
-    (f ≈ eqToHom p) → f⋆ᵥ ≈ (eqToHom (by simp [p])) := by
-  intros hf
-  apply HomEquiv.trans
-  · exact HomEquiv.star hf
-  cases p
-  simp
-  grind
-
--- Attempts to take one step of simplifying a bunch of eqToHom/id to one eqToHom
-macro "reduce_eqToHom_step" : tactic =>
-  `(tactic|
-    first
-      | apply eqToHom_comp
-      | apply eqToHom_tensor
-      | apply eqToHom_star
-      | rfl
-  )
-
--- shows any combination of eqToHom/id is HomEquiv to a single eqToHom
-macro "reduce_eqToHom" : tactic =>
-  `(tactic|
-    repeat' reduce_eqToHom_step
-  )
-
--- shows any combinations of eqToHom/id HomEquiv to each other
-macro "eqToHom_eq_eqToHom" : tactic =>
-  `(tactic|
-    apply HomEquiv.trans (by reduce_eqToHom) (by symm; reduce_eqToHom)
-  )
-
-lemma HomEquiv.whiskerLeft (X : V) {Y Z} {f f' : Y ⟶ Z} (h : f ≈ f') :
-    (X ◁ᵥ f) ≈ (X ◁ᵥ f') := by grind
-
-lemma HomEquiv.whiskerRight {X Y} {f f' : X ⟶ Y} (Z : V) (h : f ≈ f') :
-    (f ▷ᵥ Z) ≈ (f' ▷ᵥ Z) := by grind
-
-lemma HomEquiv.tensorHom_def {X₁ Y₁ X₂ Y₂ : V} (f : X₁ ⟶ᵥ Y₁) (g : X₂ ⟶ᵥ Y₂) :
-    (f ⊗ᵥ g) ≈ (f ▷ᵥ X₂ ≫ᵥ Y₁ ◁ᵥ g) := by grind [tensor_comp_tensor]
-
-lemma HomEquiv.whiskerLeft_id (X Y : V) : (X ◁ᵥ (𝟙 Y)) ≈ (𝟙 (X * Y)) := by
-  grind
-
-lemma HomEquiv.id_whiskerRight (X Y : V) : ((𝟙 X) ▷ᵥ Y) ≈ (𝟙 (X * Y)) := by
-  grind
-
-instance setoidHom (X Y : V) : Setoid (X ⟶ᵥ Y) :=
-⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
--/
 
 end FreeTwistedCategoryQuiver
 end CategoryTheory

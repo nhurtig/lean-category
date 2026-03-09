@@ -1,6 +1,8 @@
 import Mathlib
 import LeanCategory.FreeEgger
 
+namespace NatDefinition
+
 class StarQuiver.{v} (V : Type u) extends (Quiver.{v, u} (F V)) where
   star {X Y : F V} : (X ⟶ Y) → (X.star ⟶ Y.star) -- TODO if there are problems, make this
   -- two-sided invertible
@@ -184,5 +186,5 @@ end Hom
 -- Invert the top one, we have on the bottom ℓ₁.dom →β ℓ₂.dom, compose with ℓ₂, then
 -- ℓ₂.cod →β ℓ₁.cod!!!! DONE!
 
-end Layer
+end NatDefinition.Layer
 
