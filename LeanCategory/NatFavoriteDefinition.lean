@@ -42,6 +42,7 @@ instance : Star (List <| V × Bool) where
 /- #check  -/
 postfix:max "⋆" => @Star.star (List <| _ × Bool) _
 
+-- are the lists ever used? I don't think so...
 @[simp]
 def project : F V → List (V × Bool)
   | .unit => []
@@ -72,38 +73,41 @@ variable (v : V)
 #check Bool
 
 
+  -- hdom : dom = left * box.dom * right := by grind
+  -- hcod : cod = left * box.cod * right := by grind
+
+-- β is the free category without a quiver
+-- set up notation b/c we'll be introducing
+-- a higher-priority category on F V later
+#check MonoidalCategory
+def βcat : Category.{u} (F V) := FreeTwistedCategory.categoryFreeTwistedCategory
+infixr:10 " ⟶β " => βcat.Hom
+notation "𝟙β" => βcat.id
+infixr:80 " ≫β " => βcat.comp
+infixr:10 " ≅β " => @Iso _ βcat
+def βtwist : TwistedCategory.{u} (F V) := FreeTwistedCategory.freeTwistedCategory
+infixr:70 " ⊗β " => βtwist.tensorObj
+infixr:81 " ◁β " => βtwist.whiskerLeft
+infixl:81 " ▷β " => βtwist.whiskerRight
+infixr:70 " ⊗ₘβ " => βtwist.tensorHom
+notation "𝟙_β " C:arg => βtwist.tensorUnit C
+postfix:max "⋆β" => βtwist.starObj
+postfix:max "⋆β" => βtwist.starHom
+
+#synth Category (F V)
+
+
 -- the stitches (lacking restriction on dom/cod size from paper)
 variable [stitches : Quiver.{v} (F V)] {stitchStar : {X Y : F V} → (X ⟶ Y) → (X.star ⟶ Y.star)}
 
 /- #synth (Quiver (List <| V × Bool)) -/
 -- A CanonicalStitch with a record of the identity strands on its left/right
 -- TODO: maybe make two layers -- one for two+ outs, one for one out
-structure Layer (X Y : (F V)) where
+structure Layer (X Y : F V) where
   L : F V
   box : X ⟶ Y
   R : F V
-  -- hdom : dom = left * box.dom * right := by grind
-  -- hcod : cod = left * box.cod * right := by grind
 
--- β is the free category without a quiver
--- set up notation b/c we'll be introducing
--- a higher-priority category on (F V)
-#check MonoidalCategory
-def βcat : Category.{u} (F V) := inferInstance
-infixr:10 " ⟶β " => βcat.Hom
-notation "𝟙β" => βcat.id
-infixr:80 " ≫β " => βcat.comp
-infixr:10 " ≅β " => @Iso _ βcat
-def β : TwistedCategory.{u} (F V) := inferInstance
-infixr:70 " ⊗β " => β.tensorObj
-infixr:81 " ◁β " => β.whiskerLeft
-infixl:81 " ▷β " => β.whiskerRight
-infixr:70 " ⊗ₘβ " => β.tensorHom
-notation "𝟙_β " C:arg => β.tensorUnit C
-postfix:max "⋆β" => β.starObj
-postfix:max "⋆β" => β.starHom
-
-#synth Category (F V)
 
 -- if two F V's have the same project, there's a morphism between them in braid land
 -- (w/o twist, but that's not important right now)
@@ -117,34 +121,6 @@ postfix:max "⋆β" => β.starHom
 open MonoidalCategory
 #check Iso
 
-def pure_helper {X : F V} : (inject <| project X) ≅β X := by
-  induction X
-  case of =>
-    apply MonoidalCategoryStruct.leftUnitor
-  case unit =>
-    rfl
-  case star X ih =>
-    induction X
-    case of =>
-      apply MonoidalCategoryStruct.leftUnitor
-    case unit =>
-      simp
-      symm
-      apply TwistedCategoryStruct.twist -- TODO is this right?
-    case tensor =>
-      simp
-    sorry
-  case tensor X Y ih₁ ih₂ =>
-    subst L
-    simp [HMul.hMul, Mul.mul]
-    induction X
-    simp_all
-    sorry
-  sorry
-
-def pure {X Y : F V} {h : project X = project Y} : X ⟶β Y := by
-  induction X <;> cases Y
-  sorry
 
 #check CategoryStruct
 
@@ -162,13 +138,14 @@ instance (priority := low) preHom : CategoryStruct (F V) where
   id := (MyHom.braid <| 𝟙β ·)
   comp := MyHom.comp
 
--- we don't need these b/c MyHom handles it
-/- @[simp] -/
-/- def Layer.dom {L X Y R : List (V × Bool)} : Layer X Y → F V := fun _ ↦ -/
-/-   inject <| L ++ X ++ R -/
-/- @[simp] -/
-/- def Layer.cod {L X Y R : List (V × Bool)} : Layer L X Y R → F V := fun _ ↦ -/
-/-   inject <| L ++ Y ++ R -/
+inductive TopBottom where
+  | Top
+  | Bottom
+
+@[simp]
+def Layer.boundary {X Y : F V} (l : Layer X Y) : TopBottom → F V
+  | .Top => l.L * Y * l.R
+  | .Bottom => l.L * X * l.R
 
 /- @[simp] -/
 /- def Layer.cod : Layer → V -/
@@ -176,78 +153,131 @@ instance (priority := low) preHom : CategoryStruct (F V) where
 
 -- start of subgroupoid stuff
 
-inductive LayerSubgroupoidGen where
-  | kappa : LayerSubgroupoidGen
-  | left : ℕ → LayerSubgroupoidGen
-  | right : ℕ → LayerSubgroupoidGen
+inductive LayerSubgroupoidGen {X Y : F V} (l : Layer X Y) where
+  | kappa : LayerSubgroupoidGen l -- the primary strand
+  | left : Fin l.L.length → LayerSubgroupoidGen l -- named strands to the left of the stitch
+  | right : Fin l.R.length → LayerSubgroupoidGen l -- named strands to the right of the stitch
 
-def Layer.layerTypeLeft : Layer → L
-  | ⟨left, _, _⟩ => (List.range left.length).map (fun i ↦ (.left i, false))
+notation "S" => LayerSubgroupoidGen
 
-def Layer.layerTypeRight : Layer → L
-  | ⟨_, _, right⟩ => (List.range right.length).map (fun i ↦ (.right i, false))
+def Lcat {X Y : F V} {l : Layer X Y} : Category.{0} (F (S l)) := inferInstance
+infixr:10 " ⟶L " => Lcat.Hom
+notation "𝟙L" => Lcat.id
+infixr:80 " ≫L " => Lcat.comp
+infixr:10 " ≅L " => @Iso _ Lcat
+def Ltwist {X Y : F V} {l : Layer X Y} : TwistedCategory.{0} (F (S l)) := inferInstance
+infixr:70 " ⊗L " => Ltwist.tensorObj
+infixr:81 " ◁L " => Ltwist.whiskerLeft
+infixl:81 " ▷L " => Ltwist.whiskerRight
+infixr:70 " ⊗ₘL " => Ltwist.tensorHom
+notation "𝟙_L " C:arg => Ltwist.tensorUnit C
+postfix:max "⋆L" => Ltwist.starObj
+postfix:max "⋆L" => Ltwist.starHom
+
+
+def Layer.layerTypeLeft {X Y : F V} (l : Layer X Y) : F (S l) :=
+  l.L.toFin.map .left
+
+def Layer.layerTypeRight {X Y : F V} (l : Layer X Y) : F (S l) :=
+  l.R.toFin.map .right
 
 @[simp]
-def Layer.layerTypeStitch : Layer → L
-  | _ => [(.kappa, false)]
+def Layer.layerTypeStitch {X Y : F V} (l : Layer X Y) : F (S l) :=
+  .of .kappa -- TODO do we need to track flippedness in Layer? Nah, I don't think so...
 
 @[simp]
-def Layer.layerType (l : Layer) : L :=
+def Layer.layerType {X Y : F V} (l : Layer X Y) : F (S l) :=
   l.layerTypeLeft * l.layerTypeStitch * l.layerTypeRight
 
+-- boxHandler was used for above/below
 @[simp]
-def Layer.phiGen (l : Layer) (boxHandler : Stitch → V) : LayerSubgroupoidGen → V
-  | .kappa => boxHandler l.box
-  | .left i => match l.left[i]? with
-    | Option.some x => [x]
-    | Option.none => []
-  | .right i => match l.right[i]? with
-    | Option.some x => [x]
-    | Option.none => []
+def Layer.phiGen {X Y : F V} (l : Layer X Y) (above : TopBottom) : (S l) → F V
+  | .kappa => match above with
+    | .Top => Y
+    | .Bottom => X
+  | .left i => .of <| l.L.getElem i
+  | .right i => .of <| l.R.getElem i
+
+def Layer.phi {X Y : F V} (l : Layer X Y) (above : TopBottom) (Z : F (S l)) : F V :=
+  (Z.map <| l.phiGen above).flatten
+
+/- @[simp] -/
+/- lemma List.map_range_succ : List.map f (List.range (n + 1)) = -/
+/-     (List.map f (List.range n)) ++ [f n] := by -/
+/-   rw [List.range_succ] -/
+/-   simp -/
+
+/- @[simp] -/
+/- lemma List.getElem?_prefix {l l' : List α} : l' ++ [a] <+: l → l[l'.length]? = .some a := by -/
+/-   rintro ⟨s, h⟩ -/
+/-   subst l -/
+/-   simp -/
 
 @[simp]
-def Layer.phiStar (l : Layer) (boxHandler : Stitch → V) : LayerSubgroupoidGen × Bool → V
-  | (x, b) =>
-      let v := l.phiGen boxHandler x
-      if b then v⋆ else v
+lemma Layer.phi_involutive_helper {X : F V} : (X.toFin).map (X.getElem ·) = X := by
+  induction X
+  case of =>
+    simp_all
+  case unit =>
+    simp
+  case star X ih =>
+    simp_all
+    apply Eq.trans _ ih
+    clear ih
+    cases X <;> simp_all
+    case star X =>
+      apply congrArg (X.toFin.map ·)
+      ext i
+      apply congrArg (X.getElem ·)
+      ext
+      simp
+      omega
+    case tensor X Y =>
+      constructor
+      any_goals apply congrArg (X.toFin.map ·)
+      any_goals apply congrArg (Y.toFin.map ·)
+      all_goals ext i ; simp
+      all_goals split
+      any_goals omega
+      any_goals apply congrArg (X.getElem ·)
+      any_goals apply congrArg (Y.getElem ·)
+      all_goals ext ; simp ; omega
+  case tensor X Y ih₁ ih₂ =>
+    simp
+    constructor
+    any_goals apply Eq.trans _ ih₁
+    any_goals apply Eq.trans _ ih₂
+    any_goals apply congrArg (X.toFin.map ·)
+    any_goals apply congrArg (Y.toFin.map ·)
+    all_goals ext i ; simp
 
-def Layer.phi (l : Layer) (boxHandler : Stitch → V) (x : L) : V :=
-  (x.map <| l.phiStar boxHandler).flatten
-
+/-
 @[simp]
-def Layer.phiAbove (l : Layer) : L → V :=
-  l.phi Stitch.cod
-
-@[simp]
-def Layer.phiBelow (l : Layer) : L → V :=
-  l.phi Stitch.dom
-
-@[simp]
-lemma List.map_range_succ : List.map f (List.range (n + 1)) =
-    (List.map f (List.range n)) ++ [f n] := by
-  rw [List.range_succ]
-  simp
-
-@[simp]
-lemma List.getElem?_prefix {l l' : List α} : l' ++ [a] <+: l → l[l'.length]? = .some a := by
-  rintro ⟨s, h⟩
-  subst l
-  simp
-
-@[simp]
-lemma Layer.phi_left {l : Layer} : l.phi f l.layerTypeLeft = l.left := by
+lemma Layer.phi_left {X Y : F V} {l : Layer X Y} : l.phi b l.layerTypeLeft = l.L := by
   simp [phi, layerTypeLeft]
-  generalize hx : l.left = x at *
-  have hpre : x <+: l.left := by aesop
+  induction l.L
+
+  generalize hx : l.L = x at *
+  have hpre : x ⊆ l.L := by subst hx; exact FreeTwistedCategory.Subset.rfl
   clear hx
-  induction x using List.reverseRecOn
-  all_goals simp
-  case append_singleton l' a ih =>
-    apply congrArg₂
-    · apply ih
-      refine trans ?_ hpre
-      aesop
-    · rw [List.getElem?_prefix hpre]
+  induction x <;> simp_all
+  case of x =>
+    unfold Subset at hpre
+    unfold FreeTwistedCategory.instHasSubset at hpre
+    simp at hpre
+    cases hpre
+    case inl h =>
+      rw [← h]
+      simp
+    case inr h =>
+      rw [h.choose_spec]
+      simp
+  case star X ih =>
+    cases hpre
+    case inl h =>
+      simp
+      rw [← h]
+      simp
 
 @[simp]
 lemma Layer.phi_right {l : Layer} : l.phi f l.layerTypeRight = l.right := by
@@ -263,18 +293,35 @@ lemma Layer.phi_right {l : Layer} : l.phi f l.layerTypeRight = l.right := by
       refine trans ?_ hpre
       aesop
     · rw [List.getElem?_prefix hpre]
+-/
 
 @[simp]
-lemma Layer.phi_mul {l : Layer} : l.phi f (x * y) = l.phi f x * l.phi f y := by
-  simp [HMul.hMul, Mul.mul, phi]
+lemma Layer.phi_mul {X Y : F V} {l : Layer X Y} {A B : F (S l)} : l.phi b (A * B) =
+    (l.phi b A) * (l.phi b B) := by
+  simp [HMul.hMul, phi]
 
-lemma Layer.phiAbove_cod {l : Layer} : l.phiAbove l.layerType = l.cod := by
-  simp
-  simp [phi]
+lemma Layer.phi_involutive {X Y : F V} {l : Layer X Y} : l.phi b l.layerType = l.boundary b := by
+  cases b <;> simp
+  all_goals
+    unfold Layer.phi ;
+    unfold Layer.phiGen ;
+    try unfold Layer.layerTypeLeft ;
+    try unfold Layer.layerTypeRight ;
+    simp ;
+    unfold Function.comp ;
+    simp
 
-lemma Layer.phiBelow_dom {l : Layer} : l.phiBelow l.layerType = l.dom := by
-  simp
-  simp [phi]
+-- TODO a way to map F (S l) words (Y) with domain l.layerType into MyHom
+-- words (aka F V) from l's bottom boundary (Y's domain) to Y's codomain in the
+-- bottom projection to a modified l to Y's codomain in the top projection to to l's top boundary
+-- (Y's domain)
+--
+-- extra condition that Y's domain is well-behaved? Not necessary! It MUST be well-behaved!!!
+-- this is why the theory is nice
+--
+-- notably, our no-quiver representations are groupoids... gotta show that real quick TODO
+
+#synth Category (F (S _))
 
 -- end of subgroupoid stuff
 

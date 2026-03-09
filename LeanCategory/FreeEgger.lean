@@ -19,6 +19,10 @@ instance categoryFreeTwistedCategory : Category.{u} (F C) where
     rintro W X Y Z ⟨f⟩ ⟨g⟩ ⟨h⟩
     exact _root_.Quotient.sound (assoc f g h)
 
+
+/- instance groupoidFreeTwistedCategory : Groupoid.{u} (F C) where -/
+/-   inv f := Quotient.map Hom.inv (fun _ _ hf  ↦ HomEquiv.inv hf) -/
+
 instance monoidalFreeTwistedCategory : MonoidalCategory (F C) where
   tensorObj X Y := FreeTwistedCategory.tensor X Y
   tensorHom := Quotient.map₂ Hom.tensor (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg)
@@ -231,7 +235,6 @@ open MonoidalCategory
 open InvolutiveCategory
 open TwistedCategory
 
-abbrev homMk {X Y : V} (f : X ⟶ᵥ Y) : quotiented.Hom X Y := ⟦f⟧
 
 @[simp]
 def homMkDef {X Y : V} (f : X ⟶ᵥ Y) : quotiented.Hom X Y := ⟦f⟧
@@ -245,45 +248,146 @@ theorem mk_eqToHom {X Y : V} (h : X = Y) :
   subst h
   rfl
 
+-/
+
 @[simp]
-theorem mk_id {X : V} : ⟦𝟙ᵥ X⟧ = 𝟙 X :=
+def homMk {X Y : F V} (f : X ⟶ᵐ Y) : categoryFreeTwistedCategory.Hom X Y := ⟦f⟧
+
+@[simp]
+theorem mk_comp {X Y Z : F C} (f : X ⟶ᵐ Y) (g : Y ⟶ᵐ Z) :
+    ⟦f.comp g⟧ = @CategoryStruct.comp (F C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 @[simp]
-theorem mk_comp {X Y Z : V} (f : X ⟶ᵥ Y) (g : Y ⟶ᵥ Z) :
-    homMk (f ≫ᵥ g) = ⟦f⟧ ≫ ⟦g⟧ :=
+theorem mk_id {X : F C} : ⟦Hom.id X⟧ = 𝟙 X :=
+  rfl
+
+open MonoidalCategory
+
+@[simp]
+theorem mk_tensor {X₁ Y₁ X₂ Y₂ : F C} (f : X₁ ⟶ᵐ Y₁) (g : X₂ ⟶ᵐ Y₂) :
+    ⟦f.tensor g⟧ = @MonoidalCategory.tensorHom (F C) _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 @[simp]
-theorem mk_tensor {X₁ Y₁ X₂ Y₂ : V} (f : X₁ ⟶ᵥ Y₁) (g : X₂ ⟶ᵥ Y₂) :
-    ⟦f ⊗ᵥ g⟧ = @MonoidalCategory.tensorHom V _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+theorem mk_whiskerLeft {X Y₁ Y₂ : F C} (f : Y₁ ⟶ᵐ Y₂) :
+    ⟦f.whiskerLeft X⟧ = X ◁ ⟦f⟧ := rfl
+
+@[simp]
+theorem mk_whiskerRight {X₁ X₂ Y : F C} (f : X₁ ⟶ᵐ X₂) :
+    ⟦f.whiskerRight Y⟧ = ⟦f⟧ ▷ Y := rfl
+
+@[simp]
+theorem mk_α_hom {X Y Z : F C} : ⟦Hom.α_hom X Y Z⟧ = (α_ X Y Z).hom :=
   rfl
 
 @[simp]
-theorem mk_whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) :
-    ⟦X ◁ᵥ f⟧ = X ◁ ⟦f⟧ :=
+theorem mk_α_inv {X Y Z : F C} : ⟦Hom.α_inv X Y Z⟧ = (α_ X Y Z).inv :=
   rfl
-
-/- @[simp] -/
-/- theorem mk_whiskerLeft (X : V) {Y₁ Y₂ : V} (f : Y₁ ⟶ᵥ Y₂) : -/
-/-     ⟦f.whiskerLeft X⟧ = MonoidalCategory.whiskerLeft (C := V) (X := X) (f := ⟦f⟧) := -/
-/-   rfl -/
 
 @[simp]
-theorem mk_whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) :
-    ⟦f ▷ᵥ Y⟧ = ⟦f⟧ ▷ Y :=
+theorem mk_ρ_hom {X : F C} : ⟦Hom.ρ_hom X⟧ = (ρ_ X).hom :=
   rfl
-
-/- @[simp] -/
-/- theorem mk_whiskerRight {X₁ X₂ : V} (f : X₁ ⟶ᵥ X₂) (Y : V) : -/
-/-     ⟦f.whiskerRight Y⟧ = MonoidalCategory.whiskerRight (C := V) (f := ⟦f⟧) (Y := Y) := -/
-/-   rfl -/
 
 @[simp]
-theorem mk_star {X Y : V} (f : X ⟶ᵥ Y) :
-    homMk f⋆ᵥ = InvolutiveCategoryStruct.starHom ⟦f⟧ := by
-  simp only [homMk]
+theorem mk_ρ_inv {X : F C} : ⟦Hom.ρ_inv X⟧ = (ρ_ X).inv :=
   rfl
+
+@[simp]
+theorem mk_l_hom {X : F C} : ⟦Hom.l_hom X⟧ = (λ_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_l_inv {X : F C} : ⟦Hom.l_inv X⟧ = (λ_ X).inv :=
+  rfl
+
+@[simp]
+theorem tensor_eq_tensor {X Y : F C} : X.tensor Y = X ⊗ Y :=
+  rfl
+
+@[simp]
+theorem tensor_eq_tensor' {X Y : F C} : X * Y = X ⊗ Y :=
+  rfl
+
+@[simp]
+theorem unit_eq_unit : FreeTwistedCategory.unit = 𝟙_ (F C) :=
+  rfl
+
+@[simp]
+theorem unit_eq_unit' : 1 = 𝟙_ (F C) :=
+  rfl
+
+open InvolutiveCategory
+
+@[simp]
+theorem mk_star {X Y : F C} (f : X ⟶ᵐ Y) :
+    ⟦f.star⟧ = @InvolutiveCategoryStruct.starHom (F C) _ _ _ _ _ ⟦f⟧ :=
+  rfl
+
+@[simp]
+theorem mk_ε_hom {X : F C} : ⟦Hom.ε_hom X⟧ = (e_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_ε_inv {X : F C} : ⟦Hom.ε_inv X⟧ = (e_ X).inv :=
+  rfl
+
+@[simp]
+theorem mk_χ_hom {X Y : F C} : ⟦Hom.χ_hom X Y⟧ = (χ_ X Y).hom :=
+  rfl
+
+@[simp]
+theorem mk_χ_inv {X Y : F C} : ⟦Hom.χ_inv X Y⟧ = (χ_ X Y).inv :=
+  rfl
+
+@[simp]
+theorem star_eq_star {X : F C} : X.star = X⋆ :=
+  rfl
+
+open TwistedCategory
+
+@[simp]
+theorem mk_ς_hom {X : F C} : ⟦Hom.twist_hom X⟧ = (ς_ X).hom :=
+  rfl
+
+@[simp]
+theorem mk_ς_hom' {X : F C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.twist X).hom :=
+  rfl
+
+@[simp]
+theorem mk_ς_inv {X : F C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
+  rfl
+
+macro "simp_mk" : tactic =>
+  `(tactic|
+    repeat1 (first
+      | simp
+      | rw [mk_comp]
+      | rw [mk_id]
+      | rw [mk_tensor]
+      | rw [mk_whiskerLeft]
+      | rw [mk_whiskerRight]
+      | rw [mk_α_hom]
+      | rw [mk_α_inv]
+      | rw [mk_ρ_hom]
+      | rw [mk_ρ_inv]
+      | rw [mk_l_hom]
+      | rw [mk_l_inv]
+      | rw [tensor_eq_tensor]
+      | rw [tensor_eq_tensor']
+      | rw [unit_eq_unit]
+      | rw [unit_eq_unit']
+      | rw [mk_star]
+      | rw [mk_ε_hom]
+      | rw [mk_ε_inv]
+      | rw [mk_χ_hom]
+      | rw [mk_χ_inv]
+      | rw [star_eq_star]
+      | rw [star_eq_star']
+      | rw [mk_ς_hom]
+      | rw [mk_ς_inv]
+    )
+  )
 
 /-
 @[simp]
@@ -331,28 +435,34 @@ theorem mk_e_inv {X : V} :
   rfl
 -/
 
-@[simp]
-theorem mk_ς_hom {X : V} : 
-    homMk (ς_inv X) = (ς_ X).hom :=
-  rfl
+#check MonoidalCategory
 
-@[simp]
-theorem mk_ς_inv {X : V} : 
-    homMk (ς_hom X) = (ς_ X).inv :=
-  rfl
+instance : Groupoid.{u} (F C) :=
+  { (inferInstance : Category (F C)) with
+    inv := _root_.Quotient.lift (fun f => ⟦f.inv⟧) (by
+      intros f g h
+      simp
+      induction h
+      /- case twist_inv_hom X => -/
+      /-   simp_mk -/
+      /-   sorry -/
+      /- case ε_inv_hom X => -/
+      /-   simp -/
+      /-   rw [mk_ε_inv] -/
+      /-   simp_mk -/
+      /-   rw [@mk_ς_inv C X] -/
+      /-   aesop_cat -/
+      /- case  -/
+      case f3 =>
+        simp_mk
+        sorry
+      case tensorHom_def =>
+        exact MonoidalCategory.tensorHom_def' (homMk _) (homMk _)
+      all_goals sorry
+      any_goals simp_mk
+      any_goals aesop_cat
+      all_goals sorry
+      ) }
 
-@[simp]
-theorem tensor_eq_tensor {X Y : V} : X * Y = X ⊗ Y :=
-  rfl
-
-@[simp]
-theorem unit_eq_unit : 1 = 𝟙_ V :=
-  rfl
-
-@[simp]
-theorem star_eq_star {X : V} : Star.star X = InvolutiveCategoryStruct.starObj X := by
-  rfl
-
--/
 end CategoryTheory.FreeTwistedCategory
 

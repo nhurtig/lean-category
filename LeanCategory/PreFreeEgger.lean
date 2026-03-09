@@ -34,10 +34,191 @@ instance : MulOne (F C) where
 instance : Star (F C) where
   star := star
 
-def fakeTensor : F C → F C → F C
-  | .unit, X => X
-  | X, .unit => X
-  | X, Y => X * Y
+def map (f : C → D) : F C → F D
+  | .of c => .of <| f c
+  | .unit => .unit
+  | .tensor X Y => .tensor (X.map f) (Y.map f)
+  | .star X => .star (X.map f)
+
+def flatten : F (F C) → F C
+  | .of X => X
+  | .unit => .unit
+  | .tensor X Y => .tensor X.flatten Y.flatten
+  | .star X => .star X.flatten
+
+@[simp]
+def length : F C → ℕ
+  | .of _ => 1
+  | .unit => 0
+  | .tensor X Y => X.length + Y.length
+  | .star X => X.length
+
+@[simp]
+def toFin (X : F C) : F (Fin X.length) := match X with
+  | .of _ => .of <| Fin.mk 0 (by simp)
+  | .unit => .unit
+  | .tensor X Y =>
+      let X' := X.toFin |>.map (Fin.mk ·.1 (by simp; omega))
+      let Y' := Y.toFin |>.map (fun i ↦ Fin.mk (X.length + i.1) (by simp))
+      .tensor X' Y'
+  | .star X =>
+      let X' := X.toFin |>.map (fun i ↦ Fin.mk (X.length - i.1 - 1) (by simp; omega))
+      .star X'
+
+@[simp] lemma map_of (f : C → D) (c : C) : map f (.of c) = .of (f c) := rfl
+@[simp] lemma map_unit (f : C → D) : map f .unit = .unit := rfl
+@[simp] lemma map_tensor (f : C → D) (X Y : F C) :
+    map f (.tensor X Y) = .tensor (map f X) (map f Y) := rfl
+@[simp] lemma map_star (f : C → D) (X : F C) : map f (.star X) = .star (map f X) := rfl
+
+@[simp] lemma map_map (f : C → D) (g : D → E) (X : F C) : (X.map f).map g = X.map (g ∘ f) := by
+  induction X <;> simp_all
+
+@[simp] lemma flatten_of (X : F C) : flatten (.of X) = X := rfl
+@[simp] lemma flatten_unit : @flatten C .unit = .unit := rfl
+@[simp] lemma flatten_tensor (X Y : F (F C)) :
+    flatten (.tensor X Y) = .tensor (flatten X) (flatten Y) := rfl
+@[simp] lemma flatten_star (X : F (F C)) : flatten (.star X) = .star (flatten X) := rfl
+
+@[simp] lemma length_of (c : C) : length (.of c) = 1 := rfl
+@[simp] lemma length_unit : @length C .unit = 0 := rfl
+@[simp] lemma length_tensor (X Y : F C) : length (.tensor X Y) = length X + length Y := rfl
+@[simp] lemma length_star (X : F C) : length (.star X) = length X := rfl
+
+@[simp] lemma map_of_flatten (f : C → D) (X : F C) :
+    (X.map (fun x ↦ .of (f x))).flatten = X.map f := by
+  induction X <;> simp_all
+
+@[simp]
+def getElem (X : F C) (i : Fin X.length) : C := match X with
+  | .of c => c
+  | .unit => by
+      have hi := i.prop
+      contradiction
+  | .tensor X Y =>  if hi : i < X.length then
+      X.getElem ⟨i, hi⟩
+    else
+      Y.getElem ⟨i - X.length, by simp at hi; omega⟩
+  | .star X => X.getElem ⟨X.length - i - 1, by
+      have : X.length > 0 := by
+        simp at i
+        have hi := i.prop
+        omega
+      omega⟩
+
+/- instance : GetElem (F V) (Fin n) V (fun X _ ↦ X.length = n) where -/
+/-   getElem X i h := X.getElem (h ▸ i) -/
+
+/-
+@[simp]
+def getElem? (i : ℕ) (fromLeft : Bool) : F C → Option C
+  | .of c => if i = 0 then .some c else .none
+  | .unit => .none
+  | .tensor X Y => if fromLeft then
+      if i < X.length then
+        X.getElem? i fromLeft
+      else
+        Y.getElem? (i - X.length) fromLeft
+    else
+      if i < Y.length then
+        Y.getElem? i fromLeft
+      else
+        X.getElem? (i - Y.length) fromLeft
+  | .star X => X.getElem? i !fromLeft
+
+lemma getElem_valid {i : ℕ} {fromLeft : Bool} {X : F C} (h : i < X.length) :
+    (X.getElem? i fromLeft).isSome := by
+  induction X generalizing i fromLeft <;> unfold getElem?
+  case of => simp_all
+  case unit => simp_all
+  case star ih =>
+    apply ih
+    simp_all
+  case tensor ih₁ ih₂ =>
+    split <;> split
+    · apply ih₁
+      simp_all
+    · apply ih₂
+      simp_all
+      omega
+    · apply ih₂
+      simp_all
+    · apply ih₁
+      simp_all
+      omega
+
+instance : GetElem (F V) ℕ V (fun X i => i < X.length) where
+  getElem X i h := by
+    cases hv : X.getElem? i true
+    case some v => exact v
+    case none =>
+      rw [Option.isSome_iff_exists.mp (getElem_valid h) |>.choose_spec] at hv
+      simp at hv
+  -/
+  /- getElem? X i := X.getElem? i true -/
+
+/- @[simp] lemma getElem?_of (c : C) : (FreeTwistedCategory.of c)[0]? = c := rfl -/
+/- @[simp] lemma getElem?_unit (i : ℕ) : (@FreeTwistedCategory.unit C)[i]? = .none := rfl -/
+/- @[simp] lemma getElem?_star_star (X : F C) (i : ℕ) : (X.star.star)[i]? = X[i]? := rfl -/
+
+@[simp] lemma getElem_of (c : C) : (FreeTwistedCategory.of c).getElem ⟨0, by simp⟩ = c := rfl
+/- @[simp] lemma getElem_star_star (X : F C) (i : ℕ) (h : i < X.length) : (X.star.star)[i]'h = X[i]'h := rfl -/
+
+@[simp] lemma getElem_star_star (X : F C) (i : Fin X.length) : (X.star.star).getElem i = X.getElem i := by
+  simp
+  apply congrArg
+  ext
+  simp
+  omega
+
+@[simp] lemma getElem_star_tensor (X Y : F C) (i : Fin (X.length + Y.length)) : ((X.tensor Y).star).getElem i = (Y.star.tensor X.star).getElem ⟨i, by simp; omega⟩ := by
+  simp ; split <;> split
+  any_goals omega -- impossible goals
+  any_goals apply congrArg (X.getElem ·)
+  any_goals apply congrArg (Y.getElem ·)
+  all_goals simp ; omega
+
+  /- simp <;> split <;> split <;> simp_all -/
+/- @[simp] lemma getElem_star_tensor (X Y : F C) (i : Fin (X.length + Y.length)) : ((X.tensor Y).star)[i] = (X.star.tensor Y.star)[i] := by -/
+/-   simp -/
+/-   sorry -/
+
+
+/-
+@[simp] lemma getElem_star (X : F V) (i : Fin X.length) : (X.star).getElem i b = X.getElem (X.length - i - 1) i := by
+  induction X
+  case unit =>
+    simp at i ⊢
+    simp [GetElem.getElem]
+  case of =>
+    simp at i ⊢
+    simp [GetElem.getElem]
+  case star X ih =>
+    simp at i ⊢
+    have hnempty : X.length ≠ 0 := by
+      intros hi
+      rw [hi] at i
+      have hi := i.prop
+      contradiction
+    specialize ih <| Fin.mk (X.length - i - 1) (by omega)
+    simp at ih
+    rw [ih]
+    simp_all
+    apply getElem_index
+    omega
+  case tensor X Y ih₁ ih₂ =>
+    simp
+    rw [getElem_tensor X Y]
+    sorry
+  sorry
+
+@[simp] lemma getElem_tensor (X Y : F V) {i : ℕ} (hi : i < X.length + Y.length) : (X.tensor Y)[i] =
+    if hi : i < X.length then
+      X[i]
+    else
+      Y[i - X.length] := sorry
+end
+-/
 
 inductive Hom : F C → F C → Type max u v
   | id (X) : Hom X X
@@ -61,6 +242,27 @@ inductive Hom : F C → F C → Type max u v
 
 infixr:10 " ⟶ᵐ " => Hom
 -- TODO notation for 𝟙ᵐ, ≫ᵐ
+
+@[simp]
+def Hom.inv {X Y : F C} : (X ⟶ᵐ Y) → (Y ⟶ᵐ X)
+  | id X => id X
+  | comp f g => comp (g.inv) (f.inv)
+  | whiskerLeft X f => whiskerLeft X (f.inv)
+  | whiskerRight f Y => whiskerRight (f.inv) Y
+  | tensor f g => tensor (f.inv) (g.inv)
+  | α_hom X Y Z => α_inv X Y Z
+  | α_inv X Y Z => α_hom X Y Z
+  | l_hom X => l_inv X
+  | l_inv X => l_hom X
+  | ρ_hom X => ρ_inv X
+  | ρ_inv X => ρ_hom X
+  | star f => star (f.inv)
+  | χ_hom X Y => χ_inv X Y
+  | χ_inv X Y => χ_hom X Y
+  | ε_hom X => ε_inv X
+  | ε_inv X => ε_hom X
+  | twist_hom X => twist_inv X
+  | twist_inv X => twist_hom X
 
 inductive HomEquiv : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   | refl {X Y} (f : X ⟶ᵐ Y) : HomEquiv f f
