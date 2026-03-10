@@ -5,7 +5,7 @@ variable {C : Type u}
 namespace CategoryTheory.FreeTwistedCategory
 open HomEquiv
 
-instance categoryFreeTwistedCategory : Category.{u} (F C) where
+instance categoryFreeTwistedCategory : Category.{u, u} (F C) where
   Hom X Y := _root_.Quotient (FreeTwistedCategory.setoidHom X Y)
   id X := ⟦Hom.id X⟧
   comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
@@ -503,6 +503,14 @@ instance : Groupoid.{u} (F C) :=
       all_goals sorry
       ) }
 -/
+
+@[simp]
+theorem mk_inv {X Y : F V} (f : X ⟶ᵐ Y) : homMk f.inv = Groupoid.inv ⟦f⟧ := by
+  induction f <;> simp_all <;> simp_mk <;> symm <;> cat_disch
+
+@[simp]
+theorem mk_inv' {X Y : F V} (f : X ⟶ᵐ Y) : ⟦f.inv⟧ = Groupoid.inv (homMk f) := by
+  exact mk_inv f
 
 end CategoryTheory.FreeTwistedCategory
 

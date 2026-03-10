@@ -234,6 +234,7 @@ open Hom
 
 variable [TwistedCategory D]
 
+@[simp]
 def projectMapAux : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (projectObj m X ⟶ projectObj m Y)
   | _, _, Hom.id _ => 𝟙 _
   | _, _, α_hom _ _ _ => (α_ _ _ _).hom
@@ -338,6 +339,56 @@ def project : F C ⥤ D where
   obj := projectObj m
   map := projectMap m _ _
   map_comp := by rintro _ _ _ ⟨_⟩ ⟨_⟩; rfl
+
+/- #check shiftFunctor -/
+/- @[simp] -/
+/- lemma project_map_mk : ((project m).map (homMk f)) = projectMapAux m f := by -/
+/-   unfold project -/
+/-   simp -/
+
+@[simp]
+lemma project_obj_tensor : (project m).obj (X ⊗ Y) = (project m).obj X ⊗ (project m).obj Y := by
+  unfold project
+  simp
+
+@[simp]
+lemma project_map_tensor : (project m).map (f ⊗ₘ g) = (project m).map f ⊗ₘ (project m).map g := by
+  induction f using Quotient.inductionOn
+  induction g using Quotient.inductionOn
+  rw [← mk_tensor]
+  unfold project
+  simp
+
+@[simp]
+lemma project_map_whiskerLeft :
+    (project m).map (X ◁ f) = ((project m).obj X) ◁ (project m).map f := by
+  induction f using Quotient.inductionOn
+  rw [← mk_whiskerLeft]
+  unfold project
+  simp
+
+@[simp]
+lemma project_map_whiskerRight :
+    (project m).map (f ▷ Y) =  (project m).map f ▷ ((project m).obj Y):= by
+  induction f using Quotient.inductionOn
+  rw [← mk_whiskerRight]
+  unfold project
+  simp
+
+/- @[simp] -/
+/- lemma project_map_inv {f : X ⟶ Y} : -/
+/-     (project m).map (Groupoid.inv f) = Groupoid.inv ((project m).map f) := by -/
+/-   induction f using Quotient.inductionOn -/
+/-   unfold project -/
+/-   simp -/
+/-   rw [← mk_inv] -/
+/-   unfold homMk -/
+/-   rw [Quotient.lift_mk] -/
+/-   case h f => -/
+/-     induction f <;> simp_all -/
+/-     symm -/
+/-     apply IsIso.inv_eq_of_hom_inv_id -/
+/-     simp -/
 
 variable {D : Type u'} [Quiver.{v'} (F D)] (m : C → D)
 
