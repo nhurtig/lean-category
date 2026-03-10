@@ -186,6 +186,17 @@ instance natCategory : Category (FN V) where
     rintro ⟨f⟩ ⟨g⟩ ⟨h⟩
     exact _root_.Quotient.sound .assoc
 
+open CategoryTheory
+
+@[simp]
+theorem mk_comp {X Y Z : FN C} (f : X ⟶ⁿ Y) (g : Y ⟶ⁿ Z) :
+    ⟦f.comp g⟧ = @CategoryStruct.comp (FN C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+  rfl
+
+@[simp]
+theorem mk_id {X : FN C} : ⟦Hom.id X⟧ = 𝟙 X :=
+  rfl
+
 end NatDefinition
 
 /-

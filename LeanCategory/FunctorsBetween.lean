@@ -146,9 +146,13 @@ def fromNatLayerHelper (D C : FN V) (s : ℕ) (x : (FNtoF D) ⟶ (FNtoF C)) :
        FtoFQ (FNtoF (s.repeat FreeTwistedCategoryNat.star C))) := match s with
   | 0 => ⟦.of <| x⟧
   | s + 1 => 
-    ((@FreeTwistedCategoryQuiver.freeTwistedCategoryQuiver V _).toTwistedCategoryStruct.twist _).hom ≫
+    (ς_ _).hom ≫
     (fromNatLayerHelper D C s x) ≫
-    ((@FreeTwistedCategoryQuiver.freeTwistedCategoryQuiver V _).toTwistedCategoryStruct.twist _).inv
+    (ς_ _).inv
+
+lemma fromNatLayerHelper_succ {D C : FN V} {x : (FNtoF D) ⟶ (FNtoF C)} :
+    fromNatLayerHelper D C (s + 1) x = (ς_ _).hom ≫ (fromNatLayerHelper D C s x) ≫ (ς_ _).inv :=
+  rfl
 
 @[simp]
 /- def fromNat {X Y : F V} : Hom X Y → (@FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver V _).Hom ((@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _).obj X) ((@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _).obj Y) -/
@@ -196,6 +200,9 @@ open FreeTwistedCategory
 /-     projectObj (fun x ↦ FreeTwistedCategoryQuiver.of x) X = FtoFQ X := by -/
   /- induction X <;> unfold FtoFQ <;> simp_all <;> rfl -/
 
+open Hom
+open TwistedCategory
+
 #synth Category (F V)
 #synth Category (FN V)
 #synth Category (FQ V)
@@ -203,24 +210,59 @@ open FreeTwistedCategory
 /- #synth Category (F V) -/
 /- #synth Category (FQ V) -/
 
+#check Nat.repeat
+#check Nat.iterate
+
+scoped notation:max n " =>⋆" => Nat.repeat FreeTwistedCategoryNat.star n
+scoped notation:max "[[" X "]]" => FtoFQ (FNtoF X)
+
+macro "strip_left" : tactic =>
+  `(tactic|
+    ((repeat1 (first
+      | rw [← whiskerLeft_comp_assoc]
+      | rw [← whiskerLeft_comp]
+      | fail "Nothing to do!"
+    )); apply congrArg; simp)
+  )
+
+macro "extract_right" : tactic =>
+  `(tactic|
+    (repeat1 (first
+      | rw [← comp_whiskerRight_assoc]
+      | rw [← comp_whiskerRight]
+      | fail "Nothing to do!"
+    ))
+  )
+
+#check Iso
+#check MonoidalCategory
+set_option maxHeartbeats 1000000 in -- very large category theory rewrites
 instance fromNat : (FN V) ⥤ (FQ V) where
   obj X := embed.obj (FNtoF X)
   map := Quotient.lift Hom.fromNat <| by
     rintro f g h
-    induction h
-    case layer X Y l₁ l₂ x =>
+    induction h <;> simp_all -- 10 goals. 2 (swap, layer) are nontrivial
+    case swap =>
+      strip_left -- ignore the L ◁ ... on every morphism
+      -- move the x₁ layer up the word past x₂ on the LHS
+      rw [associator_naturality_left_assoc]
+      rw [associator_naturality_left_assoc]
+      rw [← whisker_exchange_assoc]
+      -- it's moved! The layers are in the same positions.
+      -- b/c monoidal categories are thin, the stuff between
+      -- the layers must be the same.
       simp
+    case layer X Y l₁ l₂ x =>
       clear f g
-      induction x
-      case twist_hom L X Y s x R =>
-        simp_all
-        rw [← Functor.map_inv]
-        simp
+      induction x <;> simp_all
+
+
+        /-
         -- TODO: below proof is now deprecated.
         -- New task: use simp lemmas that embed.map
         -- respects whisker, congrArg each whisker out,
         -- embed.map respects twist.
-        -- Use a simp lemma to simplifty fromNatLayerHelper on s successors
+        -- DONE: Use a simp lemma to simplifty fromNatLayerHelper on s successors
         -- I don't believe we need to apply twist naturality then cancel the twists,
         -- as both sides are hom ≫ sorry ≫ inv.
 
@@ -244,13 +286,30 @@ instance fromNat : (FN V) ⥤ (FQ V) where
         #check cast
         rw [← mk_star (FreeTwistedCategoryQuiver.Hom.of (cast _ s))]
         sorry
-      all_goals sorry
-      case free L₁ L₂ R₁ R₂ X Y s l r =>
-        simp
+        -/
+      case freeLeft L₁ L₂ X Y s x R l =>
+        rw [← whisker_assoc_assoc]
+        extract_right
+        repeat rw [Category.assoc]
+        rw [whisker_exchange _ _]
         unfold embed
         simp
+      case freeRight R₁ R₂ L X Y s x r =>
+        strip_left
+        rw [← whisker_exchange _ _]
+        unfold embed
+        simp
+        
+        /-
+        sorry
+        simp only
+        have h := associator_naturality_left_assoc (embed.map l) [[s =>⋆ X]] [[R]]]
+        simp at hrw
+        rw [hrw]
+        rw [embed_map_whiskerRight]
         rw [MonoidalCategory.tensorHom_def]
         rw [MonoidalCategory.tensorHom_def']
+        -/
         /- unfold project -/
 
         -- get the l's to meet
@@ -260,17 +319,17 @@ instance fromNat : (FN V) ⥤ (FQ V) where
         /- rw [← comp_whiskerRight_assoc] -/
 
         -- get the r's to meet
-        rw [← whiskerLeft_comp_assoc _ _ _]
-        rw [← whisker_exchange]
-        rw [← whisker_exchange]
-        rw [whisker_exchange]
-        rw [whiskerLeft_comp_assoc _ _ _]
+        /- rw [← whiskerLeft_comp_assoc _ _ _] -/
+        /- rw [← whisker_exchange] -/
+        /- rw [← whisker_exchange] -/
+        /- rw [whisker_exchange] -/
+        /- rw [whiskerLeft_comp_assoc _ _ _] -/
 
-        repeat rw [Category.assoc]
-        rw [← whiskerLeft_comp_assoc _ _ _]
-        rw [← whiskerLeft_comp_assoc _ _ _]
-        rw [← whiskerLeft_comp _ _ _]
-        simp
+        /- repeat rw [Category.assoc] -/
+        /- rw [← whiskerLeft_comp_assoc _ _ _] -/
+        /- rw [← whiskerLeft_comp_assoc _ _ _] -/
+        /- rw [← whiskerLeft_comp _ _ _] -/
+        /- simp -/
         /- simp only [IsIso.hom_inv_id] -/
         /- rw [whiskerLeft_id ((project fun x ↦ FreeTwistedCategoryQuiver.of x).obj L₂) (((project fun x ↦ FreeTwistedCategoryQuiver.of x).obj X ⊗ -/
         /-     (project fun x ↦ FreeTwistedCategoryQuiver.of x).obj R₁))] -/
@@ -278,20 +337,20 @@ instance fromNat : (FN V) ⥤ (FQ V) where
         /- /- rw [Category.id_comp] -/ -/
         /- simp -/
 
-        #check Category.comp_id
-        rw [← whisker_exchange_assoc]
-        rw [← whisker_exchange_assoc]
+        /- #check Category.comp_id -/
+        /- rw [← whisker_exchange_assoc] -/
+        /- rw [← whisker_exchange_assoc] -/
 
-        rw [← comp_whiskerRight _ _ _]
-        simp?
+        /- rw [← comp_whiskerRight _ _ _] -/
+        /- simp? -/
 
-        symm
-        rw [← whiskerLeft_comp _ _ _]
-        apply congrArg
-        rw [← id_whiskerRight]
-        rw [← comp_whiskerRight _ _ _]
-        apply congrArg (· ▷ (project fun x ↦ FreeTwistedCategoryQuiver.of x).obj R₁)
-        rw [Category.id_comp]
+        /- symm -/
+        /- rw [← whiskerLeft_comp _ _ _] -/
+        /- apply congrArg -/
+        /- rw [← id_whiskerRight] -/
+        /- rw [← comp_whiskerRight _ _ _] -/
+        /- apply congrArg (· ▷ (project fun x ↦ FreeTwistedCategoryQuiver.of x).obj R₁) -/
+        /- rw [Category.id_comp] -/
 
 /-
         rw [whiskerLeft_id]
@@ -310,69 +369,93 @@ instance fromNat : (FN V) ⥤ (FQ V) where
 
         sorry
         -/
-      any_goals simp_all
-      all_goals sorry
-    all_goals sorry
-    case swap X Y L X₁ Y₁ s₁ M X₂ R Y₂ s₂ =>
-      simp_all
-      -- get the embed.map outta here
-      unfold embed
-      unfold project
-      simp
-      repeat rw [← mk_α_inv]
-      repeat rw [← mk_α_hom]
-      repeat rw [← mk_whiskerLeft]
-      repeat rw [← mk_whiskerRight]
-      simp
-      /- repeat rw [associator_naturality_left_assoc] -/
-      /- rw [← whiskerLeft_comp_assoc _ (⟦FreeTwistedCategoryQuiver.Hom.of (cast ⋯ s₁)⟧ ▷ _ ▷ _ ▷ _) _] -/
-      
-      -- move the s₁ layer up the word, past s₂, on the LHS
-
-      rw [← whiskerLeft_comp_assoc _ (((_ ▷ _) ▷ _) ▷ _) _]
-      rw [← comp_whiskerRight _ _ _]
-      rw [associator_naturality_left]
-      rw [comp_whiskerRight _ _ _]
-      rw [whiskerLeft_comp_assoc _ _ _]
-
-      rw [← whiskerLeft_comp_assoc _ ((_ ▷ _) ▷ _) _]
-      rw [associator_naturality_left]
-      rw [whiskerLeft_comp_assoc _ _ _]
-
-      rw [← whiskerLeft_comp_assoc _ (_ ▷ ((_ ⊗ _) ⊗ _)) _]
-      rw [← whisker_exchange]
-      rw [whiskerLeft_comp_assoc _ _ _]
-
-      simp
-
-      rw [← whiskerLeft_comp_assoc _ (((_ ▷ _) ▷ _) ▷ _) _]
-      rw [associator_naturality_left]
-      rw [whiskerLeft_comp_assoc _ _ _]
-
-      rw [← whiskerLeft_comp_assoc _ ((_ ▷ _) ▷ _) _]
-      rw [associator_naturality_left]
-      rw [whiskerLeft_comp_assoc _ _ _]
-
-      rw [← whiskerLeft_comp_assoc _ (_ ▷ (_ ⊗ _ ⊗ _)) _]
-      rw [← whisker_exchange]
-
-      -- it's moved! The layers are in the same positions.
-      -- b/c monoidal categories are thin, the stuff between
-      -- the layers must be the same.
-
-      coherence
-    all_goals simp_all
+      case strand_box_hom =>
+        repeat1 rw [← Category.assoc]
+        apply congrArg (· ≫ _)
+        simp
+        strip_left
+        extract_right
+        repeat rw [← tensorHom_id]
+        rw [← braid_naturality]
+        simp
+      case box_strand_inv =>
+        repeat1 rw [← Category.assoc]
+        apply congrArg (· ≫ _)
+        simp
+        strip_left
+        extract_right
+        repeat rw [← tensorHom_id]
+        rw [← braid_inv_naturality]
+        simp
+      case box_strand_hom =>
+        strip_left
+        repeat1 rw [← Category.assoc]
+        apply congrArg (· ≫ _)
+        simp
+        rw [associator_inv_naturality_middle_assoc]
+        rw [Iso.hom_inv_id_assoc]
+        extract_right
+        apply congrArg
+        simp
+        rw [← id_tensorHom]
+        rw [braid_inv_naturality]
+        simp
+      case strand_box_inv =>
+        strip_left
+        repeat1 rw [← Category.assoc]
+        apply congrArg (· ≫ _)
+        simp
+        rw [associator_inv_naturality_middle_assoc]
+        rw [Iso.hom_inv_id_assoc]
+        extract_right
+        apply congrArg
+        simp
+        rw [← id_tensorHom]
+        rw [braid_naturality]
+        simp
+      case twist_hom =>
+        rw [Hom.fromNatLayerHelper_succ]
+        simp
+      case twist_inv =>
+        rw [Hom.fromNatLayerHelper_succ]
+        simp
+        repeat1 rw [← whiskerLeft_comp_assoc]
+        repeat1 rw [← whiskerLeft_comp]
+        apply congrArg
+        repeat1 rw [← comp_whiskerRight]
+        simp
+  map_comp := by
+    rintro _ _ _ ⟨f⟩ ⟨g⟩
+    rfl
+  map_id := by
+    rintro _
+    rfl
 
 #check MonoidalCategory
 
-instance toNat : FQ V ⥤ F V where
-  obj := FtoFQ.symm
+@[simp]
+def FQtoF : FQ V → F V
+  | .of v => .of v
+  | .unit => .unit
+  | .tensor X Y => .tensor (FQtoF X) (FQtoF Y)
+  | .star X => .star (FQtoF X)
+
+@[simp]
+def FtoFN : F V → FN V
+  | .of v => .of v
+  | .unit => .unit
+  | .tensor X Y => .tensor (FtoFN X) (FtoFN Y)
+  | .star X => .star (FtoFN X)
+
+instance toNat : FQ V ⥤ FN V where
+  obj := FtoFN ∘ FQtoF
   map := sorry
+  map_comp := sorry
+  map_id := sorry
 
 #check Equivalence
 -- we need something stronger than equivalence -- isomorphism of categories!
 
 end NatDefinition
--/
 
 

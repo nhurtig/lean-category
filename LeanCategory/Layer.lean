@@ -134,7 +134,8 @@ lemma boundary_bottom (l : Layer V) :
 
 inductive Hom : Layer V → Layer V → Type max (u + 1) v where
   | comp : Hom l₁ l₂ → Hom l₂ l₃ → Hom l₁ l₃
-  | free (l : ((FNtoF L₁) ⟶β (FNtoF L₂))) (r : ((FNtoF R₁) ⟶β (FNtoF R₂))) : Hom ⟨L₁, X, Y, s, x, R₁⟩ ⟨L₂, X, Y, s, x, R₂⟩ -- σ
+  | freeLeft (l : ((FNtoF L₁) ⟶β (FNtoF L₂))) : Hom ⟨L₁, X, Y, s, x, R⟩ ⟨L₂, X, Y, s, x, R⟩ -- σ
+  | freeRight (r : ((FNtoF R₁) ⟶β (FNtoF R₂))) : Hom ⟨L, X, Y, s, x, R₁⟩ ⟨L, X, Y, s, x, R₂⟩ -- σ
   | twist_hom  : Hom ⟨L, X, Y, s + 1, x, R⟩ ⟨L, X, Y, s, x, R⟩
   | twist_inv  : Hom ⟨L, X, Y, s, x, R⟩ ⟨L, X, Y, s + 1, x, R⟩ -- Δ
   | box_strand_hom : Hom ⟨L, X, Y, s, x, A * R⟩ ⟨L * A, X, Y, s, x, R⟩ -- σ underline
@@ -152,8 +153,10 @@ open TwistedCategory
 @[simp]
 def φ {l₁ l₂ : Layer V} (b : TopBottom) : (l₁ ⟶L l₂) → ((FNtoF <| l₁.boundary b) ⟶β (FNtoF <| l₂.boundary b))
   | comp f g => f.φ b ≫ g.φ b
-  | free l r => by
-      cases b <;> simp <;> exact l ⊗ₘ (𝟙 _) ⊗ₘ r
+  | freeLeft l => by
+      cases b <;> simp <;> exact l ⊗ₘ (𝟙 _) ⊗ₘ (𝟙 _)
+  | freeRight r => by
+      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (𝟙 _) ⊗ₘ r
   | twist_hom => by
       cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (ς_ _).hom ⊗ₘ (𝟙 _)
   | twist_inv => by

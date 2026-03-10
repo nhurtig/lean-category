@@ -72,6 +72,7 @@ lemma FtoFQ_star {X : F C} : FtoFQ X⋆ = (FtoFQ X)⋆ := by
 
 open Hom
 
+@[simp]
 def embedMapAux : ∀ {X Y : F C}, (X ⟶ᵐ Y) → ((FtoFQ X) ⟶Q (FtoFQ Y))
   | _, _, Hom.id _ => 𝟙 _
   | _, _, α_hom _ _ _ => (α_ _ _ _).hom
@@ -226,6 +227,43 @@ def embed : Functor (F C) (FQ C) where
   obj := FtoFQ
   map {X Y} f := embedMap X Y f
   map_comp := by rintro _ _ _ ⟨_⟩ ⟨_⟩; rfl
+
+@[simp]
+lemma embed_map_whiskerLeft {X : F C} : embed.map (X ◁ f) = FtoFQ X ◁ embed.map f := by
+  unfold embed
+  simp
+  induction f using Quotient.inductionOn
+  rfl
+
+@[simp]
+lemma embed_map_whiskerRight {X : F C} : embed.map (f ▷ X) = embed.map f ▷ FtoFQ X := by
+  unfold embed
+  simp
+  induction f using Quotient.inductionOn
+  rfl
+
+@[simp]
+lemma embed_map_twist_hom {X : F C} : embed.map (ς_ X |>.hom) = (ς_ (FtoFQ X)).hom := by
+  rfl
+@[simp]
+lemma embed_map_twist_inv {X : F C} : embed.map (ς_ X |>.inv) = (ς_ (FtoFQ X)).inv := by
+  rfl
+@[simp]
+lemma embed_map_braid_hom {X Y : F C} :
+    embed.map (σ_ X Y |>.hom) = (σ_ (FtoFQ X) (FtoFQ Y)).hom := by
+  rfl
+@[simp]
+lemma embed_map_braid_inv {X Y : F C} :
+    embed.map (σ_ X Y |>.inv) = (σ_ (FtoFQ X) (FtoFQ Y)).inv := by
+  rfl
+@[simp]
+lemma embed_map_associator_hom {X Y Z : F C} :
+    embed.map (α_ X Y Z |>.hom) = (α_ (FtoFQ X) (FtoFQ Y) (FtoFQ Z)).hom := by
+  rfl
+@[simp]
+lemma embed_map_associator_inv {X Y Z : F C} :
+    embed.map (α_ X Y Z |>.inv) = (α_ (FtoFQ X) (FtoFQ Y) (FtoFQ Z)).inv := by
+  rfl
 
 /- variable (M : {X Y : F C} → (X ⟶ Y) → -/
 /-   ((X.projectObj (FreeTwistedCategory.of <| m ·)) ⟶ (Y.projectObj (.of <| m ·)))) -/

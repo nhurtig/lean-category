@@ -261,6 +261,33 @@ theorem twist_inv_naturality :
   rw [← twist_naturality_assoc f]
   simp
 
+  /- skewator_naturality : ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂), -/
+  /-     (f⋆ ⊗ₘ g⋆) ≫ (χ_ Y₁ Y₂).hom = (χ_ X₁ X₂).hom ≫ (g ⊗ₘ f)⋆ := by cat_disch -/
+@[reassoc]
+theorem braid_naturality :
+    ∀ {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
+      (f ⊗ₘ g) ≫ (σ_ Y₁ Y₂).hom = (σ_ X₁ X₂).hom ≫ (g ⊗ₘ f) := by
+  intros _ _ _ _ f g
+  unfold braid; simp only
+  rw [tensorHom_comp_tensorHom_assoc]
+  repeat1 rw [twist_inv_naturality]
+  rw [← tensorHom_comp_tensorHom_assoc]
+  rw [skewator_naturality_assoc]
+  rw [twist_naturality]
+  simp
+
+@[simp]
+theorem braid_inv_naturality :
+    ∀ {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
+      (f ⊗ₘ g) ≫ (σ_ Y₂ Y₁).inv = (σ_ X₂ X₁).inv ≫ (g ⊗ₘ f) := by
+  intros _ _ _ _ f g
+  unfold braid; simp only
+  rw [twist_inv_naturality_assoc]
+  rw [skewator_inv_naturality_assoc]
+  rw [tensorHom_comp_tensorHom]
+  rw [twist_naturality]
+  simp
+
 @[reassoc (attr := simp), simp]
 theorem tℓ_inv : ∀ P Q R : C,
     (α_ R Q P).inv ≫  
