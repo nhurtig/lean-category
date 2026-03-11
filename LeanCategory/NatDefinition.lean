@@ -291,6 +291,23 @@ open FreeTwistedCategory
 /- set_option pp.notation false -/
 /- set_option pp.explicit true -/
 
+#check IsIso
+-- if x is an iso, then f ≫ i = g → f = g ≫ i.inv
+
+lemma stripBraidLeft {X Y : F V} {b : X ⟶β Y} {f : Y ⟶N Z} {g : X ⟶N Z} :
+    ⟦(Hom.braid b)⟧ ≫N f = g → f = ⟦(Hom.braid (inv b))⟧ ≫N g := by
+  intros h
+  trans (⟦Hom.braid (inv b)⟧ ≫N (⟦Hom.braid b⟧ ≫N f))
+  · simp
+  · rw [h]
+
+lemma stripBraidRight {X Y : F V} {b : Y ⟶β Z} {f : X ⟶N Y} {g : X ⟶N Z} :
+    f ≫N ⟦(Hom.braid b)⟧ = g → f = g ≫N ⟦(Hom.braid (inv b))⟧ := by
+  intros h
+  trans ((f ≫N ⟦Hom.braid b⟧) ≫N ⟦Hom.braid (inv b)⟧)
+  · simp
+  · rw [h]
+
 def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ ⟶N X ⊗ Y₂) := --by
   Quotient.liftOn f (⟦·.whiskerLeft X⟧) <| by
     clear f
@@ -300,11 +317,15 @@ def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ �
     case layer l₁ l₂ f =>
       simp_all
       induction f
+      case freeRight =>
+        sorry
+      all_goals sorry
       case comp ih₁ ih₂ =>
         rw [ih₁]
+        have ih₂ := stripBraidLeft ih₂
+        have ih₂ := stripBraidRight ih₂
         rw [ih₂]
         simp
-      all_goals sorry
     all_goals sorry
     case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
       simp_all
