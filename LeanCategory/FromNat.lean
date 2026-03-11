@@ -59,10 +59,14 @@ instance quiverF : Quiver (F V) where
   Hom X Y := FtoFQ X ⟶ FtoFQ Y
 
 -- our two categories of most interest:
-#synth Category (FN V)
+#synth Category (F V)
+#check natCategory
 #synth Category (FQ V)
 -- and the supporting category of just twists:
-#synth Category (F V)
+#check FreeTwistedCategory.categoryFreeTwistedCategory
+/- attribute [-instance] natCategory -/
+/- #synth Category (F V) -/
+/- attribute [instance] natCategory -/
 
 #synth Quiver (F V)
 
@@ -125,13 +129,13 @@ open TwistedCategory
 
 -- TODO put this into NatDefinition.lean?
 @[simp]
-def sizeOf {X Y : FN V} : Hom X Y → ℕ
+def sizeOf {X Y : F V} : Hom X Y → ℕ
   | layer ⟨_, _, _, s, _, _⟩ => s
   | id _ => 0
   | braid f => 0
   | comp f g => f.sizeOf + g.sizeOf + 1
 
-#synth Quiver (FN V)
+#synth Quiver (F V)
 #check @Hom
 /- def embed := -/
 /- (@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _) -/
@@ -141,26 +145,24 @@ def sizeOf {X Y : FN V} : Hom X Y → ℕ
 /- attribute [-instance] natCategory -/
 #check preHom
 #synth Quiver (F V)
-def fromNatLayerHelper (D C : FN V) (s : ℕ) (x : (FNtoF D) ⟶ (FNtoF C)) :
-    (FtoFQ (FNtoF (s.repeat FreeTwistedCategoryNat.star D)) ⟶Q
-       FtoFQ (FNtoF (s.repeat FreeTwistedCategoryNat.star C))) := match s with
+def fromNatLayerHelper (D C : F V) (s : ℕ) (x : D ⟶ C) :
+    (FtoFQ (s.repeat .star D) ⟶Q
+       FtoFQ (s.repeat .star C)) := match s with
   | 0 => ⟦.of <| x⟧
   | s + 1 => 
     (ς_ _).hom ≫
     (fromNatLayerHelper D C s x) ≫
     (ς_ _).inv
 
-lemma fromNatLayerHelper_succ {D C : FN V} {x : (FNtoF D) ⟶ (FNtoF C)} :
+lemma fromNatLayerHelper_succ {D C : F V} {x : D ⟶ C} :
     fromNatLayerHelper D C (s + 1) x = (ς_ _).hom ≫ (fromNatLayerHelper D C s x) ≫ (ς_ _).inv :=
   rfl
 
+attribute [-instance] natCategory
 @[simp]
 /- def fromNat {X Y : F V} : Hom X Y → (@FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver V _).Hom ((@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _).obj X) ((@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _).obj Y) -/
 /- def fromNat {X Y : F V} : Hom X Y → (@FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver V _).Hom ((@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _).obj X) ((@CategoryTheory.FreeTwistedCategory.project V (F V) (FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver) _ _ (.of ·) _).obj Y) -/
-
--- TODO we are making the layer thing a helper function, just for the interior
-
-def fromNat {X Y : FN V} : Hom X Y → ((embed.obj (FNtoF X)) ⟶Q (embed.obj (FNtoF Y)))
+def fromNat {X Y : F V} : Hom X Y → ((embed.obj X) ⟶Q (embed.obj Y))
   /- | braid f => (@embed_eq_FtoFQ V stitches) ▸ embed.map f -- gotta embed w/o quiver into w/ quiver -/
   | braid f => embed.map f -- gotta embed w/o quiver into w/ quiver
   | comp f g => FreeTwistedCategoryQuiver.categoryFreeTwistedCategoryQuiver.comp f.fromNat g.fromNat
@@ -168,6 +170,7 @@ def fromNat {X Y : FN V} : Hom X Y → ((embed.obj (FNtoF X)) ⟶Q (embed.obj (F
   /- | layer ⟨L, D, C, 0, x, R⟩ => by simp; unfold embed; simp; unfold quiverF at x; simp at x; unfold Nat.repeat; exact _ ◁ (⟦.of <| x⟧) ▷ _ -/
   /- | layer ⟨L, D, C, 0, x, R⟩ => _ ◁ (⟦.of <| x⟧) ▷ _ -/
   | layer ⟨L, D, C, s, x, R⟩ => _ ◁ (fromNatLayerHelper D C s x) ▷ _
+attribute [instance] natCategory
   /- | layer ⟨L, D, C, s+1, x, R⟩ => (_ ◁ ((@FreeTwistedCategoryQuiver.freeTwistedCategoryQuiver V _).toTwistedCategoryStruct.twist _).hom ▷ _) ≫ -/
   /-       (fromNat (layer ⟨L, D, C, s, x, R⟩)) ≫ -/
   /-       (_ ◁ ((@FreeTwistedCategoryQuiver.freeTwistedCategoryQuiver V _).toTwistedCategoryStruct.twist _).inv ▷ _) -/
@@ -182,8 +185,6 @@ def fromNat {X Y : FN V} : Hom X Y → ((embed.obj (FNtoF X)) ⟶Q (embed.obj (F
   /-     have blah := fromNat (layer ⟨L, D, C, s, x, R⟩) -/
   /-     unfold embed at blah ⊢; simp at blah ⊢; unfold quiverF at x; simp at x -/
   /-     refine (_ ◁ ?_ ▷ _) ≫ blah ≫ (_ ◁ ?_ ▷ _) <;> clear blah -/
-  /-     exact ((@FreeTwistedCategoryQuiver.freeTwistedCategoryQuiver V _).toTwistedCategoryStruct.twist _).hom -/
-  /-     exact ((@FreeTwistedCategoryQuiver.freeTwistedCategoryQuiver V _).toTwistedCategoryStruct.twist _).inv -/
 
 end Hom
 
@@ -203,8 +204,8 @@ open FreeTwistedCategory
 open Hom
 open TwistedCategory
 
+#check FreeTwistedCategory.categoryFreeTwistedCategory
 #synth Category (F V)
-#synth Category (FN V)
 #synth Category (FQ V)
 /- attribute [instance] natCategory -/
 /- #synth Category (F V) -/
@@ -214,7 +215,7 @@ open TwistedCategory
 #check Nat.iterate
 
 scoped notation:max n " =>⋆" => Nat.repeat FreeTwistedCategoryNat.star n
-scoped notation:max "[[" X "]]" => FtoFQ (FNtoF X)
+scoped notation:max "[[" X "]]" => FtoFQ (X)
 
 macro "strip_left" : tactic =>
   `(tactic|
@@ -237,8 +238,8 @@ macro "extract_right" : tactic =>
 #check Iso
 #check MonoidalCategory
 set_option maxHeartbeats 1000000 in -- very large category theory rewrites
-instance fromNat : (FN V) ⥤ (FQ V) where
-  obj X := embed.obj (FNtoF X)
+instance fromNat : (F V) ⥤ (FQ V) where
+  obj X := FtoFQ X
   map := Quotient.lift Hom.fromNat <| by
     rintro f g h
     induction h <;> simp_all -- 10 goals. 2 (swap, layer) are nontrivial
@@ -431,31 +432,5 @@ instance fromNat : (FN V) ⥤ (FQ V) where
     rintro _
     rfl
 
-#check MonoidalCategory
-
-@[simp]
-def FQtoF : FQ V → F V
-  | .of v => .of v
-  | .unit => .unit
-  | .tensor X Y => .tensor (FQtoF X) (FQtoF Y)
-  | .star X => .star (FQtoF X)
-
-@[simp]
-def FtoFN : F V → FN V
-  | .of v => .of v
-  | .unit => .unit
-  | .tensor X Y => .tensor (FtoFN X) (FtoFN Y)
-  | .star X => .star (FtoFN X)
-
-instance toNat : FQ V ⥤ FN V where
-  obj := FtoFN ∘ FQtoF
-  map := sorry
-  map_comp := sorry
-  map_id := sorry
-
-#check Equivalence
--- we need something stronger than equivalence -- isomorphism of categories!
-
 end NatDefinition
-
 

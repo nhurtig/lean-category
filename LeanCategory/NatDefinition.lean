@@ -7,19 +7,23 @@ variable {V : Type u}
 
 variable [stitches : Quiver.{v} (F V)]
 
-inductive Hom : FN V → FN V → Type (max (u + 2) v) where
+/- notation "F" => CategoryTheory.FreeTwistedCategory -/
+
+inductive Hom : F V → F V → Type (max (u + 2) v) where
   | layer : (l : Layer V) →
       Hom (l.boundary .Bottom) (l.boundary .Top)
-  | braid {X Y : FN V} : ((FNtoF X) ⟶β (FNtoF Y)) → Hom X Y
-  | id (X : FN V) : Hom X X -- was just using braid's id
-  | comp {X Y Z : FN V} : Hom X Y → Hom Y Z → Hom X Z
+  | braid {X Y : F V} : (X ⟶β Y) → Hom X Y
+  | id (X : F V) : Hom X X -- was just using braid's id, but
+  -- ran into motive issues
+  | comp {X Y Z : F V} : Hom X Y → Hom Y Z → Hom X Z
 
 infixr:10 " ⟶ⁿ " => Hom
 
 open CategoryTheory
 
-instance (priority := low) preHom : CategoryStruct (FN V) where
+instance (priority := low) preHom : CategoryStruct (F V) where
   Hom := Hom
+  /- id X := .braid (𝟙 (FtoF X)) -/
   id := Hom.id
   comp := Hom.comp
 
@@ -70,7 +74,7 @@ macro "pure_iso" : tactic =>
 
 open MonoidalCategory
 /- @[simp, grind] -/
-/- def Hom.whisker (X : FN V) {Y₁ Y₂ : FN V} : (Y₁ ⟶ⁿ Y₂) → (Z : FN V) → -/
+/- def Hom.whisker (X : F V) {Y₁ Y₂ : F V} : (Y₁ ⟶ⁿ Y₂) → (Z : F V) → -/
 /-     ((X * (Y₁ * Z)) ⟶ⁿ (X * (Y₂ * Z))) -/
 /-   | .layer ⟨L, D, C, s, x, R⟩, Z => -/
 /-     (Hom.braid <| by pure_iso).comp <| -/
@@ -83,10 +87,25 @@ open MonoidalCategory
 /- #synth Quiver N -/
 
 /- @[simp, grind] -/
-/- def Hom.whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶ⁿ Y₂) : ((X * Y₁) ⟶ⁿ (X * Y₂)) := -/
-/-   (Hom.braid (by pure_iso)).comp <| -/
-/-     (Hom.whisker X f 1).comp <| -/
-/-     Hom.braid (by pure_iso) -/
+@[simp]
+def Hom.whiskerLeft (X : F V) {Y₁ Y₂ : F V} : (Y₁ ⟶ⁿ Y₂) → ((X.tensor Y₁) ⟶ⁿ (X.tensor Y₂))
+  | .id _ => .id _
+  | .layer ⟨L, D, C, s, x, R⟩ =>
+    (Hom.braid <| by pure_iso).comp <|
+    (Hom.layer ⟨X.tensor L, D, C, s, x, R⟩).comp
+    (.braid <| by pure_iso)
+  | .braid b => Hom.braid (X ◁ b)
+  | .comp f g => (f.whiskerLeft X).comp (g.whiskerLeft X)
+
+@[simp]
+def Hom.whiskerRight (X : F V) {Y₁ Y₂ : F V} : (Y₁ ⟶ⁿ Y₂) → ((Y₁.tensor X) ⟶ⁿ (Y₂.tensor X))
+  | .id _ => .id _
+  | .layer ⟨L, D, C, s, x, R⟩ =>
+    (Hom.braid <| by pure_iso).comp <|
+    (Hom.layer ⟨L, D, C, s, x, R.tensor X⟩).comp
+    (.braid <| by pure_iso)
+  | .braid b => Hom.braid (b ▷ X)
+  | .comp f g => (f.whiskerRight X).comp (g.whiskerRight X)
 
 /- @[simp, grind] -/
 /- def Hom.whiskerRight {X₁ X₂ : F V} (f : X₁ ⟶ⁿ X₂) (Y : F V) : ((X₁ * Y) ⟶ⁿ (X₂ * Y)) := -/
@@ -95,45 +114,49 @@ open MonoidalCategory
 /-     (Hom.whisker 1 f Y).comp <| -/
     /- Hom.braid (by pure_iso) -/
 
-/- @[simp, grind] -/
-/- def Hom.tensor {X₁ X₂ Y₁ Y₂ : F V} (f : X₁ ⟶ⁿ Y₁) (g : X₂ ⟶ⁿ Y₂) : (X₁ * X₂) ⟶ⁿ (Y₁ * Y₂) := -/
-/-   (whiskerRight f X₂).comp (whiskerLeft Y₁ g) -/
+@[simp, grind]
+def Hom.tensor {X₁ X₂ Y₁ Y₂ : F V} (f : X₁ ⟶ⁿ Y₁) (g : X₂ ⟶ⁿ Y₂) :
+    (X₁.tensor X₂) ⟶ⁿ (Y₁.tensor Y₂) :=
+  (f.whiskerRight X₂).comp (g.whiskerLeft Y₁)
 
 /- @[simp, grind] -/
-/- def Hom.star {X Y : F V} : (X ⟶ⁿ Y) → (X⋆ ⟶ⁿ Y⋆) -/
-/-   | .layer ⟨L, X, Y, s, x, R⟩ => -/
-/-       (Hom.braid <| by pure_iso).comp <| -/
-/-         (Hom.layer ⟨R⋆, X, Y, s+1, x, L⋆⟩).comp <| -/
-/-         Hom.braid (by pure_iso) -/
-/-   | .braid b => .braid b⋆ -/
-/-   | .comp f g => (f.star).comp g.star -/
+@[simp]
+def Hom.star {X Y : F V} : (X ⟶ⁿ Y) → (X.star ⟶ⁿ Y.star)
+  | .id _ => .id _
+  | .layer ⟨L, X, Y, s, x, R⟩ =>
+      (Hom.braid <| by pure_iso).comp <|
+        (Hom.layer ⟨R.star, X, Y, s+1, x, L.star⟩).comp <|
+        Hom.braid (by pure_iso)
+  | .braid b => .braid b⋆
+  | .comp f g => (f.star).comp g.star
 
 -- #synth Quiver (S (F V))
 
 -- variable {X Y Z : S (F V)} {b₁ : X ⟶ Y} {b₂ : Y ⟶ Z}
 
+#check MonoidalCategory
 @[grind]
-inductive Hom.Equiv : ∀ {X Y : (FN V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop where
+inductive Hom.Equiv : ∀ {X Y : (F V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop where
   | refl (f) : Hom.Equiv f f
   | comp {f f' : X ⟶ⁿ Y} : Hom.Equiv f f' → Hom.Equiv g g' → Hom.Equiv (f.comp g) (f'.comp g')
   | id_comp : Hom.Equiv ((Hom.id _).comp f) f
   | comp_id : Hom.Equiv (f.comp <| Hom.id _) f
-  /- | id_comp : Hom.Equiv ((Hom.braid (𝟙β X)).comp f) f -/
-  /- | comp_id {f : X ⟶ⁿ Y} : Hom.Equiv (f.comp (.braid (𝟙β Y))) f -/
+  /- | id_comp : Hom.Equiv ((Hom.braid (𝟙β (FtoF X))).comp f) f -/
+  /- | comp_id {f : X ⟶ⁿ Y} : Hom.Equiv (f.comp (.braid (𝟙β (FtoF Y)))) f -/
   | assoc {f : _ ⟶ⁿ _} {g : _ ⟶ⁿ _} {h : _ ⟶ⁿ _} :
       Hom.Equiv ((f.comp g).comp h) (f.comp (g.comp h))
-  | merge_braid {b₁ : (FNtoF X) ⟶β (FNtoF Y)} {b₂ : (FNtoF Y) ⟶β (FNtoF Z)} :
+  | merge_braid {b₁ : X ⟶β (Y)} {b₂ : (Y) ⟶β (Z)} :
       Hom.Equiv ((Hom.braid b₁).comp (.braid b₂)) (.braid (b₁ ≫β b₂))
   -- the paper's rules
   | swap : Hom.Equiv
-      ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, M * (s₂.repeat .star X₂) * R⟩).comp
+      ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star X₂)).tensor R⟩).comp
         ((Hom.braid (by pure_iso)).comp
-        ((Hom.layer ⟨L * (s₁.repeat .star Y₁) * M, X₂, Y₂, s₂, x₂, R⟩).comp
+        ((Hom.layer ⟨(L.tensor (s₁.repeat .star Y₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩).comp
         (Hom.braid (by pure_iso)))))
       ((Hom.braid <| by pure_iso).comp
-        ((Hom.layer ⟨L * (s₁.repeat .star X₁) * M, X₂, Y₂, s₂, x₂, R⟩).comp
+        ((Hom.layer ⟨(L.tensor (s₁.repeat .star X₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩).comp
         ((Hom.braid <| by pure_iso).comp
-        (Hom.layer ⟨L, X₁, Y₁, s₁, x₁, M * (s₂.repeat .star Y₂) * R⟩))))
+        (Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star Y₂)).tensor R⟩))))
   | layer (f : l₁ ⟶L l₂) : Hom.Equiv
       (Hom.layer l₁)
       ((Hom.braid <| f.φ .Bottom).comp <|
@@ -142,13 +165,13 @@ inductive Hom.Equiv : ∀ {X Y : (FN V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop
   | symm (f g) : Hom.Equiv f g → Hom.Equiv g f
   | trans {f g h : X ⟶ⁿ Y} : Hom.Equiv f g → Hom.Equiv g h → Hom.Equiv f h
 
-instance {X Y : FN V} : HasEquiv (Hom X Y) where
+instance {X Y : F V} : HasEquiv (Hom X Y) where
   Equiv := Hom.Equiv
 
-instance {X Y : FN V} : HasEquiv (X ⟶ⁿ Y) where
+instance {X Y : F V} : HasEquiv (X ⟶ⁿ Y) where
   Equiv := Hom.Equiv
 
-attribute [grind →] Hom.Equiv.comp
+/- attribute [grind →] Hom.Equiv.comp -/
 
 /- @[grind =_] -/
 /- lemma Hom.Equiv_def {X Y : F V} {f g : X ⟶ⁿ Y} : Hom.Equiv f g ↔ f ≈ g := by -/
@@ -169,11 +192,12 @@ open CategoryTheory.MonoidalCategory
 /-     b = b' → (Hom.braid b) ≈ (Hom.braid b') := by -/
 /-   grind -/
 
-instance mySetoidHom (X Y : FN V) : Setoid (X ⟶ⁿ Y) :=
+instance mySetoidHom (X Y : F V) : Setoid (X ⟶ⁿ Y) :=
 ⟨Hom.Equiv, ⟨Hom.Equiv.refl, Hom.Equiv.symm _ _, Hom.Equiv.trans⟩⟩
 
-instance natCategory : Category (FN V) where
+instance natCategory : Category (F V) where
   Hom X Y := _root_.Quotient (mySetoidHom X Y)
+  /- id X := ⟦Hom.braid (𝟙 (FtoF X))⟧ -/
   id X := ⟦Hom.id X⟧
   comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg)
   id_comp := by
@@ -186,16 +210,62 @@ instance natCategory : Category (FN V) where
     rintro ⟨f⟩ ⟨g⟩ ⟨h⟩
     exact _root_.Quotient.sound .assoc
 
-open CategoryTheory
+@[simp]
+def homMk {X Y : F V} (f : X ⟶ⁿ Y) : natCategory.Hom X Y := ⟦f⟧
 
 @[simp]
-theorem mk_comp {X Y Z : FN C} (f : X ⟶ⁿ Y) (g : Y ⟶ⁿ Z) :
-    ⟦f.comp g⟧ = @CategoryStruct.comp (FN C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+theorem mk_comp {X Y Z : F V} (f : X ⟶ⁿ Y) (g : Y ⟶ⁿ Z) :
+    ⟦Hom.comp f g⟧ = @CategoryStruct.comp (F V) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
+/- @[simp] -/
+/- theorem mk_braid_comp {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (Y) ⟶β (Z)) : -/
+/-     ⟦Hom.braid (f ≫ g)⟧ = @CategoryStruct.comp (F V) _ _ _ _ ⟦.braid f⟧ ⟦.braid g⟧ := by -/
+/-   apply Quotient.sound -/
+/-   constructor -/
+/-   constructor -/
+
+/- @[simp] -/
+/- theorem mk_braid_comp' {X Y Z : F V} (f : X ⟶β Y) (g : Y ⟶β Z) : -/
+/-     ⟦Hom.braid (f ≫ g)⟧ = ⟦Hom.braid (f ≫ g)⟧ := by -/
+/-   apply Quotient.sound -/
+
+/- @[simp] -/
+/- theorem mk_braid_comp'' {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (FtoF Y) ⟶β (FtoF Z)) : -/
+/-     Hom.braid (f ≫ g) ≈ (Hom.braid (f)).comp (Hom.braid g) := by -/
+/-   constructor -/
+/-   constructor -/
+
 @[simp]
-theorem mk_id {X : FN C} : ⟦Hom.id X⟧ = 𝟙 X :=
+theorem mk_id {X : F V} : ⟦Hom.id X⟧ = 𝟙 X :=
   rfl
+
+/- @[simp] -/
+/- theorem mk_id {X : F V} : ⟦Hom.braid (𝟙 (FtoF X))⟧ = 𝟙 X := -/
+/-   rfl -/
+
+/- @[simp] -/
+/- theorem mk_whiskerLeft {X Y₁ Y₂ : F V} (f : Y₁ ⟶ⁿ Y₂) : ⟦f.whiskerLeft X⟧ = ◁ 𝟙 X := -/
+/-   rfl -/
+
+/- instance natMonoidalCategory : MonoidalCategory (F V) where -/
+/-   tensorObj X Y := X.tensor Y -/
+/-   whiskerLeft X {Y₁ Y₂} := Quotient.lift (⟦·.whiskerLeft X⟧) <| by -/
+/-     rintro f g h -/
+/-     simp -/
+/-     induction h -/
+/-     case merge_braid b₁ b₂ => -/
+/-       simp_all -/
+/-       apply Quotient.sound -/
+/-       symm -/
+/-       trans -/
+/-       · exact mk_braid_comp'' _ _ -/
+/-       trans mk_braid_comp'' -/
+/-       trans mk_braid_comp'' -/
+/-       rw [mk_braid_comp (X ◁ b₁) _] -/
+/-     all_goals sorry -/
+/-     any_goals simp_all -/
+/-     sorry -/
 
 end NatDefinition
 

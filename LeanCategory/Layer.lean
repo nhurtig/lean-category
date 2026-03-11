@@ -17,16 +17,16 @@ inductive FreeTwistedCategoryNat : Type u
 
 end
 
-notation "FN" => FreeTwistedCategoryNat
+/- notation "FN" => FreeTwistedCategoryNat -/
 
-@[simp]
-instance : MulOne (FN V) where
-  one := .unit
-  mul := .tensor
+/- @[simp] -/
+/- instance : MulOne (FN V) where -/
+/-   one := .unit -/
+/-   mul := .tensor -/
 
-@[simp]
-instance : Star (F V) where
-  star := .star
+/- @[simp] -/
+/- instance : Star (F V) where -/
+/-   star := .star -/
 
 /- @[simp] -/
 /- def FtoFN : F V → FN V -/
@@ -35,12 +35,12 @@ instance : Star (F V) where
 /-   | .tensor X Y => .tensor (FtoFN X) (FtoFN Y) -/
 /-   | .star X => .star (FtoFN X) -/
 
-@[simp]
-def FNtoF : FN V → F V
-  | .of v => .of v
-  | .unit => .unit
-  | .tensor X Y => .tensor (FNtoF X) (FNtoF Y)
-  | .star X => .star (FNtoF X)
+/- @[simp] -/
+/- def FNtoF : FN V → F V -/
+/-   | .of v => .of v -/
+/-   | .unit => .unit -/
+/-   | .tensor X Y => .tensor (FNtoF X) (FNtoF Y) -/
+/-   | .star X => .star (FNtoF X) -/
 
 
 /- class StarQuiver.{v} (V : Type u) extends (Quiver.{v, u} (F V)) where -/
@@ -76,12 +76,12 @@ variable (V : Type u) [stitches : Quiver.{v} (F V)]
 /-   | NotStarred => x -/
 
 structure Layer : Type max u v where
-  left : FN V
-  dom : FN V
-  cod : FN V
+  left : F V
+  dom : F V
+  cod : F V
   stars : ℕ
-  box : (FNtoF dom) ⟶ (FNtoF cod)
-  right : FN V
+  box : dom ⟶ cod
+  right : F V
 end
 
 open CategoryTheory
@@ -120,28 +120,28 @@ open MonoidalCategory
 /- @[simp] -/
 /- lemma starMany_succ [Star α] {x : α} : starMany x (n + 1) = Star.star (starMany x n) := rfl -/
 
-def boundary : TopBottom → Layer V → FN V
-  | .Top, ⟨L, _, Y, s, _, R⟩ => L * (s.repeat .star Y * R)
-  | .Bottom, ⟨L, X, _, s, _, R⟩ => L * (s.repeat .star X * R)
+def boundary : TopBottom → Layer V → F V
+  | .Top, ⟨L, _, Y, s, _, R⟩ => L.tensor (s.repeat .star Y |>.tensor R)
+  | .Bottom, ⟨L, X, _, s, _, R⟩ => L.tensor (s.repeat .star X |>.tensor R)
 
 @[simp]
 lemma boundary_top (l : Layer V) :
-    l.boundary .Top = l.left * (l.stars.repeat .star l.cod * l.right) := rfl
+    l.boundary .Top = l.left.tensor (l.stars.repeat .star l.cod |>.tensor l.right) := rfl
 
 @[simp]
 lemma boundary_bottom (l : Layer V) :
-    l.boundary .Bottom = l.left * (l.stars.repeat .star l.dom * l.right) := rfl
+    l.boundary .Bottom = l.left.tensor (l.stars.repeat .star l.dom |>.tensor l.right) := rfl
 
 inductive Hom : Layer V → Layer V → Type max (u + 1) v where
   | comp : Hom l₁ l₂ → Hom l₂ l₃ → Hom l₁ l₃
-  | freeLeft (l : ((FNtoF L₁) ⟶β (FNtoF L₂))) : Hom ⟨L₁, X, Y, s, x, R⟩ ⟨L₂, X, Y, s, x, R⟩ -- σ
-  | freeRight (r : ((FNtoF R₁) ⟶β (FNtoF R₂))) : Hom ⟨L, X, Y, s, x, R₁⟩ ⟨L, X, Y, s, x, R₂⟩ -- σ
+  | freeLeft (l : (L₁ ⟶β L₂)) : Hom ⟨L₁, X, Y, s, x, R⟩ ⟨L₂, X, Y, s, x, R⟩ -- σ
+  | freeRight (r : (R₁ ⟶β R₂)) : Hom ⟨L, X, Y, s, x, R₁⟩ ⟨L, X, Y, s, x, R₂⟩ -- σ
   | twist_hom  : Hom ⟨L, X, Y, s + 1, x, R⟩ ⟨L, X, Y, s, x, R⟩
   | twist_inv  : Hom ⟨L, X, Y, s, x, R⟩ ⟨L, X, Y, s + 1, x, R⟩ -- Δ
-  | box_strand_hom : Hom ⟨L, X, Y, s, x, A * R⟩ ⟨L * A, X, Y, s, x, R⟩ -- σ underline
-  | box_strand_inv : Hom ⟨L * A, X, Y, s, x, R⟩ ⟨L, X, Y, s, x, A * R⟩
-  | strand_box_hom : Hom ⟨L * A, X, Y, s, x, R⟩ ⟨L, X, Y, s, x, A * R⟩
-  | strand_box_inv : Hom ⟨L,  X, Y, s, x, A * R⟩ ⟨L * A, X, Y, s, x, R⟩
+  | box_strand_hom : Hom ⟨L, X, Y, s, x, A.tensor R⟩ ⟨L.tensor A, X, Y, s, x, R⟩ -- σ underline
+  | box_strand_inv : Hom ⟨L.tensor A, X, Y, s, x, R⟩ ⟨L, X, Y, s, x, A.tensor R⟩
+  | strand_box_hom : Hom ⟨L.tensor A, X, Y, s, x, R⟩ ⟨L, X, Y, s, x, A.tensor R⟩
+  | strand_box_inv : Hom ⟨L, X, Y, s, x, A.tensor R⟩ ⟨L.tensor A, X, Y, s, x, R⟩
 
 infixr:10 " ⟶L " => Hom
 -- do we even need a category on Layer?
@@ -151,7 +151,7 @@ namespace Hom
 open TwistedCategory
 
 @[simp]
-def φ {l₁ l₂ : Layer V} (b : TopBottom) : (l₁ ⟶L l₂) → ((FNtoF <| l₁.boundary b) ⟶β (FNtoF <| l₂.boundary b))
+def φ {l₁ l₂ : Layer V} (b : TopBottom) : (l₁ ⟶L l₂) → ((l₁.boundary b) ⟶β (l₂.boundary b))
   | comp f g => f.φ b ≫ g.φ b
   | freeLeft l => by
       cases b <;> simp <;> exact l ⊗ₘ (𝟙 _) ⊗ₘ (𝟙 _)
