@@ -13,19 +13,19 @@ inductive Hom : F V → F V → Type (max (u + 2) v) where
   | layer : (l : Layer V) →
       Hom (l.boundary .Bottom) (l.boundary .Top)
   | braid {X Y : F V} : (X ⟶β Y) → Hom X Y
-  | id (X : F V) : Hom X X -- was just using braid's id, but
-  -- ran into motive issues
+  /- | id (X : F V) : Hom X X -- was just using braid's id, but -/
+  /- -- ran into motive issues -/
   | comp {X Y Z : F V} : Hom X Y → Hom Y Z → Hom X Z
 
 infixr:10 " ⟶ⁿ " => Hom
 
 open CategoryTheory
 
-instance (priority := low) preHom : CategoryStruct (F V) where
-  Hom := Hom
-  /- id X := .braid (𝟙 (FtoF X)) -/
-  id := Hom.id
-  comp := Hom.comp
+/- instance (priority := low) preHom : CategoryStruct (F V) where -/
+/-   Hom := Hom -/
+/-   /- id X := .braid (𝟙 (FtoF X)) -/ -/
+/-   id := Hom.id -/
+/-   comp := Hom.comp -/
 
 open MonoidalCategory
 open InvolutiveCategory -- for the ⋆ notation
@@ -89,7 +89,7 @@ open MonoidalCategory
 /- @[simp, grind] -/
 @[simp]
 def Hom.whiskerLeft (X : F V) {Y₁ Y₂ : F V} : (Y₁ ⟶ⁿ Y₂) → ((X.tensor Y₁) ⟶ⁿ (X.tensor Y₂))
-  | .id _ => .id _
+  /- | .id _ => .id _ -/
   | .layer ⟨L, D, C, s, x, R⟩ =>
     (Hom.braid <| by pure_iso).comp <|
     (Hom.layer ⟨X.tensor L, D, C, s, x, R⟩).comp
@@ -99,7 +99,7 @@ def Hom.whiskerLeft (X : F V) {Y₁ Y₂ : F V} : (Y₁ ⟶ⁿ Y₂) → ((X.ten
 
 @[simp]
 def Hom.whiskerRight (X : F V) {Y₁ Y₂ : F V} : (Y₁ ⟶ⁿ Y₂) → ((Y₁.tensor X) ⟶ⁿ (Y₂.tensor X))
-  | .id _ => .id _
+  /- | .id _ => .id _ -/
   | .layer ⟨L, D, C, s, x, R⟩ =>
     (Hom.braid <| by pure_iso).comp <|
     (Hom.layer ⟨L, D, C, s, x, R.tensor X⟩).comp
@@ -122,7 +122,7 @@ def Hom.tensor {X₁ X₂ Y₁ Y₂ : F V} (f : X₁ ⟶ⁿ Y₁) (g : X₂ ⟶�
 /- @[simp, grind] -/
 @[simp]
 def Hom.star {X Y : F V} : (X ⟶ⁿ Y) → (X.star ⟶ⁿ Y.star)
-  | .id _ => .id _
+  /- | .id _ => .id _ -/
   | .layer ⟨L, X, Y, s, x, R⟩ =>
       (Hom.braid <| by pure_iso).comp <|
         (Hom.layer ⟨R.star, X, Y, s+1, x, L.star⟩).comp <|
@@ -133,16 +133,21 @@ def Hom.star {X Y : F V} : (X ⟶ⁿ Y) → (X.star ⟶ⁿ Y.star)
 -- #synth Quiver (S (F V))
 
 -- variable {X Y Z : S (F V)} {b₁ : X ⟶ Y} {b₂ : Y ⟶ Z}
+/- def swapLHSMiddle (X L Y₁ X₂ M R : F V) : L ⊗ () ⊗ () ⟶ⁿ _ := -/
+/-   X ◁ L ◁ Nat.repeat FreeTwistedCategory.star s₁ Y₁ ◁ (α_ M (Nat.repeat FreeTwistedCategory.star s₂ X₂) R).hom ≫ -/
+/-       (α_ X L (Nat.repeat FreeTwistedCategory.star s₁ Y₁ ⊗ M ⊗ Nat.repeat FreeTwistedCategory.star s₂ X₂ ⊗ R)).inv ≫ -/
+/-         (α_ (X ⊗ L) (Nat.repeat FreeTwistedCategory.star s₁ Y₁) (M ⊗ Nat.repeat FreeTwistedCategory.star s₂ X₂ ⊗ R)).inv ≫ -/
+/-           (α_ ((X ⊗ L) ⊗ Nat.repeat FreeTwistedCategory.star s₁ Y₁) M (Nat.repeat FreeTwistedCategory.star s₂ X₂ ⊗ R)).inv -/
 
 #check MonoidalCategory
 @[grind]
 inductive Hom.Equiv : ∀ {X Y : (F V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop where
   | refl (f) : Hom.Equiv f f
   | comp {f f' : X ⟶ⁿ Y} : Hom.Equiv f f' → Hom.Equiv g g' → Hom.Equiv (f.comp g) (f'.comp g')
-  | id_comp : Hom.Equiv ((Hom.id _).comp f) f
-  | comp_id : Hom.Equiv (f.comp <| Hom.id _) f
-  /- | id_comp : Hom.Equiv ((Hom.braid (𝟙β (FtoF X))).comp f) f -/
-  /- | comp_id {f : X ⟶ⁿ Y} : Hom.Equiv (f.comp (.braid (𝟙β (FtoF Y)))) f -/
+  /- | id_comp : Hom.Equiv ((Hom.id _).comp f) f -/
+  /- | comp_id : Hom.Equiv (f.comp <| Hom.id _) f -/
+  | id_comp : Hom.Equiv ((Hom.braid (𝟙β X)).comp f) f
+  | comp_id {f : X ⟶ⁿ Y} : Hom.Equiv (f.comp (.braid (𝟙β Y))) f
   | assoc {f : _ ⟶ⁿ _} {g : _ ⟶ⁿ _} {h : _ ⟶ⁿ _} :
       Hom.Equiv ((f.comp g).comp h) (f.comp (g.comp h))
   | merge_braid {b₁ : X ⟶β (Y)} {b₂ : (Y) ⟶β (Z)} :
@@ -150,13 +155,13 @@ inductive Hom.Equiv : ∀ {X Y : (F V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop 
   -- the paper's rules
   | swap : Hom.Equiv
       ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star X₂)).tensor R⟩).comp
-        ((Hom.braid (by pure_iso)).comp
-        ((Hom.layer ⟨(L.tensor (s₁.repeat .star Y₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩).comp
-        (Hom.braid (by pure_iso)))))
+        ((Hom.braid (by simp; pure_iso)).comp
+        ((Hom.layer ⟨(L.tensor (s₁.repeat .star Y₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩))))
       ((Hom.braid <| by pure_iso).comp
         ((Hom.layer ⟨(L.tensor (s₁.repeat .star X₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩).comp
         ((Hom.braid <| by pure_iso).comp
-        (Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star Y₂)).tensor R⟩))))
+        ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star Y₂)).tensor R⟩).comp
+        (Hom.braid <| by pure_iso)))))
   | layer (f : l₁ ⟶L l₂) : Hom.Equiv
       (Hom.layer l₁)
       ((Hom.braid <| f.φ .Bottom).comp <|
@@ -164,6 +169,20 @@ inductive Hom.Equiv : ∀ {X Y : (F V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop 
         (Hom.braid <| Groupoid.inv <| f.φ .Top))
   | symm (f g) : Hom.Equiv f g → Hom.Equiv g f
   | trans {f g h : X ⟶ⁿ Y} : Hom.Equiv f g → Hom.Equiv g h → Hom.Equiv f h
+
+def Hom.Equiv.swap_nice {L : F V} {x : L ⊗ Nat.repeat FreeTwistedCategory.star s₁ Y₁ ⊗ (M ⊗ Nat.repeat FreeTwistedCategory.star s₂ X₂) ⊗ R ⟶β
+  ((L ⊗ Nat.repeat FreeTwistedCategory.star s₁ Y₁) ⊗ M) ⊗ Nat.repeat FreeTwistedCategory.star s₂ X₂ ⊗ R} (hx : x = (by pure_iso)) : Hom.Equiv
+      ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star X₂)).tensor R⟩).comp
+        ((Hom.braid x).comp
+        ((Hom.layer ⟨(L.tensor (s₁.repeat .star Y₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩))))
+      ((Hom.braid <| by pure_iso).comp
+        ((Hom.layer ⟨(L.tensor (s₁.repeat .star X₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩).comp
+        ((Hom.braid <| by pure_iso).comp
+        ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star Y₂)).tensor R⟩).comp
+        (Hom.braid <| by pure_iso))))) := by
+  rw [hx]
+  exact Hom.Equiv.swap
+
 
 instance {X Y : F V} : HasEquiv (Hom X Y) where
   Equiv := Hom.Equiv
@@ -194,33 +213,479 @@ open CategoryTheory.MonoidalCategory
 
 instance mySetoidHom (X Y : F V) : Setoid (X ⟶ⁿ Y) :=
 ⟨Hom.Equiv, ⟨Hom.Equiv.refl, Hom.Equiv.symm _ _, Hom.Equiv.trans⟩⟩
+#check mySetoidHom
+#synth Quiver (F V)
 
-instance natCategory : Category (F V) where
-  Hom X Y := _root_.Quotient (mySetoidHom X Y)
-  /- id X := ⟦Hom.braid (𝟙 (FtoF X))⟧ -/
-  id X := ⟦Hom.id X⟧
-  comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg)
-  id_comp := by
-    rintro X Y ⟨f⟩
-    exact _root_.Quotient.sound .id_comp
-  comp_id := by
-    rintro X Y ⟨f⟩
-    exact _root_.Quotient.sound .comp_id
-  assoc {W X Y Z} := by
-    rintro ⟨f⟩ ⟨g⟩ ⟨h⟩
-    exact _root_.Quotient.sound .assoc
+
+namespace NatCategory
+
+#check Quiver
+
+def Hom X Y := _root_.Quotient (@mySetoidHom V _ X Y)
+scoped infixr:10 " ⟶N " => Hom
+@[simp]
+def homMk {X Y : F V} (f : X ⟶ⁿ Y) : X ⟶N Y := ⟦f⟧
+
+#check CategoryStruct
+
+def id (X : F V) : X ⟶N X := ⟦Hom.braid (𝟙 X)⟧
+scoped notation "𝟙N" => id
 
 @[simp]
-def homMk {X Y : F V} (f : X ⟶ⁿ Y) : natCategory.Hom X Y := ⟦f⟧
+theorem mk_id {X : F V} : ⟦.braid (𝟙 X)⟧ = 𝟙N X :=
+  rfl
+
+def comp {X Y Z : F V} (f : X ⟶N Y) (g : Y ⟶N Z) : X ⟶N Z :=
+  Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg) f g
+scoped infixr:80 " ≫N " => comp
 
 @[simp]
 theorem mk_comp {X Y Z : F V} (f : X ⟶ⁿ Y) (g : Y ⟶ⁿ Z) :
-    ⟦Hom.comp f g⟧ = @CategoryStruct.comp (F V) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+    ⟦Hom.comp f g⟧ = ⟦f⟧ ≫N ⟦g⟧ :=
   rfl
+
+@[simp]
+theorem unmk_braid_comp {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (Y) ⟶β (Z)) :
+     ⟦.braid f⟧ ≫N ⟦.braid g⟧ = ⟦.braid (f ≫β g)⟧ := by
+  apply Quotient.sound
+  constructor
+
+
+#check Category
+
+@[simp]
+lemma id_comp : ∀ {X Y : F V} (f : X ⟶N Y), 𝟙N X ≫N f = f := by
+  rintro X Y ⟨f⟩
+  exact _root_.Quotient.sound .id_comp
+
+@[simp]
+lemma comp_id : ∀ {X Y : F V} (f : X ⟶N Y), f ≫N 𝟙N Y = f := by
+  rintro X Y ⟨f⟩
+  exact _root_.Quotient.sound .comp_id
+
+@[simp]
+lemma assoc : ∀ {W X Y Z : F V} (f : W ⟶N X) (g : X ⟶N Y) (h : Y ⟶N Z),
+    (f ≫N g) ≫N h = f ≫N g ≫N h := by
+  rintro _ _ _ _ ⟨f⟩ ⟨g⟩ ⟨h⟩
+  apply _root_.Quotient.sound Hom.Equiv.assoc
+
+@[simp]
+theorem unmk_braid_comp_assoc {X Y Z : F V} (f : X ⟶β Y) (g : Y ⟶β Z) (h : Z ⟶N A) :
+     ⟦.braid f⟧ ≫N ⟦.braid g⟧ ≫N h = ⟦.braid (f ≫β g)⟧ ≫N h := by
+  rw [← assoc]
+  apply congrArg (· ≫N _)
+  apply Quotient.sound
+  constructor
+
+#check MonoidalCategoryStruct
+
+-- it helps the real category and our "category" play nice to NOT
+-- have separate definitions for objects (TODO make sure it's similar
+-- with the star)
+/- def tensorObj : F V → F V → F V := (· ⊗ ·) -/
+/- scoped infixr:70 " ⊗N " => tensorObj -/
+
+open MonoidalCategory
+open FreeTwistedCategory
+#check mk_α_inv
+/- set_option pp.notation false -/
+/- set_option pp.explicit true -/
+
+def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ ⟶N X ⊗ Y₂) := --by
+  Quotient.liftOn f (⟦·.whiskerLeft X⟧) <| by
+    clear f
+    rintro f g h
+    simp
+    induction h
+    case layer l₁ l₂ f =>
+      simp_all
+      induction f
+      case comp ih₁ ih₂ =>
+        rw [ih₁]
+        rw [ih₂]
+        simp
+      all_goals sorry
+    all_goals sorry
+    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
+      simp_all
+
+      -- reassociate the second layer in the LHS:
+      apply Eq.trans
+      apply congrArg (_ ≫N ·)
+      apply congrArg (_ ≫N ·)
+      apply congrArg (_ ≫N ·)
+      apply congrArg (· ≫N _)
+      apply Quotient.sound
+      apply Hom.Equiv.layer
+      apply Layer.Hom.freeLeft
+      apply Quotient.mk
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
+        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _)
+      simp
+      repeat1 rw [mk_whiskerRight]
+      repeat1 rw [mk_α_inv]
+      simp
+
+      -- forget about the braids outside of the layers:
+      apply Eq.trans
+      apply congrArg (_ ≫N ·)
+      repeat rewrite [← assoc]
+      apply congrArg (· ≫N _)
+      simp
+
+
+      -- swap the layers:
+      apply Quotient.sound
+      apply Hom.Equiv.swap_nice
+      pure_coherence
+      simp
+
+      -- reassociate the first layer morphism again:
+      apply Eq.trans
+      apply congrArg (_ ≫N ·)
+      apply congrArg (· ≫N _)
+      apply Quotient.sound
+      apply Hom.Equiv.layer
+      apply Layer.Hom.freeLeft
+      apply Quotient.mk
+      exact 
+        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_hom _ _ _) _).comp <|
+        (CategoryTheory.FreeTwistedCategory.Hom.α_hom _ _ _)
+      simp
+      repeat1 rw [mk_whiskerRight]
+      repeat1 rw [mk_α_hom]
+      simp
+
+      -- now the layers are in the same positions. Show each composition is the same,
+      -- using pure_coherence for braids and rfl for layers:
+      apply congrArg₂ _ (congrArg _ (congrArg _ (by pure_coherence)))
+      apply congrArg₂ _ rfl
+      apply congrArg₂ _ (congrArg _ (congrArg _ (by pure_coherence)))
+      apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by pure_coherence)))
+      /-
+      apply congrArg
+      apply congrArg
+      pure_coherence
+
+      simp
+
+      /- have x :=  -/
+      /-         ((α_ ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) -/
+      /-               ((FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).tensor ?R)).inv ≫ -/
+      /-           (α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) -/
+      /-                 (FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ?R).inv ≫ -/
+      /-             ((α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ?M -/
+      /-                       (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).inv ≫ -/
+      /-                   𝟙 -/
+      /-                     (((?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ⊗ ?M) ⊗ -/
+      /-                       Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ▷ -/
+      /-                 ?R ≫ -/
+      /-               (α_ ((FreeTwistedCategory.tensor ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)).tensor ?M) -/
+      /-                   (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂) ?R).hom) -/
+
+      -- rewrite the middle braid so we can swap:
+      apply Eq.trans
+      apply congrArg (_ ≫N ·)
+      apply congrArg (_ ≫N ·)
+      apply congrArg (· ≫N _)
+      apply congrArg
+      apply congrArg
+      show _ = ((α_ ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)
+                    ((FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).tensor ?R)).inv ≫
+                (α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)
+                      (FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ?R).inv ≫
+                  ((α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ?M
+                            (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).inv ≫
+                        𝟙
+                          (((?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ⊗ ?M) ⊗
+                            Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ▷
+                      ?R ≫
+                    (α_ ((FreeTwistedCategory.tensor ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)).tensor ?M)
+                        (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂) ?R).hom)
+      repeat1 rw [mk_whiskerRight]
+      repeat1 rw [mk_α_inv]
+      simp
+      pure_coherence
+
+      -- forget about the braids outside of the layers:
+      apply Eq.trans
+      apply congrArg (_ ≫N ·)
+      repeat rewrite [← assoc]
+      apply congrArg (· ≫N _)
+      /- simp -/
+      apply Quotient.sound
+      apply Hom.Equiv.swap
+
+      sorry
+      sorry
+      coherence
+      /- refine _ = ?_ -/
+      /- congruence -/
+      /- simp -/
+      sorry
+      -/
+    all_goals sorry
+    any_goals simp_all
+    /- any_goals aesop -/
+    case trans =>
+      sorry
+   /-
+    case comp =>
+      simp_all
+      aesop
+      sorry
+    all_goals sorry
+    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
+      simp_all
+      /- #check ⊢ -/
+      /- simp only [Hom.whiskerLeft] -/
+
+      /- simp -/
+      repeat rw [unmk_braid_comp_assoc]
+      repeat rw [unmk_braid_comp]
+      -- TODO for 3/11: this is silly. Can we instead
+      -- define and prove a functor from freeQuiver to
+      -- NatDefinition? That will show that it's
+      -- all the flavors of categories anyways, but we
+      -- won't have to deal with the yucky stuff. We'll
+      -- just have to define the Hom stuff (like Hom.whiskerLeft),
+      -- then define the aux map from freeQuiver words to
+      -- NatHom words, then show the aux map respects freeQuiver
+      -- equalities: equivalent things in freeQuiver are
+      -- equivalent in Nat. We already did our time in dealing
+      -- with the yucky Nat equalities in the other functor
+      -- definition; this time we have the opportunity to
+      -- use them. I still don't understand why this seems easy,
+      -- as we'll have to end up proving that this equality is
+      -- respected anyways... We know Nat words X and Y are equivalent
+      -- via swap. Map them via the functor fromNat, call whiskerLeft
+      -- proper on them, and map them back. Then those things have to
+      -- be equivalent, even if the composition of the functors isn't
+      -- well-behaved... Ah, I see. The rule is the whiskerLeft one
+      -- in HomEquiv, that states that equality is preserved by whiskerLeft.
+      -- Since we plan on mapping whiskerLeft to whiskerLeft, we have to prove
+      -- this exact lemma we're struggling with now. No shortcuts...
+      --
+      -- Okay then. Maybe the strategy is to get out of quotient land, and 
+      -- go into Hom.Equiv land. Or maybe that'll make no difference...
+      --
+      -- Oh, now I remember! I wanted to change the swap rule so that it's
+      -- more permissive: any non-twisting braid is good. Unclear what that
+      -- really means in the quotient of all those relations, though. Maybe
+      -- we don't have to put it on the quotient of the relations; maybe it's
+      -- just that the word in the ⟦ ⟧ is non-twisting. Boy, it would be nice
+      -- to have strictness and eqToHom back again for this...
+      --
+      -- Wait, no again! We'll just instantiate the rewrite rule, postulate that
+      -- the goal's LHS is equal to the rewrite rule's LHS, prove it using the
+      -- magical coherence tactic, and then they're swapped!
+      -- issue: the added X by the whiskering has screwed up the association
+      -- of the L ⊗ Y₁ ⊗ M stuff, so we need to use the layer rules to reassociate.
+      -- likely, the play is to apply transitivity (quotient land (strict equality) is fine?)
+      -- to make the RHS a hole, apply congrArg to locate just the layer we want to
+      -- mess with, do some explicit rewriting (pray that the βcat is nice), and then
+      -- zoom back out and reassociate/merge braids/simp.
+      apply Eq.trans
+      apply congrArg (_ ≫ ·)
+      apply congrArg (_ ≫ ·)
+      apply congrArg (_ ≫ ·)
+      apply congrArg (· ≫ _)
+      apply Quotient.sound
+      -- Nat's new idea: screw natCategory. It's not a category, it's just a category-shaped
+      -- thing.
+      apply Hom.Equiv.layer
+      apply Layer.Hom.freeLeft
+      apply Quotient.mk
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
+        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _)
+      simp
+      repeat rw [unmk_braid_comp_assoc]
+      repeat rw [unmk_braid_comp]
+
+      apply Eq.trans
+      apply congrArg (_ ≫ ·)
+      apply congrArg (_ ≫ ·)
+      apply congrArg (· ≫ _)
+      apply congrArg
+      apply congrArg
+      apply Quotient.sound
+      try rewrite [← βcat.assoc]
+      try rewrite [βcat.assoc]
+      rewrite [← Category.assoc]
+      -- want to show this is equal to the middle of the swap thing, but alas, the instance
+      -- synthesis is confused
+      -- synthesis is confused
+      -- synthesis is confused
+      coherence
+      simp
+      apply Quotient.sound
+      repeat rewrite [← Category.assoc]
+      apply congrArg (· ≫ _)
+      apply Quotient.sound
+      apply Hom.
+      apply Layer.Hom.freeRight
+      apply Quotient.mk
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
+        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _).comp <|
+        (FreeTwistedCategory.Hom.α_hom _ _ _)
+      simp
+
+      simp
+      exact CategoryTheory.FreeTwistedCategory.Hom.α_inv (C := V) X (L * s₁ =>⋆ Y₁) M
+      #check CategoryTheory.FreeTwistedCategory.Hom.α_hom
+      refine (CategoryTheory.FreeTwistedCategory.Hom.id _).comp ?_
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _)
+      /- let myβ := βcat -/
+      /- #synth Category.{u, u} (F V) -/
+      /- #check (@βtwist V).toTwistedCategoryStruct.twist -/
+      refine ((@βtwist V).toTwistedCategoryStruct.twist _).inv ≫ ?_
+      simp_all
+      simp
+      repeat rw [unmk_braid_comp_assoc]
+      repeat rw [unmk_braid_comp]
+      repeat1 rw [Category.assoc]
+      repeat1 rw [unmk_braid_comp_assoc]
+      simp
+      simp_all
+      simp at h
+      rw [h]
+      rw [unassoc_left]
+      rw [rw_left (((@βtwist V).toTwistedCategoryStruct.twist) _).inv]
+
+
+      simp
+      rw [assoc_left]
+
+      repeat1 rw [← Category.assoc]
+
+      sorry
+      /- apply congrArg₂ (@CategoryStruct.comp (F V) natCategory.toCategoryStruct ?dom ?middle ?cod) -/
+
+      apply Quotient.sound
+      constructor
+      constructor
+      constructor
+      constructor
+      constructor
+      constructor
+      apply Hom.Equiv.comp
+      apply congrArg (⟦·⟧)
+      /- refine congrArg₂ (@natCategory.comp _ _ _) sorry sorry -/
+      /- sorry -/
+
+      /- simp_all -/
+      /- refine congrArg₂ (· ≫ ·) sorry sorry -/
+      /- simp -/
+      /- sorry -/
+
+-/
+  sorry
+def comp {X Y Z : F V} (f : X ⟶N Y) (g : Y ⟶N Z) : X ⟶N Z :=
+  Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg) f g
+scoped infixr:81 " ◁ " => whiskerLeft
+
+end NatCategory
+
+/- instance natCategory : Category (F V) where -/
+/-   Hom X Y := _root_.Quotient (mySetoidHom X Y) -/
+/-   /- id X := ⟦Hom.braid (𝟙 (FtoF X))⟧ -/ -/
+/-   id X := ⟦Hom.id X⟧ -/
+/-   comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg) -/
+/-   id_comp := by -/
+/-     rintro X Y ⟨f⟩ -/
+/-     exact _root_.Quotient.sound .id_comp -/
+/-   comp_id := by -/
+/-     rintro X Y ⟨f⟩ -/
+/-     exact _root_.Quotient.sound .comp_id -/
+/-   assoc {W X Y Z} := by -/
+/-     rintro ⟨f⟩ ⟨g⟩ ⟨h⟩ -/
+/-     exact _root_.Quotient.sound .assoc -/
+
+#check FreeTwistedCategory.categoryFreeTwistedCategory 
+open FreeTwistedCategory
+#check categoryFreeTwistedCategory
+#check monoidalFreeTwistedCategory
+#check (monoidalFreeTwistedCategory.associator _ _ _).hom
+attribute [instance] βcat
+#check βcat.toCategoryStruct.associator
+#synth Category.{u, u} (F V)
+#synth MonoidalCategoryStruct.{u, u} (F V)
+
+/- @[simp] -/
+theorem assoc_left {L₁ : F V} :
+    ⟦Hom.layer ⟨(L₁.tensor L₂).tensor L₃, X, Y, s, x, R⟩⟧ =
+      homMk (Hom.braid ((α_ _ _ _).hom ▷ _ ) |>.comp <|
+        Hom.layer ⟨L₁.tensor (L₂.tensor L₃), X, Y, s, x, R⟩ |>.comp <|
+          Hom.braid ((α_ _ _ _).inv ▷ _ )) := by
+  simp
+  apply Quotient.sound
+  let l₁ : Layer V := ⟨(L₁.tensor L₂).tensor L₃, X, Y, s, x, R⟩
+  let l₂ : Layer V := ⟨L₁.tensor (L₂.tensor L₃), X, Y, s, x, R⟩
+  let f : l₁ ⟶L l₂ := .freeLeft (α_ _ _ _).hom
+  have h := Hom.Equiv.layer f
+  unfold Layer.Hom.φ at h
+  simp at h
+  exact h
+
+theorem unassoc_left {L₁ L₂ : F V} :
+    ⟦Hom.layer ⟨L₁.tensor (L₂.tensor L₃), X, Y, s, x, R⟩⟧ =
+      homMk (Hom.braid ((α_ _ _ _).inv ▷ _ ) |>.comp <|
+        Hom.layer ⟨(L₁.tensor L₂).tensor L₃, X, Y, s, x, R⟩ |>.comp <|
+          Hom.braid ((α_ _ _ _).hom ▷ _ )) := by
+  simp
+  apply Quotient.sound
+  let l₂ : Layer V := ⟨(L₁.tensor L₂).tensor L₃, X, Y, s, x, R⟩
+  let l₁ : Layer V := ⟨L₁.tensor (L₂.tensor L₃), X, Y, s, x, R⟩
+  let f : l₁ ⟶L l₂ := .freeLeft (α_ _ _ _).inv
+  have h := Hom.Equiv.layer f
+  unfold Layer.Hom.φ at h
+  simp at h
+  exact h
+
+theorem twist_left {L₁ : F V} :
+    ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧ =
+      homMk (Hom.braid ((ς_ _).inv ▷ _ ) |>.comp <|
+        Hom.layer ⟨L, X, Y, s, x, R⟩ |>.comp <|
+          Hom.braid ((ς_ _).hom ▷ _ )) := by
+  simp
+  apply Quotient.sound
+  let l₁ : Layer V := ⟨(L₁.tensor L₂).tensor L₃, X, Y, s, x, R⟩
+  let l₂ : Layer V := ⟨L₁.tensor (L₂.tensor L₃), X, Y, s, x, R⟩
+  let f : l₁ ⟶L l₂ := .freeLeft (α_ _ _ _).hom
+  have h := Hom.Equiv.layer f
+  unfold Layer.Hom.φ at h
+  simp at h
+  exact h
+
+theorem rw_left {L₁ : F V} (b : L₁ ⟶β L₂) :
+    ⟦Hom.layer ⟨L₁, X, Y, s, x, R⟩⟧ =
+      homMk (Hom.braid (b ▷ _) |>.comp <|
+        Hom.layer ⟨L₂, X, Y, s, x, R⟩ |>.comp <|
+          Hom.braid (inv b ▷ _)) := by
+  simp
+  apply Quotient.sound
+  let l₁ : Layer V := ⟨(L₁.tensor L₂).tensor L₃, X, Y, s, x, R⟩
+  let l₂ : Layer V := ⟨L₁.tensor (L₂.tensor L₃), X, Y, s, x, R⟩
+  let f : l₁ ⟶L l₂ := .freeLeft (α_ _ _ _).hom
+  have h := Hom.Equiv.layer f
+  unfold Layer.Hom.φ at h
+  simp at h
+  exact h
+
+attribute [-instance] βcat
+
+#check MonoidalCategory
 
 /- @[simp] -/
 /- theorem mk_braid_comp {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (Y) ⟶β (Z)) : -/
-/-     ⟦Hom.braid (f ≫ g)⟧ = @CategoryStruct.comp (F V) _ _ _ _ ⟦.braid f⟧ ⟦.braid g⟧ := by -/
+/-     ⟦Hom.braid (f ≫β g)⟧ = @CategoryStruct.comp (F V) _ _ _ _ ⟦.braid f⟧ ⟦.braid g⟧ := by -/
+/-   apply Quotient.sound -/
+/-   constructor -/
+/-   constructor -/
+
+/- @[simp] -/
+/- theorem mk_braid_comp' {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (Y) ⟶β (Z)) : -/
+/-     ⟦Hom.braid (f ≫β g)⟧ = @CategoryStruct.comp (F V) _ _ _ _ ⟦.braid f⟧ ⟦.braid g⟧ := by -/
 /-   apply Quotient.sound -/
 /-   constructor -/
 /-   constructor -/
@@ -247,25 +712,175 @@ theorem mk_id {X : F V} : ⟦Hom.id X⟧ = 𝟙 X :=
 /- @[simp] -/
 /- theorem mk_whiskerLeft {X Y₁ Y₂ : F V} (f : Y₁ ⟶ⁿ Y₂) : ⟦f.whiskerLeft X⟧ = ◁ 𝟙 X := -/
 /-   rfl -/
+scoped notation:max n " =>⋆" => Nat.repeat FreeTwistedCategory.star n
+#check natCategory.comp
+#check @CategoryStruct.comp (F V) natCategory.toCategoryStruct _ _ _
+#check congrArg₂
 
-/- instance natMonoidalCategory : MonoidalCategory (F V) where -/
-/-   tensorObj X Y := X.tensor Y -/
-/-   whiskerLeft X {Y₁ Y₂} := Quotient.lift (⟦·.whiskerLeft X⟧) <| by -/
-/-     rintro f g h -/
-/-     simp -/
-/-     induction h -/
-/-     case merge_braid b₁ b₂ => -/
-/-       simp_all -/
-/-       apply Quotient.sound -/
-/-       symm -/
-/-       trans -/
-/-       · exact mk_braid_comp'' _ _ -/
-/-       trans mk_braid_comp'' -/
-/-       trans mk_braid_comp'' -/
-/-       rw [mk_braid_comp (X ◁ b₁) _] -/
-/-     all_goals sorry -/
-/-     any_goals simp_all -/
-/-     sorry -/
+/- set_option pp.explicit true -/
+/- set_option pp.notation false -/
+/- set_option pp.universes true -/
+/- set_option pp.privateNames true -/
+/- set_option pp.maxSteps 100000 -/
+#check ((@βtwist V).toTwistedCategoryStruct.twist)
+#check _root_.Quotient
+
+/- attribute [instance] βcat -/
+
+/- attribute [instance] βcat -/
+#check Quot
+instance natMonoidalCategory : @MonoidalCategory (F V) natCategory where
+  tensorObj X Y := X.tensor Y
+  whiskerLeft X {Y₁ Y₂} := --let inst := βcat;
+    Quotient.lift (⟦·.whiskerLeft X⟧) <| by
+    rintro f g h
+    simp
+    induction h
+    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
+      simp_all
+      /- #check ⊢ -/
+      /- simp only [Hom.whiskerLeft] -/
+
+      /- simp -/
+      repeat rw [unmk_braid_comp_assoc]
+      repeat rw [unmk_braid_comp]
+      -- TODO for 3/11: this is silly. Can we instead
+      -- define and prove a functor from freeQuiver to
+      -- NatDefinition? That will show that it's
+      -- all the flavors of categories anyways, but we
+      -- won't have to deal with the yucky stuff. We'll
+      -- just have to define the Hom stuff (like Hom.whiskerLeft),
+      -- then define the aux map from freeQuiver words to
+      -- NatHom words, then show the aux map respects freeQuiver
+      -- equalities: equivalent things in freeQuiver are
+      -- equivalent in Nat. We already did our time in dealing
+      -- with the yucky Nat equalities in the other functor
+      -- definition; this time we have the opportunity to
+      -- use them. I still don't understand why this seems easy,
+      -- as we'll have to end up proving that this equality is
+      -- respected anyways... We know Nat words X and Y are equivalent
+      -- via swap. Map them via the functor fromNat, call whiskerLeft
+      -- proper on them, and map them back. Then those things have to
+      -- be equivalent, even if the composition of the functors isn't
+      -- well-behaved... Ah, I see. The rule is the whiskerLeft one
+      -- in HomEquiv, that states that equality is preserved by whiskerLeft.
+      -- Since we plan on mapping whiskerLeft to whiskerLeft, we have to prove
+      -- this exact lemma we're struggling with now. No shortcuts...
+      --
+      -- Okay then. Maybe the strategy is to get out of quotient land, and 
+      -- go into Hom.Equiv land. Or maybe that'll make no difference...
+      --
+      -- Oh, now I remember! I wanted to change the swap rule so that it's
+      -- more permissive: any non-twisting braid is good. Unclear what that
+      -- really means in the quotient of all those relations, though. Maybe
+      -- we don't have to put it on the quotient of the relations; maybe it's
+      -- just that the word in the ⟦ ⟧ is non-twisting. Boy, it would be nice
+      -- to have strictness and eqToHom back again for this...
+      --
+      -- Wait, no again! We'll just instantiate the rewrite rule, postulate that
+      -- the goal's LHS is equal to the rewrite rule's LHS, prove it using the
+      -- magical coherence tactic, and then they're swapped!
+      -- issue: the added X by the whiskering has screwed up the association
+      -- of the L ⊗ Y₁ ⊗ M stuff, so we need to use the layer rules to reassociate.
+      -- likely, the play is to apply transitivity (quotient land (strict equality) is fine?)
+      -- to make the RHS a hole, apply congrArg to locate just the layer we want to
+      -- mess with, do some explicit rewriting (pray that the βcat is nice), and then
+      -- zoom back out and reassociate/merge braids/simp.
+      apply Eq.trans
+      apply congrArg (_ ≫ ·)
+      apply congrArg (_ ≫ ·)
+      apply congrArg (_ ≫ ·)
+      apply congrArg (· ≫ _)
+      apply Quotient.sound
+      -- Nat's new idea: screw natCategory. It's not a category, it's just a category-shaped
+      -- thing.
+      apply Hom.Equiv.layer
+      apply Layer.Hom.freeLeft
+      apply Quotient.mk
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
+        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _)
+      simp
+      repeat rw [unmk_braid_comp_assoc]
+      repeat rw [unmk_braid_comp]
+
+      apply Eq.trans
+      apply congrArg (_ ≫ ·)
+      apply congrArg (_ ≫ ·)
+      apply congrArg (· ≫ _)
+      apply congrArg
+      apply congrArg
+      apply Quotient.sound
+      try rewrite [← βcat.assoc]
+      try rewrite [βcat.assoc]
+      rewrite [← Category.assoc]
+      -- want to show this is equal to the middle of the swap thing, but alas, the instance
+      -- synthesis is confused
+      -- synthesis is confused
+      -- synthesis is confused
+      coherence
+      simp
+      apply Quotient.sound
+      repeat rewrite [← Category.assoc]
+      apply congrArg (· ≫ _)
+      apply Quotient.sound
+      apply Hom.
+      apply Layer.Hom.freeRight
+      apply Quotient.mk
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
+        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _).comp <|
+        (FreeTwistedCategory.Hom.α_hom _ _ _)
+      simp
+
+      simp
+      exact CategoryTheory.FreeTwistedCategory.Hom.α_inv (C := V) X (L * s₁ =>⋆ Y₁) M
+      #check CategoryTheory.FreeTwistedCategory.Hom.α_hom
+      refine (CategoryTheory.FreeTwistedCategory.Hom.id _).comp ?_
+      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _)
+      /- let myβ := βcat -/
+      /- #synth Category.{u, u} (F V) -/
+      /- #check (@βtwist V).toTwistedCategoryStruct.twist -/
+      refine ((@βtwist V).toTwistedCategoryStruct.twist _).inv ≫ ?_
+      simp_all
+      simp
+      repeat rw [unmk_braid_comp_assoc]
+      repeat rw [unmk_braid_comp]
+      repeat1 rw [Category.assoc]
+      repeat1 rw [unmk_braid_comp_assoc]
+      simp
+      simp_all
+      simp at h
+      rw [h]
+      rw [unassoc_left]
+      rw [rw_left (((@βtwist V).toTwistedCategoryStruct.twist) _).inv]
+
+
+      simp
+      rw [assoc_left]
+
+      repeat1 rw [← Category.assoc]
+
+      sorry
+      /- apply congrArg₂ (@CategoryStruct.comp (F V) natCategory.toCategoryStruct ?dom ?middle ?cod) -/
+
+      apply Quotient.sound
+      constructor
+      constructor
+      constructor
+      constructor
+      constructor
+      constructor
+      apply Hom.Equiv.comp
+      apply congrArg (⟦·⟧)
+      /- refine congrArg₂ (@natCategory.comp _ _ _) sorry sorry -/
+      /- sorry -/
+
+      /- simp_all -/
+      /- refine congrArg₂ (· ≫ ·) sorry sorry -/
+      /- simp -/
+      /- sorry -/
+    all_goals sorry
+    any_goals simp_all
+    sorry
 
 end NatDefinition
 
