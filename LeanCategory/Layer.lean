@@ -143,6 +143,8 @@ inductive Hom : Layer V → Layer V → Type max (u + 1) v where
   | freeRight (r : (R₁ ⟶β R₂)) : Hom ⟨L, X, Y, s, x, R₁⟩ ⟨L, X, Y, s, x, R₂⟩ -- σ
   | twist_hom  : Hom ⟨L, X, Y, s + 1, x, R⟩ ⟨L, X, Y, s, x, R⟩
   | twist_inv  : Hom ⟨L, X, Y, s, x, R⟩ ⟨L, X, Y, s + 1, x, R⟩ -- Δ
+  | ε_hom  : Hom ⟨L, X, Y, s + 2, x, R⟩ ⟨L, X, Y, s, x, R⟩
+  | ε_inv  : Hom ⟨L, X, Y, s, x, R⟩ ⟨L, X, Y, s + 2, x, R⟩
   | box_strand_hom : Hom ⟨L, X, Y, s, x, A.tensor R⟩ ⟨L.tensor A, X, Y, s, x, R⟩ -- σ underline
   | box_strand_inv : Hom ⟨L.tensor A, X, Y, s, x, R⟩ ⟨L, X, Y, s, x, A.tensor R⟩
   | strand_box_hom : Hom ⟨L.tensor A, X, Y, s, x, R⟩ ⟨L, X, Y, s, x, A.tensor R⟩
@@ -156,39 +158,43 @@ namespace Hom
 open TwistedCategory
 
 @[simp]
-def φ {l₁ l₂ : Layer V} (b : TopBottom) : (l₁ ⟶L l₂) → ((l₁.boundary b) ⟶β (l₂.boundary b))
-  | comp f g => f.φ b ≫ g.φ b
+def φ {l₁ l₂ : Layer V} (b : TopBottom) : (l₁ ⟶L l₂) → ((l₂.boundary b) ⟶β (l₁.boundary b))
+  | comp f g => g.φ b ≫ f.φ b
   | freeLeft l => by
-      cases b <;> simp <;> exact l ⊗ₘ (𝟙 _) ⊗ₘ (𝟙 _)
+      cases b <;> simp <;> exact (Groupoid.inv l) ⊗ₘ (𝟙 _) ⊗ₘ (𝟙 _)
   | freeRight r => by
-      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (𝟙 _) ⊗ₘ r
+      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (𝟙 _) ⊗ₘ (Groupoid.inv r)
   | twist_hom => by
-      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (ς_ _).hom ⊗ₘ (𝟙 _)
-  | twist_inv => by
       cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (ς_ _).inv ⊗ₘ (𝟙 _)
+  | twist_inv => by
+      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (ς_ _).hom ⊗ₘ (𝟙 _)
+  | ε_hom => by
+      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (e_ _).inv ⊗ₘ (𝟙 _)
+  | ε_inv => by
+      cases b <;> simp <;> exact (𝟙 _) ⊗ₘ (e_ _).hom ⊗ₘ (𝟙 _)
   | box_strand_hom => by
-      cases b <;> simp <;> exact
+      cases b <;> simp <;> exact Groupoid.inv <|
         _ ◁ (α_ _ _ _).inv ≫
         (α_ _ _ _).inv ≫
         (_ ◁ (σ_ _ _).hom) ▷ _ ≫
         (α_ _ _ _).inv ▷ _ ≫
         (α_ _ _ _).hom
   | box_strand_inv => by
-      cases b <;> simp <;> exact
+      cases b <;> simp <;> exact Groupoid.inv <|
         (α_ _ _ _).inv ≫
         (α_ _ _ _).hom ▷ _ ≫
         (_ ◁ (σ_ _ _).inv) ▷ _ ≫
         (α_ _ _ _).hom ≫
         _ ◁ (α_ _ _ _).hom
   | strand_box_hom => by
-      cases b <;> simp <;> exact
+      cases b <;> simp <;> exact Groupoid.inv <|
         (α_ _ _ _).inv ≫
         (α_ _ _ _).hom ▷ _ ≫
         (_ ◁ (σ_ _ _).hom) ▷ _ ≫
         (α_ _ _ _).hom ≫
         _ ◁ (α_ _ _ _).hom
   | strand_box_inv => by
-      cases b <;> simp <;> exact
+      cases b <;> simp <;> exact Groupoid.inv <|
         _ ◁ (α_ _ _ _).inv ≫
         (α_ _ _ _).inv ≫
         (_ ◁ (σ_ _ _).inv) ▷ _ ≫

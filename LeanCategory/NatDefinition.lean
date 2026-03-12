@@ -166,9 +166,9 @@ inductive Hom.Equiv : ∀ {X Y : (F V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop 
       /- ((Hom.layer l₁).comp (Hom.braid <| f.φ .Top)) -/
       /- ((Hom.braid <| f.φ .Bottom).comp (Hom.layer l₂)) -/
       (Hom.layer l₁)
-      ((Hom.braid <| f.φ .Bottom).comp <|
+      ((Hom.braid <| inv <| f.φ .Bottom).comp <|
         (Hom.layer l₂).comp <|
-        (Hom.braid <| Groupoid.inv <| f.φ .Top))
+        (Hom.braid <| f.φ .Top))
   | symm (f g) : Hom.Equiv f g → Hom.Equiv g f
   | trans {f g h : X ⟶ⁿ Y} : Hom.Equiv f g → Hom.Equiv g h → Hom.Equiv f h
 
@@ -246,14 +246,6 @@ theorem mk_comp {X Y Z : F V} (f : X ⟶ⁿ Y) (g : Y ⟶ⁿ Z) :
     ⟦Hom.comp f g⟧ = ⟦f⟧ ≫N ⟦g⟧ :=
   rfl
 
-@[simp]
-theorem unmk_braid_comp {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (Y) ⟶β (Z)) :
-     ⟦.braid f⟧ ≫N ⟦.braid g⟧ = ⟦.braid (f ≫β g)⟧ := by
-  apply Quotient.sound
-  constructor
-
-
-#check Category
 
 @[simp]
 lemma id_comp : ∀ {X Y : F V} (f : X ⟶N Y), 𝟙N X ≫N f = f := by
@@ -271,15 +263,177 @@ lemma assoc : ∀ {W X Y Z : F V} (f : W ⟶N X) (g : X ⟶N Y) (h : Y ⟶N Z),
   rintro _ _ _ _ ⟨f⟩ ⟨g⟩ ⟨h⟩
   apply _root_.Quotient.sound Hom.Equiv.assoc
 
+def MyLayer (L : F V) {X Y : F V} (s : ℕ) (x : X ⟶ Y) (R : F V) :
+    L ⊗ (s.repeat .star X) ⊗ R ⟶N L ⊗ (s.repeat .star Y ⊗ R) := ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧
+
+@[simp]
+theorem mk_layer {L : F V} {x : X ⟶ Y} : ⟦.layer ⟨L, X, Y, s, x, R⟩⟧ = MyLayer L s x R :=
+  rfl
+
+def MyBraid {X Y : F V} (b : X ⟶β Y) : X ⟶N Y := ⟦Hom.braid b⟧
+
+@[simp]
+theorem mk_braid {X : F V} {b : X ⟶β Y} : ⟦.braid b⟧ = MyBraid b :=
+  rfl
+
+@[simp]
+theorem MyBraid_id {X : F V} : MyBraid (𝟙 X) = 𝟙N X :=
+  rfl
+
+@[simp]
+theorem unmk_braid_comp {X Y Z : F V} (f : (X) ⟶β (Y)) (g : (Y) ⟶β (Z)) :
+     MyBraid f ≫N MyBraid g = MyBraid (f ≫β g) := by
+  apply Quotient.sound
+  constructor
+
 @[simp]
 theorem unmk_braid_comp_assoc {X Y Z : F V} (f : X ⟶β Y) (g : Y ⟶β Z) (h : Z ⟶N A) :
-     ⟦.braid f⟧ ≫N ⟦.braid g⟧ ≫N h = ⟦.braid (f ≫β g)⟧ ≫N h := by
+     MyBraid f ≫N MyBraid g ≫N h = MyBraid (f ≫β g) ≫N h := by
   rw [← assoc]
   apply congrArg (· ≫N _)
   apply Quotient.sound
   constructor
 
-#check MonoidalCategoryStruct
+lemma Layer_twist_hom_conjugation {L : F V} :
+    MyLayer L s x R = 
+      MyBraid (L ◁ (ς_ _).inv ▷ R) ≫N MyLayer L (s + 1) x R ≫N MyBraid (L ◁ (ς_ _).hom ▷ R) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.twist_inv
+  simp
+
+lemma Layer_twist_inv_conjugation {L : F V} :
+    MyLayer L (s + 1) x R = 
+      MyBraid (L ◁ (ς_ _).hom ▷ R) ≫N MyLayer L s x R ≫N MyBraid (L ◁ (ς_ _).inv ▷ R) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.twist_hom
+  simp
+
+lemma Layer_box_strand_hom_conjugation {L : F V} :
+    MyLayer (L ⊗ A) s x R = 
+      MyBraid ((α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).inv ▷ R ≫ (α_ _ _ _).hom)) ≫N
+        MyLayer L s x (A ⊗ R) ≫N
+          MyBraid (inv <| (α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).inv ▷ R ≫ (α_ _ _ _).hom)) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.box_strand_inv
+  simp
+
+lemma Layer_box_strand_inv_conjugation {L : F V} :
+    MyLayer L s x (A ⊗ R) = 
+      MyBraid (inv <| (α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).inv ▷ R ≫ (α_ _ _ _).hom)) ≫N
+        MyLayer (L ⊗ A) s x R ≫N
+          MyBraid ((α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).inv ▷ R ≫ (α_ _ _ _).hom)) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.box_strand_hom
+  simp
+
+lemma Layer_strand_box_hom_conjugation {L : F V} :
+    MyLayer L s x (A ⊗ R) = 
+      MyBraid (inv <| (α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).hom ▷ R ≫ (α_ _ _ _).hom)) ≫N
+        MyLayer (L ⊗ A) s x R ≫N
+          MyBraid ((α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).hom ▷ R ≫ (α_ _ _ _).hom)) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.strand_box_inv
+  simp
+
+lemma Layer_strand_box_inv_conjugation {L : F V} :
+    MyLayer (L ⊗ A) s x R = 
+      MyBraid ((α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).hom ▷ R ≫ (α_ _ _ _).hom)) ≫N
+        MyLayer L s x (A ⊗ R) ≫N
+          MyBraid (inv <| (α_ _ _ _).hom ≫ L ◁ ((α_ _ _ _).inv ≫ (σ_ _ _).hom ▷ R ≫ (α_ _ _ _).hom)) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.strand_box_hom
+  simp
+
+@[simp]
+lemma Layer_associator_conjugation_left {L₁ : F V} :
+    MyLayer (L₁ ⊗ L₂ ⊗ L₃) s x R = 
+      MyBraid ((α_ _ _ _).inv ▷ _) ≫N
+        MyLayer ((L₁ ⊗ L₂) ⊗ L₃) s x R ≫N
+          MyBraid ((α_ _ _ _).hom ▷ _) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      apply Layer.Hom.freeLeft
+      exact (α_ _ _ _).inv
+  simp
+
+@[simp]
+lemma Layer_associator_conjugation_right {L : F V} :
+    MyLayer L s x ((R₁ ⊗ R₂) ⊗ R₃) = 
+      MyBraid (_ ◁ _ ◁ (α_ _ _ _).hom) ≫N
+        MyLayer L s x (R₁ ⊗ R₂ ⊗ R₃) ≫N
+          MyBraid (_ ◁ _ ◁ (α_ _ _ _).inv) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      apply Layer.Hom.freeRight
+      exact (α_ _ _ _).hom
+  simp
+
+@[simp]
+lemma Layer_involutor_conjugation {L : F V} :
+    MyLayer L (s + 2) x R = 
+      MyBraid (_ ◁ (e_ _).hom ▷ _) ≫N
+        MyLayer L s x R ≫N
+          MyBraid (_ ◁ (e_ _).inv ▷ _) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      exact Layer.Hom.ε_hom
+  simp
+
+lemma Layer_braid_conjugation_left {L₁ : F V} (b : L₁ ⟶β L₂) :
+    MyLayer L₁ s x R = 
+      MyBraid (b ▷ _) ≫N
+        MyLayer L₂ s x R ≫N
+          MyBraid (inv b ▷ _) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      apply Layer.Hom.freeLeft
+      exact b
+  simp
+
+lemma Layer_braid_conjugation_right {L : F V} (b : R₁ ⟶β R₂) :
+    MyLayer L s x R₁ = 
+      MyBraid (_ ◁ _ ◁ b) ≫N
+        MyLayer L s x R₂ ≫N
+          MyBraid (_ ◁ _ ◁ inv b) := by
+  apply Eq.trans
+  · apply Quotient.sound
+    · apply Hom.Equiv.layer
+      apply Layer.Hom.freeRight
+      exact b
+  simp
+
+macro "my_coherence_step" : tactic =>
+  `(tactic|
+    first
+      | rfl -- just Layer
+      | apply congrArg _ <| by coherence -- just Braid
+      | apply congrArg₂ _ (congrArg _ (by coherence)) -- starting w/ Braid
+      | apply congrArg₂ _ rfl -- starting w/ Layer
+      | fail "IDK what to do"
+  )
+
+macro "my_coherence" : tactic =>
+  `(tactic|
+    first
+      | simp ; done
+      | ((try simp) ; (repeat1 my_coherence_step))
+  )
 
 -- it helps the real category and our "category" play nice to NOT
 -- have separate definitions for objects (TODO make sure it's similar
@@ -304,11 +458,21 @@ lemma stripBraidLeft {X Y : F V} {b : X ⟶β Y} {f : Y ⟶N Z} {g : X ⟶N Z} :
   · rw [h]
 
 lemma stripBraidRight {X Y : F V} {b : Y ⟶β Z} {f : X ⟶N Y} {g : X ⟶N Z} :
-    f ≫N ⟦(Hom.braid b)⟧ = g → f = g ≫N ⟦(Hom.braid (inv b))⟧ := by
+    f ≫N MyBraid b = g → f = g ≫N MyBraid (inv b) := by
   intros h
   trans ((f ≫N ⟦Hom.braid b⟧) ≫N ⟦Hom.braid (inv b)⟧)
   · simp
-  · rw [h]
+  · simp only [mk_braid]; rw [h]
+
+lemma stripBraid {W X Y Z : F V} {b₁ : W ⟶β X} {f : X ⟶N Y} {b₂ : Y ⟶β Z} {g : W ⟶N Z} :
+    MyBraid b₁ ≫N f ≫N MyBraid b₂ = g → f = MyBraid (inv b₁) ≫N g ≫N MyBraid (inv b₂) := by
+  intros h
+  have h := stripBraidLeft h
+  have h := stripBraidRight h
+  simp at h
+  exact h
+
+/- l.left.tensor (l.stars.repeat .star l.cod |>.tensor l.right) := rfl -/
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ ⟶N X ⊗ Y₂) := --by
@@ -316,145 +480,53 @@ def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ �
     clear f
     rintro f g h
     simp
-    induction h <;> simp_all
+    /- induction h <;> simp_all -/
+    induction h
     case layer l₁ l₂ f =>
+      simp_all
       induction f
       case comp ih₁ ih₂ =>
-        rw [ih₁]
-        have ih₂ := stripBraidLeft ih₂
-        have ih₂ := stripBraidRight ih₂
-        rw [ih₂]
-        simp
+        have ih₂ := stripBraid ih₂
+        simp_all
       all_goals simp_all
-      case twist_hom =>
-
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.twist_hom
-
-        simp
-      case twist_inv =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.twist_inv
-
-        simp
+      case freeLeft b =>
+        rw [Layer_braid_conjugation_left (_ ◁ b)]
+        my_coherence
+      case freeRight b =>
+        rw [Layer_braid_conjugation_right b]
+        my_coherence
       case box_strand_hom =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.comp
-        apply Layer.Hom.box_strand_hom
-        apply Layer.Hom.freeLeft
-        exact (α_ _ _ _).hom -- a little reassociating
-        
-        simp
-
-        -- TODO a custom coherence tactic for these situations
-        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
-        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+        rw [Layer_box_strand_inv_conjugation]
+        my_coherence
       case box_strand_inv =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.comp
-        apply Layer.Hom.freeLeft
-        exact (α_ _ _ _).inv -- a little reassociating
-        apply Layer.Hom.box_strand_inv
-        
-        simp
-
-        -- TODO a custom coherence tactic for these situations
-        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
-        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+        rw [Layer_box_strand_hom_conjugation]
+        my_coherence
       case strand_box_hom =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.comp
-        apply Layer.Hom.freeLeft
-        exact (α_ _ _ _).inv -- a little reassociating
-        apply Layer.Hom.strand_box_hom
-        
-        simp
-
-        -- TODO a custom coherence tactic for these situations
-        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
-        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+        rw [Layer_strand_box_inv_conjugation]
+        my_coherence
       case strand_box_inv =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.comp
-        apply Layer.Hom.strand_box_inv
-        apply Layer.Hom.freeLeft
-        exact (α_ _ _ _).hom -- a little reassociating
-        
-        simp
-
-        -- TODO a custom coherence tactic for these situations
-        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
-        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
-      case freeRight =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.freeRight
-        assumption
-
-        simp
-      case freeLeft =>
-        -- get just the layer:
-        apply Eq.trans
-        apply congrArg (_ ≫N ·)
-        /- rewrite [← assoc] -/
-        apply congrArg (· ≫N _)
-
-        -- do the layer move:
-        apply Quotient.sound
-        apply Hom.Equiv.layer
-        apply Layer.Hom.freeLeft
-        exact _ ◁ (by assumption)
-
-        simp
+        rw [Layer_strand_box_hom_conjugation]
+        my_coherence
+      case twist_hom =>
+        rw [Layer_twist_inv_conjugation]
+        my_coherence
+      case twist_inv =>
+        rw [Layer_twist_hom_conjugation]
+        my_coherence
+      case ε_hom =>
+        my_coherence
+      case ε_inv =>
+        -- monoidal coherence doesn't like the involutor
+        -- we'll do it ourselves
+        repeat rw [← associator_naturality_right_assoc]
+        repeat rw [← associator_naturality_right]
+        simp only [Iso.hom_inv_id_assoc]
+        rw [associator_inv_naturality_right_assoc]
+        repeat rw [← whiskerLeft_comp_assoc]
+        repeat rw [← comp_whiskerRight]
+        my_coherence
     case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
+      sorry
       -- reassociate the second layer in the LHS:
       apply Eq.trans
       apply congrArg (_ ≫N ·)
