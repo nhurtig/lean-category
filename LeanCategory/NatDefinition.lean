@@ -163,6 +163,8 @@ inductive Hom.Equiv : ∀ {X Y : (F V)}, (X ⟶ⁿ Y) → (X ⟶ⁿ Y) → Prop 
         ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star Y₂)).tensor R⟩).comp
         (Hom.braid <| by pure_iso)))))
   | layer (f : l₁ ⟶L l₂) : Hom.Equiv
+      /- ((Hom.layer l₁).comp (Hom.braid <| f.φ .Top)) -/
+      /- ((Hom.braid <| f.φ .Bottom).comp (Hom.layer l₂)) -/
       (Hom.layer l₁)
       ((Hom.braid <| f.φ .Bottom).comp <|
         (Hom.layer l₂).comp <|
@@ -308,28 +310,151 @@ lemma stripBraidRight {X Y : F V} {b : Y ⟶β Z} {f : X ⟶N Y} {g : X ⟶N Z} 
   · simp
   · rw [h]
 
+set_option maxHeartbeats 10000000 in -- big simp_all
 def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ ⟶N X ⊗ Y₂) := --by
   Quotient.liftOn f (⟦·.whiskerLeft X⟧) <| by
     clear f
     rintro f g h
     simp
-    induction h
+    induction h <;> simp_all
     case layer l₁ l₂ f =>
-      simp_all
       induction f
-      case freeRight =>
-        sorry
-      all_goals sorry
       case comp ih₁ ih₂ =>
         rw [ih₁]
         have ih₂ := stripBraidLeft ih₂
         have ih₂ := stripBraidRight ih₂
         rw [ih₂]
         simp
-    all_goals sorry
-    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
-      simp_all
+      all_goals simp_all
+      case twist_hom =>
 
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.twist_hom
+
+        simp
+      case twist_inv =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.twist_inv
+
+        simp
+      case box_strand_hom =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.comp
+        apply Layer.Hom.box_strand_hom
+        apply Layer.Hom.freeLeft
+        exact (α_ _ _ _).hom -- a little reassociating
+        
+        simp
+
+        -- TODO a custom coherence tactic for these situations
+        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
+        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+      case box_strand_inv =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.comp
+        apply Layer.Hom.freeLeft
+        exact (α_ _ _ _).inv -- a little reassociating
+        apply Layer.Hom.box_strand_inv
+        
+        simp
+
+        -- TODO a custom coherence tactic for these situations
+        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
+        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+      case strand_box_hom =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.comp
+        apply Layer.Hom.freeLeft
+        exact (α_ _ _ _).inv -- a little reassociating
+        apply Layer.Hom.strand_box_hom
+        
+        simp
+
+        -- TODO a custom coherence tactic for these situations
+        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
+        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+      case strand_box_inv =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.comp
+        apply Layer.Hom.strand_box_inv
+        apply Layer.Hom.freeLeft
+        exact (α_ _ _ _).hom -- a little reassociating
+        
+        simp
+
+        -- TODO a custom coherence tactic for these situations
+        apply congrArg₂ _ (congrArg _ (congrArg _ (by coherence)))
+        apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by coherence)))
+      case freeRight =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.freeRight
+        assumption
+
+        simp
+      case freeLeft =>
+        -- get just the layer:
+        apply Eq.trans
+        apply congrArg (_ ≫N ·)
+        /- rewrite [← assoc] -/
+        apply congrArg (· ≫N _)
+
+        -- do the layer move:
+        apply Quotient.sound
+        apply Hom.Equiv.layer
+        apply Layer.Hom.freeLeft
+        exact _ ◁ (by assumption)
+
+        simp
+    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
       -- reassociate the second layer in the LHS:
       apply Eq.trans
       apply congrArg (_ ≫N ·)
@@ -445,11 +570,7 @@ def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ �
       /- simp -/
       sorry
       -/
-    all_goals sorry
-    any_goals simp_all
     /- any_goals aesop -/
-    case trans =>
-      sorry
    /-
     case comp =>
       simp_all
@@ -600,7 +721,7 @@ def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ �
       /- sorry -/
 
 -/
-  sorry
+
 def comp {X Y Z : F V} (f : X ⟶N Y) (g : Y ⟶N Z) : X ⟶N Z :=
   Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg) f g
 scoped infixr:81 " ◁ " => whiskerLeft

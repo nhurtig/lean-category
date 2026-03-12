@@ -111,6 +111,11 @@ inductive TopBottom where
   | Top
   | Bottom
 
+instance : Neg TopBottom where
+  neg
+    | .Top => .Bottom
+    | .Bottom => .Top
+
 open MonoidalCategory
 
 /- def starMany [Star α] (x : α) : ℕ → α -/
