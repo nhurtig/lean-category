@@ -22,6 +22,12 @@ namespace FreeTwistedCategory
 
 notation "F" => FreeTwistedCategory
 
+def sizeOf : F C → ℕ
+  | of _ => 0
+  | unit => 0
+  | tensor A B => A.sizeOf + B.sizeOf + 1
+  | star A => A.sizeOf + 1
+
 @[simp]
 instance : MulOne (F C) where
   one := unit

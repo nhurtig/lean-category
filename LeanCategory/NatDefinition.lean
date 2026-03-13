@@ -663,6 +663,7 @@ def starHom {X Y : F V} (f : X ⟶N Y) : (X⋆ ⟶N Y⋆) := --by
         simp_all
         -- I don't want to deal with the skewator junk
         -- I want coherence, but for involutive categories
+        monoidal_simps
         sorry
       all_goals sorry
       case comp ih₁ ih₂ =>

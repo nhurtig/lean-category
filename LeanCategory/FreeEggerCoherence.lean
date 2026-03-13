@@ -80,39 +80,59 @@ theorem normalizeObj_star (X : F C) (n : NormalInvolutiveMonoidalObject C) :
   rfl
 
 /-- Auxiliary definition for `normalize`. -/
-def normalizeObj' (X : F C) : N C ⥤ N C := Discrete.functor fun n ↦ ⟨normalizeObj false X n⟩
+def normalizeObj' (starred : Bool) (X : F C) : N C ⥤ N C := Discrete.functor fun n ↦ ⟨normalizeObj starred X n⟩
 
 section
 
 open Hom
 
+#check MonoidalCategory.tensorHom_def
 /-- Auxiliary definition for `normalize`. Here we prove that objects that are related by
 associators and unitors map to the same normal form. -/
 @[simp]
-def normalizeMapAux : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (normalizeObj' X ⟶ normalizeObj' Y)
-  | _, _, Hom.id _ => 𝟙 _
-  | _, _, α_hom X Y Z => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, α_inv _ _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, l_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, l_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, ρ_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, ρ_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, χ_hom _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, χ_inv _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, ε_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, ε_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
-  | _, _, (@Hom.comp _ _ _ _ f g) => normalizeMapAux f ≫ normalizeMapAux g
-  | _, _, (@Hom.comp _ _ _ _ f g) => normalizeMapAux f ≫ normalizeMapAux g
-  | _, _, (@Hom.tensor _ T _ _ W f g) =>
-    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux g).app ⟨normalizeObj false T X⟩ ≫
-      (normalizeObj' W).map ((normalizeMapAux f).app ⟨X⟩)
-  | _, _, (@Hom.whiskerLeft _ T _ W f) =>
-    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux f).app ⟨normalizeObj false T X⟩
-  | _, _, (@Hom.whiskerRight _ T _ f W) =>
-    Discrete.natTrans <| fun X => (normalizeObj' W).map <| (normalizeMapAux f).app X
-  | _, _, (@Hom.star _ _ W f) =>
-    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux f).app sorry
-    /- Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux f).app ⟨normalizeObj false T X⟩ -/
+def normalizeMapAux : ∀ {X Y : F C}, (starred : Bool) → (X ⟶ᵐ Y) → (normalizeObj' starred X ⟶ normalizeObj' starred Y)
+  | _, _, _, Hom.id _ => 𝟙 _
+  | _, _, true, α_hom X Y Z => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, α_hom X Y Z => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, α_inv _ _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, α_inv _ _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, l_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, l_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true,  l_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false,  l_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, ρ_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, ρ_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, ρ_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, ρ_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, χ_hom _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, χ_hom _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, χ_inv _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, χ_inv _ _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, ε_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, ε_hom _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, true, ε_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, false, ε_inv _ => by dsimp; exact Discrete.natTrans (fun _ => 𝟙 _)
+  | _, _, starred, (@Hom.comp _ _ _ _ f g) => normalizeMapAux starred f ≫ normalizeMapAux starred g
+  | _, _, false, (@Hom.tensor _ T _ _ W f g) =>
+    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux false g).app ⟨normalizeObj false T X⟩ ≫
+      (normalizeObj' false W).map ((normalizeMapAux false f).app ⟨X⟩)
+  | _, _, true, (@Hom.tensor _ T _ _ W f g) =>
+    Discrete.natTrans <| fun ⟨X⟩ => (normalizeObj' true T).map ((normalizeMapAux true g).app ⟨X⟩) ≫
+      (normalizeMapAux true f).app ⟨normalizeObj true W X⟩
+  | _, _, false, (@Hom.whiskerLeft _ T _ W f) =>
+    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux false f).app ⟨normalizeObj false T X⟩
+  | _, _, true, (@Hom.whiskerLeft _ T _ W f) =>
+    Discrete.natTrans <| fun X => (normalizeObj' true T).map <| (normalizeMapAux true f).app X
+  | _, _, false, (@Hom.whiskerRight _ T _ f W) =>
+    Discrete.natTrans <| fun X => (normalizeObj' false W).map <| (normalizeMapAux false f).app X
+  | _, _, true, (@Hom.whiskerRight _ T _ f W) =>
+    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux true f).app ⟨normalizeObj true W X⟩
+  | _, _, false, (@Hom.star _ _ W f) =>
+    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux true f).app ⟨X⟩
+  | _, _, true, (@Hom.star _ _ W f) =>
+    Discrete.natTrans <| fun ⟨X⟩ => (normalizeMapAux false f).app ⟨X⟩
+  | _, _, _, twist_hom _ => sorry
+  | _, _, _, twist_inv _ => sorry
 
 end
 
@@ -124,33 +144,46 @@ variable (C)
 out to be very easy), and then obtain a functor `F C ⥤ N C` by plugging in the normal object
 `𝟙_ C`. -/
 @[simp]
-def normalize : F C ⥤ N C ⥤ N C where
-  obj X := normalizeObj' X
-  map {X Y} := Quotient.lift normalizeMapAux (by cat_disch)
+def normalize (starred : Bool) : F C ⥤ N C ⥤ N C where
+  obj X := normalizeObj' starred X
+  map {X Y} := _root_.Quotient.lift (normalizeMapAux starred) (by cat_disch)
 
 /-- A variant of the normalization functor where we consider the result as an object in the free
 monoidal category (rather than an object of the discrete subcategory of objects in normal form). -/
 @[simp]
-def normalize' : F C ⥤ N C ⥤ F C :=
-  normalize C ⋙ (whiskeringRight _ _ _).obj inclusion
+def normalize' (starred : Bool) : F C ⥤ N C ⥤ F C :=
+  normalize C starred ⋙ (whiskeringRight _ _ _).obj inclusion
 
 /-- The normalization functor for the free monoidal category over `C`. -/
 def fullNormalize : F C ⥤ N C where
-  obj X := ((normalize C).obj X).obj ⟨NormalInvolutiveMonoidalObject.unit⟩
-  map f := ((normalize C).map f).app ⟨NormalInvolutiveMonoidalObject.unit⟩
+  obj X := ((normalize C false).obj X).obj ⟨NormalInvolutiveMonoidalObject.unit⟩
+  map f := ((normalize C false).map f).app ⟨NormalInvolutiveMonoidalObject.unit⟩
 
 /-- Given an object `X` of the free monoidal category and an object `n` in normal form, taking
 the tensor product `n ⊗ X` in the free monoidal category is functorial in both `X` and `n`. -/
 @[simp]
-def tensorFunc : F C ⥤ N C ⥤ F C where
-  obj X := Discrete.functor fun n => inclusion.obj ⟨n⟩ ⊗ X
-  map f := Discrete.natTrans (fun _ => _ ◁ f)
+def tensorFunc : Bool → F C ⥤ N C ⥤ F C
+  | false => {
+      obj X := Discrete.functor fun n => inclusion.obj ⟨n⟩ ⊗ X
+      map f := Discrete.natTrans (fun n =>  _ ◁ f)
+      /- map_id := sorry -/
+      /- map_comp := sorry -/
+      }
+  | true => {
+      obj X := Discrete.functor fun n => X ⊗ inclusion.obj ⟨n⟩
+      map f := Discrete.natTrans (fun n =>  f ▷ _)
+      /- map_id := sorry -/
+      /- map_comp := sorry -/
+      }
 
-theorem tensorFunc_map_app {X Y : F C} (f : X ⟶ Y) (n) : ((tensorFunc C).map f).app n = _ ◁ f :=
+theorem tensorFunc_map_app_false {X Y : F C} (f : X ⟶ Y) (n) : ((tensorFunc C false).map f).app n = _ ◁ f :=
   rfl
 
-theorem tensorFunc_obj_map (Z : F C) {n n' : N C} (f : n ⟶ n') :
-    ((tensorFunc C).obj Z).map f = inclusion.map f ▷ Z := by
+theorem tensorFunc_map_app_true {X Y : F C} (f : X ⟶ Y) (n) : ((tensorFunc C true).map f).app n = f ▷ _ :=
+  rfl
+
+theorem tensorFunc_obj_map_false (Z : F C) {n n' : N C} (f : n ⟶ n') :
+    ((tensorFunc C false).obj Z).map f = inclusion.map f ▷ Z := by
   cases n
   cases n'
   rcases f with ⟨⟨h⟩⟩
@@ -158,15 +191,32 @@ theorem tensorFunc_obj_map (Z : F C) {n n' : N C} (f : n ⟶ n') :
   subst h
   simp
 
+
+lemma x {C : Type u} {a : C} {x : N C} : True := by
+  have : ((tensorFunc C true).obj (of a)).obj x ≅ ((normalize' C true).obj (of a)).obj x := by
+    simp [normalizeObj', normalizeObj]
+    sorry
+  sorry
+/- C : Type u -/
+/- a✝ : C -/
+/- x✝ : (Discrete ∘ NormalInvolutiveMonoidalObject) C -/
+/- ⊢ ((tensorFunc C true).obj (of a✝)).obj x✝ ≅ ((normalize' C true).obj (of a✝)).obj x✝ -/
+
+
+
 /-- Auxiliary definition for `normalizeIso`. Here we construct the isomorphism between
 `n ⊗ X` and `normalize X n`. -/
 @[simp]
 def normalizeIsoApp :
-    ∀ (X : F C) (n : N C), ((tensorFunc C).obj X).obj n ≅ ((normalize' C).obj X).obj n
-  | of _, _ => Iso.refl _
-  | unit, _ => ρ_ _
-  | tensor X a, n =>
-    (α_ _ _ _).symm ≪≫ whiskerRightIso (normalizeIsoApp X n) a ≪≫ normalizeIsoApp _ _
+    ∀ (starred : Bool) (X : F C) (n : N C), ((tensorFunc C starred).obj X).obj n ≅ ((normalize' C starred).obj X).obj n
+  | false, of _, _ => Iso.refl _
+  | true, of _, _ => Iso.refl _
+  | false, unit, _ => ρ_ _
+  | true, unit, _ => λ_ _
+  | false, tensor X a, n =>
+    (α_ _ _ _).symm ≪≫ whiskerRightIso (normalizeIsoApp false X n) a ≪≫ normalizeIsoApp false _ _
+  | _, star X, n =>
+      (normalizeIsoApp X n)
 
 /-- Almost non-definitionally equal to `normalizeIsoApp`, but has a better definitional property
 in the proof of `normalize_naturality`. -/
