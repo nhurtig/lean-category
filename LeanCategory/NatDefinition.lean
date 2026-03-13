@@ -1,5 +1,6 @@
 import Mathlib
 import LeanCategory.Layer
+import LeanCategory.EggerCoherence
 
 namespace NatDefinition
 
@@ -121,14 +122,14 @@ def Hom.tensor {X₁ X₂ Y₁ Y₂ : F V} (f : X₁ ⟶ⁿ Y₁) (g : X₂ ⟶�
 
 /- @[simp, grind] -/
 @[simp]
-def Hom.star {X Y : F V} : (X ⟶ⁿ Y) → (X.star ⟶ⁿ Y.star)
+def Hom.starHom {X Y : F V} : (X ⟶ⁿ Y) → (X⋆ ⟶ⁿ Y⋆)
   /- | .id _ => .id _ -/
   | .layer ⟨L, X, Y, s, x, R⟩ =>
       (Hom.braid <| by pure_iso).comp <|
-        (Hom.layer ⟨R.star, X, Y, s+1, x, L.star⟩).comp <|
+        (Hom.layer ⟨R⋆, X, Y, s+1, x, L⋆⟩).comp <|
         Hom.braid (by pure_iso)
   | .braid b => .braid b⋆
-  | .comp f g => (f.star).comp g.star
+  | .comp f g => (f.starHom).comp g.starHom
 
 -- #synth Quiver (S (F V))
 
@@ -435,21 +436,6 @@ macro "my_coherence" : tactic =>
       | ((try simp) ; (repeat1 my_coherence_step))
   )
 
--- it helps the real category and our "category" play nice to NOT
--- have separate definitions for objects (TODO make sure it's similar
--- with the star)
-/- def tensorObj : F V → F V → F V := (· ⊗ ·) -/
-/- scoped infixr:70 " ⊗N " => tensorObj -/
-
-open MonoidalCategory
-open FreeTwistedCategory
-#check mk_α_inv
-/- set_option pp.notation false -/
-/- set_option pp.explicit true -/
-
-#check IsIso
--- if x is an iso, then f ≫ i = g → f = g ≫ i.inv
-
 lemma stripBraidLeft {X Y : F V} {b : X ⟶β Y} {f : Y ⟶N Z} {g : X ⟶N Z} :
     ⟦(Hom.braid b)⟧ ≫N f = g → f = ⟦(Hom.braid (inv b))⟧ ≫N g := by
   intros h
@@ -472,7 +458,54 @@ lemma stripBraid {W X Y Z : F V} {b₁ : W ⟶β X} {f : X ⟶N Y} {b₂ : Y ⟶
   simp at h
   exact h
 
+def Hom.Equiv.swap_nice' {L : F V} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶β _} (hx : x = (by pure_iso)) :
+    (MyLayer L s₁ x₁ (M ⊗ (s₂.repeat .star X₂) ⊗ R)) ≫N
+      (MyBraid x) ≫N
+      (MyLayer ((L ⊗ (s₁.repeat .star Y₁)) ⊗ M) s₂ x₂ R) =
+    (MyBraid (by pure_iso)) ≫N
+    (MyLayer ((L ⊗ (s₁.repeat .star X₁)) ⊗ M) s₂ x₂ R) ≫N
+      (MyBraid (by pure_iso)) ≫N
+      (MyLayer L s₁ x₁ (M ⊗ ((s₂.repeat .star Y₂) ⊗ R))) ≫N
+      (MyBraid (by pure_iso)) := by
+  rw [hx]
+  clear x hx
+  simp_all
+  have hrw :=
+    @Quotient.sound _ (mySetoidHom _ _) _ _ <|
+      Hom.Equiv.swap (L := L) (M := M) (R := R) (s₁ := s₁) (s₂ := s₂) (x₁ := x₁) (x₂ := x₂)
+  simp at hrw
+  have hrw := stripBraidLeft hrw
+  simp at hrw
+  repeat1 rw [← whiskerLeft_comp_assoc] at hrw
+  repeat1 rw [← whiskerLeft_comp] at hrw
+  repeat1 rw [Iso.inv_hom_id] at hrw
+  simp at hrw
+  rw [hrw]
+
+-- it helps the real category and our "category" play nice to NOT
+-- have separate definitions for objects (TODO make sure it's similar
+-- with the star)
+/- def tensorObj : F V → F V → F V := (· ⊗ ·) -/
+/- scoped infixr:70 " ⊗N " => tensorObj -/
+
+open MonoidalCategory
+open FreeTwistedCategory
+#check mk_α_inv
+/- set_option pp.notation false -/
+/- set_option pp.explicit true -/
+
+#check IsIso
+-- if x is an iso, then f ≫ i = g → f = g ≫ i.inv
+
+
 /- l.left.tensor (l.stars.repeat .star l.cod |>.tensor l.right) := rfl -/
+#check MonoidalCategory
+#check Nat.repeat
+@[simp]
+lemma Nat.repeat_succ (n : ℕ) : f (n.repeat f x) = (n + 1).repeat f x  := rfl
+
+@[simp]
+lemma Nat.repeat_succ' {x : F α} (n : ℕ) : (n.repeat .star x)⋆ = (n + 1).repeat .star x  := rfl
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ ⟶N X ⊗ Y₂) := --by
@@ -480,15 +513,12 @@ def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ �
     clear f
     rintro f g h
     simp
-    /- induction h <;> simp_all -/
-    induction h
+    induction h <;> simp_all
     case layer l₁ l₂ f =>
-      simp_all
-      induction f
+      induction f <;> simp_all
       case comp ih₁ ih₂ =>
         have ih₂ := stripBraid ih₂
         simp_all
-      all_goals simp_all
       case freeLeft b =>
         rw [Layer_braid_conjugation_left (_ ◁ b)]
         my_coherence
@@ -513,287 +543,176 @@ def whiskerLeft (X : F V) {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) : (X ⊗ Y₁ �
       case twist_inv =>
         rw [Layer_twist_hom_conjugation]
         my_coherence
-      case ε_hom =>
+      case ε_inv =>
+        -- monoidal coherence doesn't like the involutor
+        -- we'll do it ourselves
+        repeat rw [← whiskerLeft_comp_assoc]
+        repeat rw [← whiskerLeft_comp]
+        my_coherence
+    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
+      -- do some preparations for swap rewrites:
+      rewrite [Layer_braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
+      repeat1 rw [assoc]
+      repeat1 rw [unmk_braid_comp_assoc]
+      repeat1 rw [unmk_braid_comp]
+
+      -- forget about the final braid (so we can apply swap_nice w/o assoc):
+      apply Eq.trans
+      · repeat rewrite [← assoc]
+        apply congrArg (· ≫N _)
+        · simp
+
+          -- do the swap:
+          rw [Hom.Equiv.swap_nice' (by coherence)]
+
+      -- simp up; simp doesn't handle rewriting internal monoidal stuff
+      simp
+      rewrite [Layer_braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
+      my_coherence
+
+set_option maxHeartbeats 10000000 in -- big simp_all
+def whiskerRight  {Y₁ Y₂ : F V} (f : Y₁ ⟶N Y₂) (X : F V) : (Y₁ ⊗ X ⟶N Y₂ ⊗ X) := --by
+  Quotient.liftOn f (⟦·.whiskerRight X⟧) <| by
+    clear f
+    rintro f g h
+    simp
+    induction h <;> simp_all
+    case layer l₁ l₂ f =>
+      induction f
+      case comp ih₁ ih₂ =>
+        have ih₂ := stripBraid ih₂
+        simp_all
+      all_goals simp_all
+      case freeLeft b =>
+        rw [Layer_braid_conjugation_left b]
+        my_coherence
+      case freeRight b =>
+        rw [Layer_braid_conjugation_right (b ▷ _)]
+        my_coherence
+      case box_strand_hom =>
+        rw [Layer_box_strand_inv_conjugation]
+        my_coherence
+      case box_strand_inv =>
+        rw [Layer_box_strand_hom_conjugation]
+        my_coherence
+      case strand_box_hom =>
+        rw [Layer_strand_box_inv_conjugation]
+        my_coherence
+      case strand_box_inv =>
+        rw [Layer_strand_box_hom_conjugation]
+        my_coherence
+      case twist_hom =>
+        rw [Layer_twist_inv_conjugation]
+        my_coherence
+      case twist_inv =>
+        rw [Layer_twist_hom_conjugation]
         my_coherence
       case ε_inv =>
         -- monoidal coherence doesn't like the involutor
         -- we'll do it ourselves
-        repeat rw [← associator_naturality_right_assoc]
-        repeat rw [← associator_naturality_right]
-        simp only [Iso.hom_inv_id_assoc]
-        rw [associator_inv_naturality_right_assoc]
         repeat rw [← whiskerLeft_comp_assoc]
+        repeat rw [Category.assoc]
+        repeat rw [← comp_whiskerRight]
+        my_coherence
+    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
+      -- forget about the final braid (so we can apply swap_nice w/o assoc):
+      apply Eq.trans
+      · repeat rewrite [← assoc]
+        apply congrArg (· ≫N _)
+        · simp
+
+          -- do the swap:
+          rw [Hom.Equiv.swap_nice' (by coherence)]
+
+      -- simp up; simp doesn't handle rewriting internal monoidal stuff
+      my_coherence
+
+
+/-
+macro "my_coherence_step" : tactic =>
+  `(tactic|
+    first
+      | rfl -- just Layer
+      | apply congrArg _ <| by coherence -- just Braid
+      | apply congrArg₂ _ (congrArg _ (by coherence)) -- starting w/ Braid
+      | apply congrArg₂ _ rfl -- starting w/ Layer
+      | fail "IDK what to do"
+  )
+
+macro "my_coherence" : tactic =>
+  `(tactic|
+    first
+      | simp ; done
+      | ((try simp) ; (repeat1 my_coherence_step))
+  )
+-/
+def starHom {X Y : F V} (f : X ⟶N Y) : (X⋆ ⟶N Y⋆) := --by
+  Quotient.liftOn f (⟦·.starHom⟧) <| by
+    clear f
+    rintro f g h
+    simp
+    induction h
+    /- induction h <;> simp_all -/
+    case layer l₁ l₂ f =>
+      simp_all
+      induction f
+      /- induction f <;> simp_all -/
+      case freeLeft b =>
+        simp_all
+        rw [Layer_braid_conjugation_right b⋆]
+        simp_all
+        -- I don't want to deal with the skewator junk
+        -- I want coherence, but for involutive categories
+        sorry
+      all_goals sorry
+      case comp ih₁ ih₂ =>
+        have ih₂ := stripBraid ih₂
+        simp_all
+      case freeRight b =>
+        rw [Layer_braid_conjugation_right (b ▷ _)]
+        my_coherence
+      case box_strand_hom =>
+        rw [Layer_box_strand_inv_conjugation]
+        my_coherence
+      case box_strand_inv =>
+        rw [Layer_box_strand_hom_conjugation]
+        my_coherence
+      case strand_box_hom =>
+        rw [Layer_strand_box_inv_conjugation]
+        my_coherence
+      case strand_box_inv =>
+        rw [Layer_strand_box_hom_conjugation]
+        my_coherence
+      case twist_hom =>
+        rw [Layer_twist_inv_conjugation]
+        my_coherence
+      case twist_inv =>
+        rw [Layer_twist_hom_conjugation]
+        my_coherence
+      case ε_inv =>
+        -- monoidal coherence doesn't like the involutor
+        -- we'll do it ourselves
+        repeat rw [← whiskerLeft_comp_assoc]
+        repeat rw [Category.assoc]
         repeat rw [← comp_whiskerRight]
         my_coherence
     case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
       sorry
-      -- reassociate the second layer in the LHS:
+      -- forget about the final braid (so we can apply swap_nice w/o assoc):
       apply Eq.trans
-      apply congrArg (_ ≫N ·)
-      apply congrArg (_ ≫N ·)
-      apply congrArg (_ ≫N ·)
-      apply congrArg (· ≫N _)
-      apply Quotient.sound
-      apply Hom.Equiv.layer
-      apply Layer.Hom.freeLeft
-      apply Quotient.mk
-      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
-        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _)
-      simp
-      repeat1 rw [mk_whiskerRight]
-      repeat1 rw [mk_α_inv]
-      simp
+      · repeat rewrite [← assoc]
+        apply congrArg (· ≫N _)
+        · simp
 
-      -- forget about the braids outside of the layers:
-      apply Eq.trans
-      apply congrArg (_ ≫N ·)
-      repeat rewrite [← assoc]
-      apply congrArg (· ≫N _)
-      simp
+          -- do the swap:
+          rw [Hom.Equiv.swap_nice' (by coherence)]
 
+      -- simp up; simp doesn't handle rewriting internal monoidal stuff
+      my_coherence
 
-      -- swap the layers:
-      apply Quotient.sound
-      apply Hom.Equiv.swap_nice
-      pure_coherence
-      simp
+#check coherence
 
-      -- reassociate the first layer morphism again:
-      apply Eq.trans
-      apply congrArg (_ ≫N ·)
-      apply congrArg (· ≫N _)
-      apply Quotient.sound
-      apply Hom.Equiv.layer
-      apply Layer.Hom.freeLeft
-      apply Quotient.mk
-      exact 
-        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_hom _ _ _) _).comp <|
-        (CategoryTheory.FreeTwistedCategory.Hom.α_hom _ _ _)
-      simp
-      repeat1 rw [mk_whiskerRight]
-      repeat1 rw [mk_α_hom]
-      simp
-
-      -- now the layers are in the same positions. Show each composition is the same,
-      -- using pure_coherence for braids and rfl for layers:
-      apply congrArg₂ _ (congrArg _ (congrArg _ (by pure_coherence)))
-      apply congrArg₂ _ rfl
-      apply congrArg₂ _ (congrArg _ (congrArg _ (by pure_coherence)))
-      apply congrArg₂ _ rfl (congrArg _ (congrArg _ (by pure_coherence)))
-      /-
-      apply congrArg
-      apply congrArg
-      pure_coherence
-
-      simp
-
-      /- have x :=  -/
-      /-         ((α_ ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) -/
-      /-               ((FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).tensor ?R)).inv ≫ -/
-      /-           (α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) -/
-      /-                 (FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ?R).inv ≫ -/
-      /-             ((α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ?M -/
-      /-                       (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).inv ≫ -/
-      /-                   𝟙 -/
-      /-                     (((?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ⊗ ?M) ⊗ -/
-      /-                       Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ▷ -/
-      /-                 ?R ≫ -/
-      /-               (α_ ((FreeTwistedCategory.tensor ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)).tensor ?M) -/
-      /-                   (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂) ?R).hom) -/
-
-      -- rewrite the middle braid so we can swap:
-      apply Eq.trans
-      apply congrArg (_ ≫N ·)
-      apply congrArg (_ ≫N ·)
-      apply congrArg (· ≫N _)
-      apply congrArg
-      apply congrArg
-      show _ = ((α_ ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)
-                    ((FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).tensor ?R)).inv ≫
-                (α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)
-                      (FreeTwistedCategory.tensor ?M (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ?R).inv ≫
-                  ((α_ (?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ?M
-                            (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)).inv ≫
-                        𝟙
-                          (((?L ⊗ Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁) ⊗ ?M) ⊗
-                            Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂)) ▷
-                      ?R ≫
-                    (α_ ((FreeTwistedCategory.tensor ?L (Nat.repeat FreeTwistedCategory.star ?s₁ ?Y₁)).tensor ?M)
-                        (Nat.repeat FreeTwistedCategory.star ?s₂ ?X₂) ?R).hom)
-      repeat1 rw [mk_whiskerRight]
-      repeat1 rw [mk_α_inv]
-      simp
-      pure_coherence
-
-      -- forget about the braids outside of the layers:
-      apply Eq.trans
-      apply congrArg (_ ≫N ·)
-      repeat rewrite [← assoc]
-      apply congrArg (· ≫N _)
-      /- simp -/
-      apply Quotient.sound
-      apply Hom.Equiv.swap
-
-      sorry
-      sorry
-      coherence
-      /- refine _ = ?_ -/
-      /- congruence -/
-      /- simp -/
-      sorry
-      -/
-    /- any_goals aesop -/
-   /-
-    case comp =>
-      simp_all
-      aesop
-      sorry
-    all_goals sorry
-    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
-      simp_all
-      /- #check ⊢ -/
-      /- simp only [Hom.whiskerLeft] -/
-
-      /- simp -/
-      repeat rw [unmk_braid_comp_assoc]
-      repeat rw [unmk_braid_comp]
-      -- TODO for 3/11: this is silly. Can we instead
-      -- define and prove a functor from freeQuiver to
-      -- NatDefinition? That will show that it's
-      -- all the flavors of categories anyways, but we
-      -- won't have to deal with the yucky stuff. We'll
-      -- just have to define the Hom stuff (like Hom.whiskerLeft),
-      -- then define the aux map from freeQuiver words to
-      -- NatHom words, then show the aux map respects freeQuiver
-      -- equalities: equivalent things in freeQuiver are
-      -- equivalent in Nat. We already did our time in dealing
-      -- with the yucky Nat equalities in the other functor
-      -- definition; this time we have the opportunity to
-      -- use them. I still don't understand why this seems easy,
-      -- as we'll have to end up proving that this equality is
-      -- respected anyways... We know Nat words X and Y are equivalent
-      -- via swap. Map them via the functor fromNat, call whiskerLeft
-      -- proper on them, and map them back. Then those things have to
-      -- be equivalent, even if the composition of the functors isn't
-      -- well-behaved... Ah, I see. The rule is the whiskerLeft one
-      -- in HomEquiv, that states that equality is preserved by whiskerLeft.
-      -- Since we plan on mapping whiskerLeft to whiskerLeft, we have to prove
-      -- this exact lemma we're struggling with now. No shortcuts...
-      --
-      -- Okay then. Maybe the strategy is to get out of quotient land, and 
-      -- go into Hom.Equiv land. Or maybe that'll make no difference...
-      --
-      -- Oh, now I remember! I wanted to change the swap rule so that it's
-      -- more permissive: any non-twisting braid is good. Unclear what that
-      -- really means in the quotient of all those relations, though. Maybe
-      -- we don't have to put it on the quotient of the relations; maybe it's
-      -- just that the word in the ⟦ ⟧ is non-twisting. Boy, it would be nice
-      -- to have strictness and eqToHom back again for this...
-      --
-      -- Wait, no again! We'll just instantiate the rewrite rule, postulate that
-      -- the goal's LHS is equal to the rewrite rule's LHS, prove it using the
-      -- magical coherence tactic, and then they're swapped!
-      -- issue: the added X by the whiskering has screwed up the association
-      -- of the L ⊗ Y₁ ⊗ M stuff, so we need to use the layer rules to reassociate.
-      -- likely, the play is to apply transitivity (quotient land (strict equality) is fine?)
-      -- to make the RHS a hole, apply congrArg to locate just the layer we want to
-      -- mess with, do some explicit rewriting (pray that the βcat is nice), and then
-      -- zoom back out and reassociate/merge braids/simp.
-      apply Eq.trans
-      apply congrArg (_ ≫ ·)
-      apply congrArg (_ ≫ ·)
-      apply congrArg (_ ≫ ·)
-      apply congrArg (· ≫ _)
-      apply Quotient.sound
-      -- Nat's new idea: screw natCategory. It's not a category, it's just a category-shaped
-      -- thing.
-      apply Hom.Equiv.layer
-      apply Layer.Hom.freeLeft
-      apply Quotient.mk
-      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
-        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _)
-      simp
-      repeat rw [unmk_braid_comp_assoc]
-      repeat rw [unmk_braid_comp]
-
-      apply Eq.trans
-      apply congrArg (_ ≫ ·)
-      apply congrArg (_ ≫ ·)
-      apply congrArg (· ≫ _)
-      apply congrArg
-      apply congrArg
-      apply Quotient.sound
-      try rewrite [← βcat.assoc]
-      try rewrite [βcat.assoc]
-      rewrite [← Category.assoc]
-      -- want to show this is equal to the middle of the swap thing, but alas, the instance
-      -- synthesis is confused
-      -- synthesis is confused
-      -- synthesis is confused
-      coherence
-      simp
-      apply Quotient.sound
-      repeat rewrite [← Category.assoc]
-      apply congrArg (· ≫ _)
-      apply Quotient.sound
-      apply Hom.
-      apply Layer.Hom.freeRight
-      apply Quotient.mk
-      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _).comp <|
-        (FreeTwistedCategory.Hom.whiskerRight (FreeTwistedCategory.Hom.α_inv _ _ _) _).comp <|
-        (FreeTwistedCategory.Hom.α_hom _ _ _)
-      simp
-
-      simp
-      exact CategoryTheory.FreeTwistedCategory.Hom.α_inv (C := V) X (L * s₁ =>⋆ Y₁) M
-      #check CategoryTheory.FreeTwistedCategory.Hom.α_hom
-      refine (CategoryTheory.FreeTwistedCategory.Hom.id _).comp ?_
-      exact (CategoryTheory.FreeTwistedCategory.Hom.α_inv _ _ _)
-      /- let myβ := βcat -/
-      /- #synth Category.{u, u} (F V) -/
-      /- #check (@βtwist V).toTwistedCategoryStruct.twist -/
-      refine ((@βtwist V).toTwistedCategoryStruct.twist _).inv ≫ ?_
-      simp_all
-      simp
-      repeat rw [unmk_braid_comp_assoc]
-      repeat rw [unmk_braid_comp]
-      repeat1 rw [Category.assoc]
-      repeat1 rw [unmk_braid_comp_assoc]
-      simp
-      simp_all
-      simp at h
-      rw [h]
-      rw [unassoc_left]
-      rw [rw_left (((@βtwist V).toTwistedCategoryStruct.twist) _).inv]
-
-
-      simp
-      rw [assoc_left]
-
-      repeat1 rw [← Category.assoc]
-
-      sorry
-      /- apply congrArg₂ (@CategoryStruct.comp (F V) natCategory.toCategoryStruct ?dom ?middle ?cod) -/
-
-      apply Quotient.sound
-      constructor
-      constructor
-      constructor
-      constructor
-      constructor
-      constructor
-      apply Hom.Equiv.comp
-      apply congrArg (⟦·⟧)
-      /- refine congrArg₂ (@natCategory.comp _ _ _) sorry sorry -/
-      /- sorry -/
-
-      /- simp_all -/
-      /- refine congrArg₂ (· ≫ ·) sorry sorry -/
-      /- simp -/
-      /- sorry -/
-
--/
-
+#check MonoidalCategory
 def comp {X Y Z : F V} (f : X ⟶N Y) (g : Y ⟶N Z) : X ⟶N Z :=
   Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ Hom.Equiv.comp hf hg) f g
 scoped infixr:81 " ◁ " => whiskerLeft

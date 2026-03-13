@@ -63,8 +63,8 @@ class InvolutiveCategory (C : Type u)
 
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.starHom_id
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.starHom_comp_starHom
-attribute [reassoc (attr := simp), simp] InvolutiveCategory.skewator_naturality
-attribute [reassoc (attr := simp), simp] InvolutiveCategory.involutor_naturality
+attribute [reassoc] InvolutiveCategory.skewator_naturality
+attribute [reassoc] InvolutiveCategory.involutor_naturality
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.f3
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.n2
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.a
@@ -88,7 +88,7 @@ namespace InvolutiveCategory
 
 variable {C : Type u} [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C]
 
-@[reassoc (attr := simp), simp]
+@[reassoc]
 theorem skewator_inv_naturality :
     ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
       (g ⊗ₘ f)⋆ ≫ (χ_ Y₁ Y₂).inv = (χ_ X₁ X₂).inv ≫ (f⋆ ⊗ₘ g⋆) := by
@@ -99,7 +99,7 @@ theorem skewator_inv_naturality :
   rw [← skewator_naturality_assoc f g]
   simp
 
-@[reassoc (attr := simp), simp]
+@[reassoc]
 theorem involutor_inv_naturality :
     ∀ {X Y : C} (f : X ⟶ Y),
       f ≫ (e_ Y).inv = (e_ X).inv ≫ f⋆⋆ := by
@@ -149,6 +149,28 @@ theorem inv_star {X Y : C} (f : X ⟶ Y) [hf : IsIso f] :
   rw [← starHom_id]
   rw [← hf.inv_hom_id]
   cat_disch
+
+@[reassoc (attr := simp), simp]
+theorem starHom_tensorHom {X X' Y Y' : C} (f : X ⟶ X') (g : Y ⟶ Y') :
+    (f ⊗ₘ g)⋆ = (χ_ _ _).inv ≫ (g⋆ ⊗ₘ f⋆) ≫ (χ_ _ _).hom := by
+  rw [skewator_naturality, Iso.inv_hom_id_assoc]
+
+@[reassoc (attr := simp), simp]
+theorem starHom_whiskerLeft {X X' Y : C} (f : X ⟶ X') :
+    (Y ◁ f)⋆ = (χ_ _ _).inv ≫ (f⋆ ▷ Y⋆) ≫ (χ_ _ _).hom := by
+  rw [← id_tensorHom, starHom_tensorHom]
+  simp
+
+@[reassoc (attr := simp), simp]
+theorem starHom_whiskerRight {X X' Y : C} (f : X ⟶ X') :
+    (f ▷ Y)⋆ = (χ_ _ _).inv ≫ ((InvolutiveCategoryStruct.starObj Y) ◁ f⋆) ≫ (χ_ _ _).hom := by
+  rw [← tensorHom_id, starHom_tensorHom]
+  simp
+
+@[reassoc (attr := simp), simp]
+theorem involutor_conjugation {X X' : C} (f : X ⟶ X') :
+    f⋆⋆ = (e_ _).hom ≫ f ≫ (e_ _).inv := by
+  rw [involutor_inv_naturality, Iso.hom_inv_id_assoc]
 
 /-
   f3 : ∀ P Q R : C,
@@ -242,7 +264,7 @@ class TwistedCategory (C : Type u) [Category.{v} C] [MonoidalCategory C] [Involu
       (((ς_ P⋆).hom ⊗ₘ (ς_ Q⋆).hom) ⊗ₘ (ς_ R⋆).hom) ≫ ((χ_ P Q).hom ▷ R⋆) ≫
         (χ_ (Q ⊗ P) R).hom ≫ (ς_ (R ⊗ Q ⊗ P)).hom := by cat_disch
 
-attribute [reassoc (attr := simp), simp] TwistedCategory.twist_naturality
+attribute [reassoc] TwistedCategory.twist_naturality
 attribute [reassoc (attr := simp), simp] TwistedCategory.tℓ
 
 namespace TwistedCategory
@@ -261,8 +283,6 @@ theorem twist_inv_naturality :
   rw [← twist_naturality_assoc f]
   simp
 
-  /- skewator_naturality : ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂), -/
-  /-     (f⋆ ⊗ₘ g⋆) ≫ (χ_ Y₁ Y₂).hom = (χ_ X₁ X₂).hom ≫ (g ⊗ₘ f)⋆ := by cat_disch -/
 @[reassoc]
 theorem braid_naturality :
     ∀ {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
@@ -276,7 +296,7 @@ theorem braid_naturality :
   rw [twist_naturality]
   simp
 
-@[simp]
+@[reassoc]
 theorem braid_inv_naturality :
     ∀ {X₁ Y₁ X₂ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
       (f ⊗ₘ g) ≫ (σ_ Y₂ Y₁).inv = (σ_ X₂ X₁).inv ≫ (g ⊗ₘ f) := by
@@ -285,8 +305,7 @@ theorem braid_inv_naturality :
   rw [twist_inv_naturality_assoc]
   rw [skewator_inv_naturality_assoc]
   rw [tensorHom_comp_tensorHom]
-  rw [twist_naturality]
-  simp
+  simp [twist_naturality]
 
 @[reassoc (attr := simp), simp]
 theorem tℓ_inv : ∀ P Q R : C,
