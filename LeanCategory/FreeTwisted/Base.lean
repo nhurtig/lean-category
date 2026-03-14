@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.FreeInvolutiveCategoryBase
+import LeanCategory.FreeInvolutive.Base
 
 namespace CategoryTheory
 

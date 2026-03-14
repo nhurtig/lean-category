@@ -1,10 +1,5 @@
-import LeanCategory.Egger
-import LeanCategory.FreeInvolutiveCategoryBase
-import LeanCategory.FreeTwistedCategoryQuiverBase
-import LeanCategory.FreeTwistedFunctor
-import LeanCategory.FreeTwistedCategoryBase
-import LeanCategory.FreeTwistedFunctorQuiver
-import LeanCategory.FreeTwistedCategoryQuiver
-import LeanCategory.FreeTwistedCategory
-import LeanCategory.FreeInvolutiveCategory
+import LeanCategory.Basic
+import LeanCategory.FreeInvolutive.Instance
+import LeanCategory.FreeTwisted.Functor
+import LeanCategory.FreeTwistedQuiver.Functor
 

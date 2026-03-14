@@ -1,6 +1,6 @@
 import Mathlib
-import LeanCategory.Egger
-import LeanCategory.FreeInvolutiveCategoryBase
+import LeanCategory.Basic
+import LeanCategory.FreeInvolutive.Base
 
 namespace CategoryTheory.FreeInvolutiveCategory
 

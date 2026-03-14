@@ -1,10 +1,9 @@
-import LeanCategory.FreeTwistedCategoryQuiver
-import LeanCategory.FreeTwistedCategory
+import LeanCategory.FreeTwisted.Instance
+import LeanCategory.FreeTwistedQuiver.Instance
 
-namespace CategoryTheory.FreeTwistedCategoryQuiver
+namespace CategoryTheory.FreeTwistedCategory
 
-open scoped FreeTwistedCategory -- just the T notation
-variable {C : Type u} [Quiver.{v} (T C)]
+variable {C : Type u}
 
 variable {D : Type u'}
     [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D] [TwistedCategory D] (m : C → D)
@@ -13,13 +12,10 @@ open MonoidalCategory
 open InvolutiveCategory
 open TwistedCategory
 
-variable (M : {X Y : T C} → (X ⟶ Y) → ((X.projectObj m) ⟶ (Y.projectObj m)))
-
 open Hom
 
 @[simp]
-def projectMapAux : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X.projectObj m ⟶ Y.projectObj m)
-  | _, _, Hom.of f => M f
+def projectMapAux : ∀ {X Y : T C}, (X ⟶t Y) → (X.projectObj m ⟶ Y.projectObj m)
   | _, _, Hom.id _ => 𝟙 _
   | _, _, α_hom _ _ _ => (α_ _ _ _).hom
   | _, _, α_inv _ _ _ => (α_ _ _ _).inv
@@ -39,15 +35,15 @@ def projectMapAux : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X.projectObj m ⟶ Y.proj
   | _, _, twist_hom _ => (ς_ _).hom
   | _, _, twist_inv _ => (ς_ _).inv
 
-lemma projectMapAux_Pure : ∀ {X Y : TQ C} (f : X ⟶tq Y),
-    f.Pure → InvolutiveCoherence (projectMapAux m M f) := by
+lemma projectMapAux_Pure : ∀ {X Y : T C} (f : X ⟶t Y),
+    f.Pure → InvolutiveCoherence (projectMapAux m f) := by
   intro X Y f hf
   induction f <;> simp_all
   all_goals constructor <;> assumption
 
 @[simp]
-def projectMap {X Y : TQ C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) :=
-  _root_.Quotient.lift (projectMapAux m M) <| by
+def projectMap {X Y : T C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) :=
+  _root_.Quotient.lift (projectMapAux m) <| by
     intro f g h
     induction h with
     | refl => rfl
@@ -124,18 +120,20 @@ def projectMap {X Y : TQ C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) 
     | coherence X Y f g hf hg =>
         apply coherence <;> apply projectMapAux_Pure <;> assumption
 
-def project : TQ C ⥤ D where
+def project : T C ⥤ D where
   obj := projectObj m
-  map := projectMap m M
+  map := projectMap m
   map_comp := by rintro _ _ _ ⟨_⟩ ⟨_⟩; rfl
 
-variable {D : Type u'} [Quiver.{v'} (T D)] (m : C → D)
+variable {D : Type u'} (m : C → D)
 
 variable (M : {X Y : T C} → (X ⟶ Y) → ((X.map m) ⟶ (Y.map m)))
 
-def projectFree : TQ C ⥤ TQ D := project (fun c ↦ (of (m c))) <| fun f ↦ homMk <| .of <| by
-  simp
-  exact M f
+def projectFree : T C ⥤ T D := project (fun c ↦ (of (m c)))
 
-end CategoryTheory.FreeTwistedCategoryQuiver
+open FreeTwistedCategoryQuiver
+
+def embed : T C ⥤ TQ C := project FreeTwistedCategoryQuiver.of
+
+end CategoryTheory.FreeTwistedCategory
 

@@ -1,55 +1,53 @@
 import Mathlib
-import LeanCategory.Egger
-import LeanCategory.FreeTwistedCategoryQuiverBase
+import LeanCategory.Basic
+import LeanCategory.FreeTwisted.Base
 
-namespace CategoryTheory.FreeTwistedCategoryQuiver
+namespace CategoryTheory.FreeTwistedCategory
 
-open CategoryTheory.FreeTwistedCategory
+variable {C : Type u}
 
-variable {C : Type u} [Quiver.{v} (T C)]
-
-inductive HomEquiv : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X ⟶tq Y) → Prop
-  | refl {X Y} (f : X ⟶tq Y) : HomEquiv f f
-  | comp {X Y Z} {f f' : X ⟶tq Y} {g g' : Y ⟶tq Z} :
+inductive HomEquiv : ∀ {X Y : T C}, (X ⟶t Y) → (X ⟶t Y) → Prop
+  | refl {X Y} (f : X ⟶t Y) : HomEquiv f f
+  | comp {X Y Z} {f f' : X ⟶t Y} {g g' : Y ⟶t Z} :
       HomEquiv f f' → HomEquiv g g' → HomEquiv (f.comp g) (f'.comp g')
-  | whiskerLeft (X) {Y Z} (f f' : Y ⟶tq Z) :
+  | whiskerLeft (X) {Y Z} (f f' : Y ⟶t Z) :
       HomEquiv f f' → HomEquiv (f.whiskerLeft X) (f'.whiskerLeft X)
-  | whiskerRight {Y Z} (f f' : Y ⟶tq Z) (X) :
+  | whiskerRight {Y Z} (f f' : Y ⟶t Z) (X) :
       HomEquiv f f' → HomEquiv (f.whiskerRight X) (f'.whiskerRight X)
-  | tensor {W X Y Z} {f f' : W ⟶tq X} {g g' : Y ⟶tq Z} :
+  | tensor {W X Y Z} {f f' : W ⟶t X} {g g' : Y ⟶t Z} :
       HomEquiv f f' → HomEquiv g g' → HomEquiv (f.tensor g) (f'.tensor g')
-  | tensorHom_def {X₁ Y₁ X₂ Y₂} (f : X₁ ⟶tq Y₁) (g : X₂ ⟶tq Y₂) :
+  | tensorHom_def {X₁ Y₁ X₂ Y₂} (f : X₁ ⟶t Y₁) (g : X₂ ⟶t Y₂) :
       HomEquiv (f.tensor g) ((f.whiskerRight X₂).comp (g.whiskerLeft Y₁))
-  | comp_id {X Y} (f : X ⟶tq Y) : HomEquiv (f.comp (Hom.id _)) f
-  | id_comp {X Y} (f : X ⟶tq Y) : HomEquiv ((Hom.id _).comp f) f
-  | assoc {X Y U V : TQ C} (f : X ⟶tq U) (g : U ⟶tq V) (h : V ⟶tq Y) :
+  | comp_id {X Y} (f : X ⟶t Y) : HomEquiv (f.comp (Hom.id _)) f
+  | id_comp {X Y} (f : X ⟶t Y) : HomEquiv ((Hom.id _).comp f) f
+  | assoc {X Y U V : T C} (f : X ⟶t U) (g : U ⟶t V) (h : V ⟶t Y) :
       HomEquiv ((f.comp g).comp h) (f.comp (g.comp h))
-  | tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : TQ C} (f₁ : X₁ ⟶tq Y₁) (f₂ : X₂ ⟶tq Y₂)
-      (g₁ : Y₁ ⟶tq Z₁) (g₂ : Y₂ ⟶tq Z₂) :
+  | tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : T C} (f₁ : X₁ ⟶t Y₁) (f₂ : X₂ ⟶t Y₂)
+      (g₁ : Y₁ ⟶t Z₁) (g₂ : Y₂ ⟶t Z₂) :
     HomEquiv ((f₁.tensor f₂).comp (g₁.tensor g₂)) ((f₁.comp g₁).tensor (f₂.comp g₂))
   | whiskerLeft_id (X Y) : HomEquiv ((Hom.id Y).whiskerLeft X) (Hom.id (X.tensor Y))
   | id_whiskerRight (X Y) : HomEquiv ((Hom.id X).whiskerRight Y) (Hom.id (X.tensor Y))
-  | associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} (f₁ : X₁ ⟶tq Y₁) (f₂ : X₂ ⟶tq Y₂) (f₃ : X₃ ⟶tq Y₃) :
+  | associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} (f₁ : X₁ ⟶t Y₁) (f₂ : X₂ ⟶t Y₂) (f₃ : X₃ ⟶t Y₃) :
       HomEquiv (((f₁.tensor f₂).tensor f₃).comp (Hom.α_hom Y₁ Y₂ Y₃))
         ((Hom.α_hom X₁ X₂ X₃).comp (f₁.tensor (f₂.tensor f₃)))
-  | ρ_naturality {X Y} (f : X ⟶tq Y) :
+  | ρ_naturality {X Y} (f : X ⟶t Y) :
       HomEquiv ((f.whiskerRight .unit).comp (Hom.ρ_hom Y)) ((Hom.ρ_hom X).comp f)
-  | l_naturality {X Y} (f : X ⟶tq Y) :
+  | l_naturality {X Y} (f : X ⟶t Y) :
       HomEquiv ((f.whiskerLeft .unit).comp (Hom.l_hom Y)) ((Hom.l_hom X).comp f)
   -- START OF NAT'S STUFF
-  | star {X Y} {f f' : X ⟶tq Y} : HomEquiv f f' → HomEquiv f.star f'.star
-  | starHom_comp_starHom {X Y Z : TQ C} (f : X ⟶tq Y) (g : Y ⟶tq Z) :
+  | star {X Y} {f f' : X ⟶t Y} : HomEquiv f f' → HomEquiv f.star f'.star
+  | starHom_comp_starHom {X Y Z : T C} (f : X ⟶t Y) (g : Y ⟶t Z) :
     HomEquiv (f.comp g).star (f.star.comp g.star)
-  | χ_naturality {X₁ X₂ Y₁ Y₂} (f : X₁ ⟶tq Y₁) (g : X₂ ⟶tq Y₂) :
+  | χ_naturality {X₁ X₂ Y₁ Y₂} (f : X₁ ⟶t Y₁) (g : X₂ ⟶t Y₂) :
     HomEquiv ((f.star.tensor g.star).comp (Hom.χ_hom Y₁ Y₂))
       ((Hom.χ_hom X₁ X₂).comp (g.tensor f).star)
-  | ε_naturality {X Y : TQ C} (f : X ⟶tq Y) :
+  | ε_naturality {X Y : T C} (f : X ⟶t Y) :
     HomEquiv (f.star.star.comp (Hom.ε_hom Y)) ((Hom.ε_hom X).comp f)
   | twist_hom_inv {X} : HomEquiv ((Hom.twist_hom X).comp (Hom.twist_inv X)) (Hom.id _)
   | twist_inv_hom {X} : HomEquiv ((Hom.twist_inv X).comp (Hom.twist_hom X)) (Hom.id _)
-  | twist_naturality {X Y : TQ C} (f : X ⟶tq Y) :
+  | twist_naturality {X Y : T C} (f : X ⟶t Y) :
     HomEquiv (f.star.comp (Hom.twist_hom Y)) ((Hom.twist_hom X).comp f)
-  | tℓ {P Q R : TQ C} : HomEquiv
+  | tℓ {P Q R : T C} : HomEquiv
     (((Hom.χ_hom P.star Q.star).whiskerRight R.star.star).comp <|
       ((Hom.twist_hom (Q.star.tensor P.star)).whiskerRight R.star.star).comp <|
       (Hom.α_hom Q.star P.star R.star.star).comp <|
@@ -63,11 +61,11 @@ inductive HomEquiv : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X ⟶tq Y) → Prop
       ((Hom.χ_hom P Q).whiskerRight R.star).comp <|
       (Hom.χ_hom (Q.tensor P) R).comp
       (Hom.twist_hom (R.tensor (Q.tensor P))))
-  | coherence (X Y : TQ C) (f g : X ⟶tq Y) : f.Pure → g.Pure → HomEquiv f g
-  | symm {X Y} (f g : X ⟶tq Y) : HomEquiv f g → HomEquiv g f
-  | trans {X Y} {f g h : X ⟶tq Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
+  | coherence (X Y : T C) (f g : X ⟶t Y) : f.Pure → g.Pure → HomEquiv f g
+  | symm {X Y} (f g : X ⟶t Y) : HomEquiv f g → HomEquiv g f
+  | trans {X Y} {f g h : X ⟶t Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 
-instance setoidHom (X Y : TQ C) : Setoid (X ⟶tq Y) :=
+instance setoidHom (X Y : T C) : Setoid (X ⟶t Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
 macro "coherence" : tactic =>
@@ -75,7 +73,7 @@ macro "coherence" : tactic =>
     (intros; apply _root_.Quotient.sound; apply HomEquiv.coherence <;> repeat' constructor)
   )
 
-instance : Category.{max u v, u} (TQ C) where
+instance : Category.{u, u} (T C) where
   Hom := fun X Y ↦ _root_.Quotient (setoidHom X Y)
   id X := ⟦Hom.id X⟧
   comp := Quotient.map₂ Hom.comp <| fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg
@@ -92,7 +90,7 @@ instance : Category.{max u v, u} (TQ C) where
     apply _root_.Quotient.sound
     constructor
 
-instance : MonoidalCategory (TQ C) where
+instance : MonoidalCategory (T C) where
   tensorUnit := .unit
   tensorObj X Y := .tensor X Y
   whiskerLeft X := Quotient.map (Hom.whiskerLeft X) <| fun _ _ h ↦ HomEquiv.whiskerLeft X _ _ h
@@ -132,7 +130,7 @@ instance : MonoidalCategory (TQ C) where
   pentagon := by coherence
   triangle := by coherence
 
-instance : InvolutiveCategoryStruct (TQ C) where
+instance : InvolutiveCategoryStruct (T C) where
   starObj := .star
   starHom := Quotient.map Hom.star <| fun _ _ h ↦ HomEquiv.star h
   skewator := fun X Y ↦ {
@@ -150,7 +148,7 @@ instance : InvolutiveCategoryStruct (TQ C) where
 
 open InvolutiveCategory
 
-lemma coherence_Pure {X Y : TQ C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
+lemma coherence_Pure {X Y : T C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
     ∃ f', f'.Pure ∧ f = ⟦f'⟧ := by
   intros f hf
   induction hf
@@ -201,7 +199,7 @@ lemma coherence_Pure {X Y : TQ C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
   case involutor_inv _ =>
     exists Hom.ε_inv _
 
-instance : InvolutiveCategory (TQ C) where
+instance : InvolutiveCategory (T C) where
   starHom_id := by coherence
   starHom_comp_starHom := by rintro _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
   skewator_naturality := by rintro _ _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
@@ -217,7 +215,7 @@ instance : InvolutiveCategory (TQ C) where
     apply _root_.Quotient.sound
     constructor <;> assumption
 
-instance : TwistedCategory (TQ C) where
+instance : TwistedCategory (T C) where
   twist X := {
     hom := ⟦Hom.twist_hom X⟧
     inv := ⟦Hom.twist_inv X⟧
@@ -230,104 +228,106 @@ instance : TwistedCategory (TQ C) where
     apply _root_.Quotient.sound
     constructor
 
-@[simp]
-def homMk {X Y : TQ C} (f : X ⟶tq Y) : X ⟶ Y := ⟦f⟧
+-- preparation for groupoid: simplifying lemmas
 
 @[simp]
-theorem mk_comp {X Y Z : TQ C} (f : X ⟶tq Y) (g : Y ⟶tq Z) :
-    ⟦f.comp g⟧ = @CategoryStruct.comp (TQ C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+def homMk {X Y : T C} (f : X ⟶t Y) : X ⟶ Y := ⟦f⟧
+
+@[simp]
+theorem mk_comp {X Y Z : T C} (f : X ⟶t Y) (g : Y ⟶t Z) :
+    ⟦f.comp g⟧ = @CategoryStruct.comp (T C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 @[simp]
-theorem mk_id {X : TQ C} : ⟦Hom.id X⟧ = 𝟙 X :=
+theorem mk_id {X : T C} : ⟦Hom.id X⟧ = 𝟙 X :=
   rfl
 
 open MonoidalCategory
 
 @[simp]
-theorem mk_tensor {X₁ Y₁ X₂ Y₂ : TQ C} (f : X₁ ⟶tq Y₁) (g : X₂ ⟶tq Y₂) :
-    ⟦f.tensor g⟧ = @MonoidalCategory.tensorHom (TQ C) _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+theorem mk_tensor {X₁ Y₁ X₂ Y₂ : T C} (f : X₁ ⟶t Y₁) (g : X₂ ⟶t Y₂) :
+    ⟦f.tensor g⟧ = @MonoidalCategory.tensorHom (T C) _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 @[simp]
-theorem mk_whiskerLeft {X Y₁ Y₂ : TQ C} (f : Y₁ ⟶tq Y₂) :
+theorem mk_whiskerLeft {X Y₁ Y₂ : T C} (f : Y₁ ⟶t Y₂) :
     ⟦f.whiskerLeft X⟧ = X ◁ ⟦f⟧ := rfl
 
 @[simp]
-theorem mk_whiskerRight {X₁ X₂ Y : TQ C} (f : X₁ ⟶tq X₂) :
+theorem mk_whiskerRight {X₁ X₂ Y : T C} (f : X₁ ⟶t X₂) :
     ⟦f.whiskerRight Y⟧ = ⟦f⟧ ▷ Y := rfl
 
 @[simp]
-theorem mk_α_hom {X Y Z : TQ C} : ⟦Hom.α_hom X Y Z⟧ = (α_ X Y Z).hom :=
+theorem mk_α_hom {X Y Z : T C} : ⟦Hom.α_hom X Y Z⟧ = (α_ X Y Z).hom :=
   rfl
 
 @[simp]
-theorem mk_α_inv {X Y Z : TQ C} : ⟦Hom.α_inv X Y Z⟧ = (α_ X Y Z).inv :=
+theorem mk_α_inv {X Y Z : T C} : ⟦Hom.α_inv X Y Z⟧ = (α_ X Y Z).inv :=
   rfl
 
 @[simp]
-theorem mk_ρ_hom {X : TQ C} : ⟦Hom.ρ_hom X⟧ = (ρ_ X).hom :=
+theorem mk_ρ_hom {X : T C} : ⟦Hom.ρ_hom X⟧ = (ρ_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_ρ_inv {X : TQ C} : ⟦Hom.ρ_inv X⟧ = (ρ_ X).inv :=
+theorem mk_ρ_inv {X : T C} : ⟦Hom.ρ_inv X⟧ = (ρ_ X).inv :=
   rfl
 
 @[simp]
-theorem mk_l_hom {X : TQ C} : ⟦Hom.l_hom X⟧ = (λ_ X).hom :=
+theorem mk_l_hom {X : T C} : ⟦Hom.l_hom X⟧ = (λ_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_l_inv {X : TQ C} : ⟦Hom.l_inv X⟧ = (λ_ X).inv :=
+theorem mk_l_inv {X : T C} : ⟦Hom.l_inv X⟧ = (λ_ X).inv :=
   rfl
 
 @[simp]
-theorem tensor_eq_tensor {X Y : TQ C} : X.tensor Y = X ⊗ Y :=
+theorem tensor_eq_tensor {X Y : T C} : X.tensor Y = X ⊗ Y :=
   rfl
 
 @[simp]
-theorem unit_eq_unit : FreeTwistedCategoryQuiver.unit = 𝟙_ (TQ C) :=
+theorem unit_eq_unit : FreeTwistedCategory.unit = 𝟙_ (T C) :=
   rfl
 
 open InvolutiveCategory
 
 @[simp]
-theorem mk_star {X Y : TQ C} (f : X ⟶tq Y) :
-    ⟦f.star⟧ = @InvolutiveCategoryStruct.starHom (TQ C) _ _ _ _ _ ⟦f⟧ :=
+theorem mk_star {X Y : T C} (f : X ⟶t Y) :
+    ⟦f.star⟧ = @InvolutiveCategoryStruct.starHom (T C) _ _ _ _ _ ⟦f⟧ :=
   rfl
 
 @[simp]
-theorem mk_ε_hom {X : TQ C} : ⟦Hom.ε_hom X⟧ = (e_ X).hom :=
+theorem mk_ε_hom {X : T C} : ⟦Hom.ε_hom X⟧ = (e_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_ε_inv {X : TQ C} : ⟦Hom.ε_inv X⟧ = (e_ X).inv :=
+theorem mk_ε_inv {X : T C} : ⟦Hom.ε_inv X⟧ = (e_ X).inv :=
   rfl
 
 @[simp]
-theorem mk_χ_hom {X Y : TQ C} : ⟦Hom.χ_hom X Y⟧ = (χ_ X Y).hom :=
+theorem mk_χ_hom {X Y : T C} : ⟦Hom.χ_hom X Y⟧ = (χ_ X Y).hom :=
   rfl
 
 @[simp]
-theorem mk_χ_inv {X Y : TQ C} : ⟦Hom.χ_inv X Y⟧ = (χ_ X Y).inv :=
+theorem mk_χ_inv {X Y : T C} : ⟦Hom.χ_inv X Y⟧ = (χ_ X Y).inv :=
   rfl
 
 @[simp]
-theorem star_eq_star {X : TQ C} : X.star = X⋆ :=
+theorem star_eq_star {X : T C} : X.star = X⋆ :=
   rfl
 
 open TwistedCategory
 
 @[simp]
-theorem mk_ς_hom {X : TQ C} : ⟦Hom.twist_hom X⟧ = (ς_ X).hom :=
+theorem mk_ς_hom {X : T C} : ⟦Hom.twist_hom X⟧ = (ς_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_ς_hom' {X : TQ C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.twist X).hom :=
+theorem mk_ς_hom' {X : T C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.twist X).hom :=
   rfl
 
 @[simp]
-theorem mk_ς_inv {X : TQ C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
+theorem mk_ς_inv {X : T C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
   rfl
 
 -- if you've got a ⟦Hom ...⟧, this breaks
@@ -366,47 +366,85 @@ macro "simp_mk" : tactic =>
     )
   )
 
+instance : Groupoid (T C) where
+  inv := _root_.Quotient.lift (fun f => ⟦f.inv⟧) <| by
+    intros f g h
+    simp
+    induction h <;> try simp_mk
+    case coherence =>
+      apply _root_.Quotient.sound
+      apply HomEquiv.coherence <;> apply Pure_inv_Pure <;> assumption
+    case tensorHom_def =>
+      rw [← tensorHom_def']
+    all_goals aesop_cat
+  inv_comp := by
+    rintro X Y f
+    induction f using Quotient.inductionOn
+    simp
+    case h f =>
+      induction f
+      all_goals simp_mk
+      any_goals cat_disch
+      any_goals first
+        | repeat1 rw [← Category.assoc]
+        | rw [← whiskerLeft_comp]
+        | rw [← comp_whiskerRight]
+        | rw [← InvolutiveCategory.starHom_comp_starHom]
+      all_goals cat_disch
+  comp_inv := by
+    rintro X Y f
+    induction f using Quotient.inductionOn
+    simp
+    case h f =>
+      induction f
+      all_goals simp_mk
+      any_goals cat_disch
+      any_goals first
+        | repeat1 rw [← Category.assoc]
+        | rw [← whiskerLeft_comp]
+        | rw [← comp_whiskerRight]
+        | rw [← InvolutiveCategory.starHom_comp_starHom]
+      all_goals cat_disch
+
+@[simp]
+theorem mk_inv {X Y : T C} (f : X ⟶t Y) : homMk f.inv = Groupoid.inv ⟦f⟧ := by
+  induction f <;> simp_all <;> simp_mk <;> symm <;> cat_disch
+
+@[simp]
+theorem mk_inv' {X Y : T C} (f : X ⟶t Y) : ⟦f.inv⟧ = Groupoid.inv (homMk f) := by
+  exact mk_inv f
 
 section
 
-variable {C : Type u} [Quiver.{v} (T C)] {D : Type u'} (m : C → D)
+variable {C : Type u} {D : Type u'} (m : C → D)
 
 open MonoidalCategory InvolutiveCategory
 
-@[simp] lemma map_tensorUnit : map m (𝟙_ _) = unit := rfl
-@[simp] lemma map_tensorObj (X Y : TQ C) : map m (X ⊗ Y) = (map m X).tensor (map m Y) := rfl
-@[simp] lemma map_starObj (X : TQ C) : map m X⋆ = (map m X).star := rfl
+@[simp] lemma map_tensorUnit : map m (𝟙_ _) = 𝟙_ _ := rfl
+@[simp] lemma map_tensorObj (X Y : T C) : map m (X ⊗ Y) = map m X ⊗ map m Y := rfl
+@[simp] lemma map_starObj (X : T C) : map m X⋆ = (map m X)⋆ := rfl
 
 variable [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
 
-open MonoidalCategory InvolutiveCategory
-
 @[simp] lemma projectObj_tensorUnit : projectObj m (𝟙_ _)= 𝟙_ _ := rfl
-@[simp] lemma projectObj_tensorObj (X Y : TQ C) :
+@[simp] lemma projectObj_tensorObj (X Y : T C) :
     projectObj m (X ⊗ Y) = projectObj m X ⊗ projectObj m Y := rfl
-@[simp] lemma projectObj_starObj (X : TQ C) : projectObj m X⋆ = (projectObj m X)⋆ := rfl
+@[simp] lemma projectObj_starObj (X : T C) : projectObj m X⋆ = (projectObj m X)⋆ := rfl
 
 end
 
 section
 
-variable {C : Type u} {D : Type u'} [Quiver.{v'} (T D)]
+variable {C : Type u} {D : Type u'}
 
 @[simp]
-lemma projectObj_of_map (m : C → D) : ∀ (X : TQ C),
+lemma projectObj_of_map (m : C → D) : ∀ (X : T C),
     projectObj (fun c ↦ (of (m c))) X =
       X.map m := by
   intro X
   induction X using recOn' <;> simp_all
 
-@[simp]
-lemma projectObj_of_map' (m : C → D) : ∀ (X : T C),
-    X.projectObj (fun c ↦ (of (m c))) =
-      ⟨X.map m⟩ := by
-  intro X
-  induction X using FreeTwistedCategory.recOn' <;> simp_all <;> rfl
-
 end
 
-end CategoryTheory.FreeTwistedCategoryQuiver
+end CategoryTheory.FreeTwistedCategory
 

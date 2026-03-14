@@ -1,7 +1,7 @@
 import Mathlib
-import LeanCategory.FreeInvolutiveCategoryBase
-import LeanCategory.FreeTwistedCategoryBase
-import LeanCategory.FreeTwistedCategoryQuiverBase
+import LeanCategory.FreeInvolutive.Base
+import LeanCategory.FreeTwisted.Base
+import LeanCategory.FreeTwistedQuiver.Base
 
 open CategoryTheory
 

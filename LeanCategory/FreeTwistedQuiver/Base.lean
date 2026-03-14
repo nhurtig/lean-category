@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.FreeTwistedCategoryBase
+import LeanCategory.FreeTwisted.Base
 
 namespace CategoryTheory
 
