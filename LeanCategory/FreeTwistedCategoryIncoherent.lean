@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.Egger
+import LeanCategory.EggerIncoherent
 import LeanCategory.FreeTwistedCategoryBase
 
 namespace CategoryTheory.FreeTwistedCategory
@@ -22,27 +22,55 @@ inductive HomEquiv : ∀ {X Y : T C}, (X ⟶t Y) → (X ⟶t Y) → Prop
   | id_comp {X Y} (f : X ⟶t Y) : HomEquiv ((Hom.id _).comp f) f
   | assoc {X Y U V : T C} (f : X ⟶t U) (g : U ⟶t V) (h : V ⟶t Y) :
       HomEquiv ((f.comp g).comp h) (f.comp (g.comp h))
+  | id_tensorHom_id {X Y} : HomEquiv ((Hom.id X).tensor (Hom.id Y)) (Hom.id _)
   | tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : T C} (f₁ : X₁ ⟶t Y₁) (f₂ : X₂ ⟶t Y₂)
       (g₁ : Y₁ ⟶t Z₁) (g₂ : Y₂ ⟶t Z₂) :
     HomEquiv ((f₁.tensor f₂).comp (g₁.tensor g₂)) ((f₁.comp g₁).tensor (f₂.comp g₂))
   | whiskerLeft_id (X Y) : HomEquiv ((Hom.id Y).whiskerLeft X) (Hom.id (X.tensor Y))
   | id_whiskerRight (X Y) : HomEquiv ((Hom.id X).whiskerRight Y) (Hom.id (X.tensor Y))
+  | α_hom_inv {X Y Z} : HomEquiv ((Hom.α_hom X Y Z).comp (Hom.α_inv X Y Z)) (Hom.id _)
+  | α_inv_hom {X Y Z} : HomEquiv ((Hom.α_inv X Y Z).comp (Hom.α_hom X Y Z)) (Hom.id _)
   | associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} (f₁ : X₁ ⟶t Y₁) (f₂ : X₂ ⟶t Y₂) (f₃ : X₃ ⟶t Y₃) :
       HomEquiv (((f₁.tensor f₂).tensor f₃).comp (Hom.α_hom Y₁ Y₂ Y₃))
         ((Hom.α_hom X₁ X₂ X₃).comp (f₁.tensor (f₂.tensor f₃)))
+  | ρ_hom_inv {X} : HomEquiv ((Hom.ρ_hom X).comp (Hom.ρ_inv X)) (Hom.id _)
+  | ρ_inv_hom {X} : HomEquiv ((Hom.ρ_inv X).comp (Hom.ρ_hom X)) (Hom.id _)
   | ρ_naturality {X Y} (f : X ⟶t Y) :
       HomEquiv ((f.whiskerRight .unit).comp (Hom.ρ_hom Y)) ((Hom.ρ_hom X).comp f)
+  | l_hom_inv {X} : HomEquiv ((Hom.l_hom X).comp (Hom.l_inv X)) (Hom.id _)
+  | l_inv_hom {X} : HomEquiv ((Hom.l_inv X).comp (Hom.l_hom X)) (Hom.id _)
   | l_naturality {X Y} (f : X ⟶t Y) :
       HomEquiv ((f.whiskerLeft .unit).comp (Hom.l_hom Y)) ((Hom.l_hom X).comp f)
+  | pentagon {W X Y Z} :
+      HomEquiv
+        (((Hom.α_hom W X Y).whiskerRight Z).comp
+          ((Hom.α_hom W (X.tensor Y) Z).comp ((Hom.α_hom X Y Z).whiskerLeft W)))
+        ((Hom.α_hom (W.tensor X) Y Z).comp (Hom.α_hom W X (Y.tensor Z)))
+  | triangle {X Y} :
+      HomEquiv ((Hom.α_hom X unit Y).comp ((Hom.l_hom Y).whiskerLeft X))
+        ((Hom.ρ_hom X).whiskerRight Y)
   -- START OF NAT'S STUFF
   | star {X Y} {f f' : X ⟶t Y} : HomEquiv f f' → HomEquiv f.star f'.star
+  | starHom_id {X} : HomEquiv (Hom.id X).star (Hom.id X.star)
   | starHom_comp_starHom {X Y Z : T C} (f : X ⟶t Y) (g : Y ⟶t Z) :
     HomEquiv (f.comp g).star (f.star.comp g.star)
+  | χ_hom_inv {X Y} : HomEquiv ((Hom.χ_hom X Y).comp (Hom.χ_inv X Y)) (Hom.id _)
+  | χ_inv_hom {X Y} : HomEquiv ((Hom.χ_inv X Y).comp (Hom.χ_hom X Y)) (Hom.id _)
   | χ_naturality {X₁ X₂ Y₁ Y₂} (f : X₁ ⟶t Y₁) (g : X₂ ⟶t Y₂) :
     HomEquiv ((f.star.tensor g.star).comp (Hom.χ_hom Y₁ Y₂))
       ((Hom.χ_hom X₁ X₂).comp (g.tensor f).star)
+  | ε_hom_inv {X} : HomEquiv ((Hom.ε_hom X).comp (Hom.ε_inv X)) (Hom.id _)
+  | ε_inv_hom {X} : HomEquiv ((Hom.ε_inv X).comp (Hom.ε_hom X)) (Hom.id _)
   | ε_naturality {X Y : T C} (f : X ⟶t Y) :
     HomEquiv (f.star.star.comp (Hom.ε_hom Y)) ((Hom.ε_hom X).comp f)
+  | f3 {P Q R : T C} : HomEquiv ((Hom.α_hom P.star Q.star R.star).comp <|
+    ((Hom.χ_hom Q R).whiskerLeft P.star).comp <|
+    (Hom.χ_hom P (R.tensor Q)).comp (Hom.α_hom R Q P).star)
+    (((Hom.χ_hom P Q).whiskerRight R.star).comp (Hom.χ_hom (Q.tensor P) R))
+  | n2 {P Q : T C} : HomEquiv ((Hom.χ_hom P.star Q.star).comp <|
+    (Hom.χ_hom Q P).star.comp (Hom.ε_hom (P.tensor Q)))
+    ((Hom.ε_hom P).tensor (Hom.ε_hom Q))
+  | a {R : T C} : HomEquiv (Hom.ε_hom R).star (Hom.ε_hom R.star)
   | twist_hom_inv {X} : HomEquiv ((Hom.twist_hom X).comp (Hom.twist_inv X)) (Hom.id _)
   | twist_inv_hom {X} : HomEquiv ((Hom.twist_inv X).comp (Hom.twist_hom X)) (Hom.id _)
   | twist_naturality {X Y : T C} (f : X ⟶t Y) :
@@ -61,177 +89,92 @@ inductive HomEquiv : ∀ {X Y : T C}, (X ⟶t Y) → (X ⟶t Y) → Prop
       ((Hom.χ_hom P Q).whiskerRight R.star).comp <|
       (Hom.χ_hom (Q.tensor P) R).comp
       (Hom.twist_hom (R.tensor (Q.tensor P))))
-  | coherence (X Y : T C) (f g : X ⟶t Y) : f.Pure → g.Pure → HomEquiv f g
   | symm {X Y} (f g : X ⟶t Y) : HomEquiv f g → HomEquiv g f
   | trans {X Y} {f g h : X ⟶t Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 
 instance setoidHom (X Y : T C) : Setoid (X ⟶t Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
-macro "coherence" : tactic =>
-  `(tactic|
-    (intros; apply _root_.Quotient.sound; apply HomEquiv.coherence <;> repeat' constructor)
-  )
+open HomEquiv
 
-instance : Category.{u, u} (T C) where
-  Hom := fun X Y ↦ _root_.Quotient (setoidHom X Y)
+instance categoryFreeTwistedCategory : Category.{u, u} (T C) where
+  Hom X Y := _root_.Quotient (setoidHom X Y)
   id X := ⟦Hom.id X⟧
-  comp := Quotient.map₂ Hom.comp <| fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg
+  comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
   id_comp := by
     rintro X Y ⟨f⟩
-    apply _root_.Quotient.sound
-    constructor
+    exact _root_.Quotient.sound (id_comp f)
   comp_id := by
     rintro X Y ⟨f⟩
-    apply _root_.Quotient.sound
-    constructor
+    exact _root_.Quotient.sound (comp_id f)
   assoc := by
     rintro W X Y Z ⟨f⟩ ⟨g⟩ ⟨h⟩
-    apply _root_.Quotient.sound
-    constructor
+    exact _root_.Quotient.sound (assoc f g h)
 
-instance : MonoidalCategory (T C) where
-  tensorUnit := .unit
+instance monoidalFreeTwistedCategory : MonoidalCategory (T C) where
   tensorObj X Y := .tensor X Y
-  whiskerLeft X := Quotient.map (Hom.whiskerLeft X) <| fun _ _ h ↦ HomEquiv.whiskerLeft X _ _ h
-  whiskerRight f X := Quotient.map (Hom.whiskerRight · X)
-    (fun _ _ h ↦ HomEquiv.whiskerRight _ _ X h) f
-  tensorHom := Quotient.map₂ Hom.tensor <| fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg
-  associator := fun X Y Z ↦ {
-    hom := ⟦Hom.α_hom X Y Z⟧
-    inv := ⟦Hom.α_inv X Y Z⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
-  }
-  leftUnitor := fun X ↦ {
-    hom := ⟦Hom.l_hom X⟧
-    inv := ⟦Hom.l_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
-  }
-  rightUnitor := fun X ↦ {
-    hom := ⟦Hom.ρ_hom X⟧
-    inv := ⟦Hom.ρ_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
-  }
-  whiskerLeft_id := by intros; apply _root_.Quotient.sound; constructor
-  id_whiskerRight := by intros; apply _root_.Quotient.sound; constructor
-  tensorHom_def := by
-    rintro X₁ Y₁ X₂ Y₂ ⟨f⟩ ⟨g⟩
-    apply _root_.Quotient.sound; constructor
-  id_tensorHom_id := by coherence
-  tensorHom_comp_tensorHom := by
-    rintro _ _ _ _ _ _ ⟨f₁⟩ ⟨f₂⟩ ⟨g₁⟩ ⟨g₂⟩; apply _root_.Quotient.sound; constructor
-  associator_naturality := by
-    rintro _ _ _ _ _ _ ⟨f⟩ ⟨g⟩ ⟨h⟩; apply _root_.Quotient.sound; constructor
-  leftUnitor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
-  rightUnitor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
-  pentagon := by coherence
-  triangle := by coherence
+  tensorHom := Quotient.map₂ Hom.tensor (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg)
+  whiskerLeft X _ _ f := Quot.map (fun f ↦ Hom.whiskerLeft X f) (fun f f' ↦ .whiskerLeft X f f') f
+  whiskerRight f Y := Quot.map (fun f ↦ Hom.whiskerRight f Y) (fun f f' ↦ .whiskerRight f f' Y) f
+  tensorHom_def {W X Y Z} := by
+    rintro ⟨f⟩ ⟨g⟩
+    exact _root_.Quotient.sound (HomEquiv.tensorHom_def _ _)
+  id_tensorHom_id _ _ := _root_.Quotient.sound id_tensorHom_id
+  tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂} := by
+    rintro ⟨f₁⟩ ⟨f₂⟩ ⟨g₁⟩ ⟨g₂⟩
+    exact _root_.Quotient.sound (tensorHom_comp_tensorHom _ _ _ _)
+  whiskerLeft_id X Y := Quot.sound (HomEquiv.whiskerLeft_id X Y)
+  id_whiskerRight X Y := Quot.sound (HomEquiv.id_whiskerRight X Y)
+  tensorUnit := .unit
+  associator X Y Z := ⟨⟦Hom.α_hom X Y Z⟧, ⟦Hom.α_inv X Y Z⟧,
+    _root_.Quotient.sound α_hom_inv, _root_.Quotient.sound α_inv_hom⟩
+  associator_naturality {X₁ X₂ X₃ Y₁ Y₂ Y₃} := by
+    rintro ⟨f₁⟩ ⟨f₂⟩ ⟨f₃⟩
+    exact _root_.Quotient.sound (associator_naturality _ _ _)
+  leftUnitor X := ⟨⟦Hom.l_hom X⟧, ⟦Hom.l_inv X⟧,
+    _root_.Quotient.sound l_hom_inv, _root_.Quotient.sound l_inv_hom⟩
+  leftUnitor_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (l_naturality _)
+  rightUnitor X :=
+    ⟨⟦Hom.ρ_hom X⟧, ⟦Hom.ρ_inv X⟧, _root_.Quotient.sound ρ_hom_inv, _root_.Quotient.sound ρ_inv_hom⟩
+  rightUnitor_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (ρ_naturality _)
+  pentagon _ _ _ _ := _root_.Quotient.sound pentagon
+  triangle _ _ := _root_.Quotient.sound triangle
 
-instance : InvolutiveCategoryStruct (T C) where
-  starObj := .star
-  starHom := Quotient.map Hom.star <| fun _ _ h ↦ HomEquiv.star h
-  skewator := fun X Y ↦ {
-    hom := ⟦Hom.χ_hom X Y⟧
-    inv := ⟦Hom.χ_inv X Y⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
-  }
-  involutor := fun X ↦ {
-    hom := ⟦Hom.ε_hom X⟧
-    inv := ⟦Hom.ε_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
-  }
+instance involutiveFreeTwistedCategory : InvolutiveCategory (T C) where
+  starObj X := X.star
+  starHom := Quotient.map Hom.star (fun _ _ hf  ↦ HomEquiv.star hf)
+  starHom_id _ := Quot.sound starHom_id
+  starHom_comp_starHom {X Y Z} := by
+    rintro ⟨f⟩ ⟨g⟩
+    exact _root_.Quotient.sound (starHom_comp_starHom _ _)
+  skewator X Y := ⟨⟦Hom.χ_hom X Y⟧, ⟦Hom.χ_inv X Y⟧,
+    _root_.Quotient.sound χ_hom_inv, _root_.Quotient.sound χ_inv_hom⟩
+  skewator_naturality {X₁ X₂ Y₁ Y₂} := by
+    rintro ⟨f₁⟩ ⟨f₂⟩
+    exact _root_.Quotient.sound (χ_naturality _ _)
+  involutor X := ⟨⟦Hom.ε_hom X⟧, ⟦Hom.ε_inv X⟧,
+    _root_.Quotient.sound ε_hom_inv, _root_.Quotient.sound ε_inv_hom⟩
+  involutor_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (HomEquiv.ε_naturality _)
+  f3 _ _ _ := _root_.Quotient.sound f3
+  n2 _ _ := _root_.Quotient.sound n2
+  a _ := _root_.Quotient.sound a
 
-open InvolutiveCategory
-
-lemma coherence_Pure {X Y : T C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
-    ∃ f', f'.Pure ∧ f = ⟦f'⟧ := by
-  intros f hf
-  induction hf
-  case id =>
-    exists .id _
-  case comp f g _ _ hf hg =>
-    rcases hf with ⟨f', ⟨hf', hf⟩⟩
-    subst f
-    rcases hg with ⟨g', ⟨hg', hg⟩⟩
-    subst g
-    exists f'.comp g'
-  case tensor f _ _ g _ _ hf hg =>
-    rcases hf with ⟨f', ⟨hf', hf⟩⟩
-    subst f
-    rcases hg with ⟨g', ⟨hg', hg⟩⟩
-    subst g
-    exists f'.tensor g'
-  case whiskerLeft f X _ hf =>
-    rcases hf with ⟨f', ⟨hf', hf⟩⟩
-    subst f
-    exists f'.whiskerLeft X
-  case whiskerRight f Y _ hf =>
-    rcases hf with ⟨f', ⟨hf', hf⟩⟩
-    subst f
-    exists f'.whiskerRight Y
-  case starHom f _ hf =>
-    rcases hf with ⟨f', ⟨hf', hf⟩⟩
-    subst f
-    exists f'.star
-  case associator_hom _ _ _ =>
-    exists Hom.α_hom _ _ _
-  case associator_inv _ _ _ =>
-    exists Hom.α_inv _ _ _
-  case leftUnitor_hom _ =>
-    exists Hom.l_hom _
-  case leftUnitor_inv _ =>
-    exists Hom.l_inv _
-  case rightUnitor_hom _ =>
-    exists Hom.ρ_hom _
-  case rightUnitor_inv _ =>
-    exists Hom.ρ_inv _
-  case skewator_hom _ _ =>
-    exists Hom.χ_hom _ _
-  case skewator_inv _ _ =>
-    exists Hom.χ_inv _ _
-  case involutor_hom _ =>
-    exists Hom.ε_hom _
-  case involutor_inv _ =>
-    exists Hom.ε_inv _
-
-instance : InvolutiveCategory (T C) where
-  starHom_id := by coherence
-  starHom_comp_starHom := by rintro _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
-  skewator_naturality := by rintro _ _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
-  involutor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
-  coherence := by
-    intros X Y f g hf hg
-    apply coherence_Pure at hf
-    rcases hf with ⟨f', ⟨hf', hf⟩⟩
-    subst f
-    apply coherence_Pure at hg
-    rcases hg with ⟨g', ⟨hg', hg⟩⟩
-    subst g
-    apply _root_.Quotient.sound
-    constructor <;> assumption
-
-instance : TwistedCategory (T C) where
-  twist X := {
-    hom := ⟦Hom.twist_hom X⟧
-    inv := ⟦Hom.twist_inv X⟧
-    hom_inv_id := _root_.Quotient.sound HomEquiv.twist_hom_inv
-    inv_hom_id := _root_.Quotient.sound HomEquiv.twist_inv_hom
-  }
-  twist_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
-  tℓ := by
-    intros
-    apply _root_.Quotient.sound
-    constructor
-
--- preparation for groupoid: simplifying lemmas
+instance freeTwistedCategory : TwistedCategory (T C) where
+  twist X := ⟨⟦Hom.twist_hom X⟧, ⟦Hom.twist_inv X⟧,
+    _root_.Quotient.sound twist_hom_inv, _root_.Quotient.sound twist_inv_hom⟩
+  twist_naturality {X Y} := by
+    rintro ⟨f⟩
+    exact _root_.Quotient.sound (HomEquiv.twist_naturality _)
+  tℓ _ _ _ := _root_.Quotient.sound tℓ
 
 @[simp]
-def homMk {X Y : T C} (f : X ⟶t Y) : X ⟶ Y := ⟦f⟧
+def homMk {X Y : T V} (f : X ⟶t Y) : categoryFreeTwistedCategory.Hom X Y := ⟦f⟧
 
 @[simp]
 theorem mk_comp {X Y Z : T C} (f : X ⟶t Y) (g : Y ⟶t Z) :
@@ -330,9 +273,6 @@ theorem mk_ς_hom' {X : T C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.tw
 theorem mk_ς_inv {X : T C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
   rfl
 
--- if you've got a ⟦Hom ...⟧, this breaks
--- it up so we can use category-level rewrites
--- instead of Quotient.sound into HomEquiv
 macro "simp_mk" : tactic =>
   `(tactic|
     repeat1 (first
@@ -371,9 +311,6 @@ instance : Groupoid (T C) where
     intros f g h
     simp
     induction h <;> try simp_mk
-    case coherence =>
-      apply _root_.Quotient.sound
-      apply HomEquiv.coherence <;> apply Pure_inv_Pure <;> assumption
     case tensorHom_def =>
       rw [← tensorHom_def']
     all_goals aesop_cat

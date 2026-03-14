@@ -1,5 +1,4 @@
 import Mathlib
-
 open CategoryTheory
 
 open Category MonoidalCategory
@@ -19,40 +18,12 @@ scoped postfix:max "⋆" => InvolutiveCategoryStruct.starHom
 scoped notation "χ_" => InvolutiveCategoryStruct.skewator
 scoped notation "e_" => InvolutiveCategoryStruct.involutor
 
-variable {C : Type u} [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategoryStruct C]
-
--- involutive coherences are isomorphisms made up of the
--- skewator/involutor, and monoidal associator/unitors.
--- We define these here so we can "cheat" in the involutive
--- category definition by stating coherence instead of proving
--- it from a couple of diagrams. If involutive categories are indeed
--- coherent (as many have proved by hand), this is equivalent to
--- the usual definition
-inductive InvolutiveCoherence : {X Y : C} → (X ⟶ Y) → Prop where
-  | id : InvolutiveCoherence (𝟙 X)
-  | comp : InvolutiveCoherence f → InvolutiveCoherence g → InvolutiveCoherence (f ≫ g)
-  | tensor : InvolutiveCoherence f → InvolutiveCoherence g → InvolutiveCoherence (f ⊗ₘ g)
-  | whiskerLeft : InvolutiveCoherence f → InvolutiveCoherence (X ◁ f)
-  | whiskerRight : InvolutiveCoherence f → InvolutiveCoherence (f ▷ Y)
-  | starHom : InvolutiveCoherence f → InvolutiveCoherence f⋆
-  | associator_hom : ∀ X Y Z : C, InvolutiveCoherence (α_ X Y Z).hom
-  | associator_inv : ∀ X Y Z : C, InvolutiveCoherence (α_ X Y Z).inv
-  | leftUnitor_hom : ∀ X : C, InvolutiveCoherence (λ_ X).hom
-  | leftUnitor_inv : ∀ X : C, InvolutiveCoherence (λ_ X).inv
-  | rightUnitor_hom : ∀ X : C, InvolutiveCoherence (ρ_ X).hom
-  | rightUnitor_inv : ∀ X : C, InvolutiveCoherence (ρ_ X).inv
-  | skewator_hom : ∀ X Y : C, InvolutiveCoherence (χ_ X Y).hom
-  | skewator_inv : ∀ X Y : C, InvolutiveCoherence (χ_ X Y).inv
-  | involutor_hom : ∀ X : C, InvolutiveCoherence (e_ X).hom
-  | involutor_inv : ∀ X : C, InvolutiveCoherence (e_ X).inv
-
 end InvolutiveCategory
 
 open InvolutiveCategory
 
 class InvolutiveCategory (C : Type u)
     [Category.{v} C] [MonoidalCategory C] extends InvolutiveCategoryStruct C where
-  -- starObj on monoidal identity 𝟙_?
   starHom_id : ∀ X : C, (𝟙 X)⋆ = 𝟙 X⋆ := by cat_disch
   starHom_comp_starHom : ∀ {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z),
       (f ≫ g)⋆ = f⋆ ≫ g⋆ := by cat_disch
@@ -60,13 +31,22 @@ class InvolutiveCategory (C : Type u)
       (f⋆ ⊗ₘ g⋆) ≫ (χ_ Y₁ Y₂).hom = (χ_ X₁ X₂).hom ≫ (g ⊗ₘ f)⋆ := by cat_disch
   involutor_naturality : ∀ {X Y : C} (f : X ⟶ Y),
       f⋆⋆ ≫ (e_ Y).hom = (e_ X).hom ≫ f
-  coherence : ∀ {X Y : C} (f g : X ⟶ Y),
-      InvolutiveCoherence f → InvolutiveCoherence g → f = g := by cat_disch
+  f3 : ∀ P Q R : C,
+      (α_ P⋆ Q⋆ R⋆).hom ≫ (P⋆ ◁ (χ_ Q R).hom) ≫ (χ_ P (R ⊗ Q)).hom ≫ (α_ R Q P).hom⋆ =
+        ((χ_ P Q).hom ▷ R⋆) ≫ (χ_ (Q ⊗ P) R).hom := by cat_disch
+  n2 : ∀ P Q : C,
+      (χ_ P⋆ Q⋆).hom ≫ (χ_ Q P).hom⋆ ≫ (e_ (P ⊗ Q)).hom =
+        (e_ P).hom ⊗ₘ (e_ Q).hom := by cat_disch
+  a : ∀ R : C,
+      (e_ R).hom⋆ = (e_ R⋆).hom := by cat_disch
 
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.starHom_id
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.starHom_comp_starHom
 attribute [reassoc] InvolutiveCategory.skewator_naturality
 attribute [reassoc] InvolutiveCategory.involutor_naturality
+attribute [reassoc (attr := simp), simp] InvolutiveCategory.f3
+attribute [reassoc (attr := simp), simp] InvolutiveCategory.n2
+attribute [reassoc (attr := simp), simp] InvolutiveCategory.a
 
 namespace InvolutiveCategory
 
@@ -158,6 +138,26 @@ theorem involutor_conjugation {X X' : C} (f : X ⟶ X') :
 
 def star_tensorObj : (𝟙_ C)⋆ ≅ 𝟙_ C :=
   (ρ_ _).symm ≪≫ whiskerLeftIso _ (e_ _).symm ≪≫ χ_ _ _ ≪≫ starIso (ρ_ _) ≪≫ e_ _
+
+@[reassoc (attr := simp), simp]
+theorem f3_inv : ∀ P Q R : C,
+    (α_ R Q P).inv⋆ ≫ (χ_ P (R ⊗ Q)).inv ≫ (P⋆ ◁ (χ_ Q R).inv) ≫ (α_ P⋆ Q⋆ R⋆).inv =
+      (χ_ (Q ⊗ P) R).inv ≫ ((χ_ P Q).inv ▷ R⋆) := by
+  intros P Q R
+  exact eq_of_inv_eq_inv (by simp)
+
+@[reassoc (attr := simp), simp]
+theorem n2_inv : ∀ P Q : C,
+      (e_ (P ⊗ Q)).inv ≫ (χ_ Q P).inv⋆ ≫ (χ_ P⋆ Q⋆).inv =
+        (e_ P).inv ⊗ₘ (e_ Q).inv := by
+  intros P Q
+  exact eq_of_inv_eq_inv (by simp)
+
+@[reassoc (attr := simp), simp]
+theorem a_inv : ∀ R : C,
+    (e_ R).inv⋆ = (e_ R⋆).inv := by
+  intros R
+  exact eq_of_inv_eq_inv (by simp)
 
 end InvolutiveCategory
 
