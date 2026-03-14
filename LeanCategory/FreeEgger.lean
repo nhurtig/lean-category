@@ -5,7 +5,7 @@ variable {C : Type u}
 namespace CategoryTheory.FreeTwistedCategory
 open HomEquiv
 
-instance categoryFreeTwistedCategory : Category.{u, u} (F C) where
+instance categoryFreeTwistedCategory : Category.{u, u} (FreeInvolutiveCategory C) where
   Hom X Y := _root_.Quotient (FreeTwistedCategory.setoidHom X Y)
   id X := ⟦Hom.id X⟧
   comp := Quotient.map₂ Hom.comp (fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg)
@@ -23,7 +23,7 @@ instance categoryFreeTwistedCategory : Category.{u, u} (F C) where
 /- instance groupoidFreeTwistedCategory : Groupoid.{u} (F C) where -/
 /-   inv f := Quotient.map Hom.inv (fun _ _ hf  ↦ HomEquiv.inv hf) -/
 
-instance monoidalFreeTwistedCategory : MonoidalCategory (F C) where
+instance monoidalFreeTwistedCategory : MonoidalCategory (FreeInvolutiveCategory C) where
   tensorObj X Y := FreeTwistedCategory.tensor X Y
   tensorHom := Quotient.map₂ Hom.tensor (fun _ _ hf _ _ hg ↦ HomEquiv.tensor hf hg)
   whiskerLeft X _ _ f := Quot.map (fun f ↦ Hom.whiskerLeft X f) (fun f f' ↦ .whiskerLeft X f f') f
@@ -56,7 +56,7 @@ instance monoidalFreeTwistedCategory : MonoidalCategory (F C) where
   pentagon _ _ _ _ := _root_.Quotient.sound pentagon
   triangle _ _ := _root_.Quotient.sound triangle
 
-instance involutiveFreeTwistedCategory : InvolutiveCategory (F C) where
+instance involutiveFreeTwistedCategory : InvolutiveCategory (FreeInvolutiveCategory C) where
   starObj X := X.star
   starHom := Quotient.map Hom.star (fun _ _ hf  ↦ HomEquiv.star hf)
   starHom_id _ := Quot.sound starHom_id
@@ -77,7 +77,7 @@ instance involutiveFreeTwistedCategory : InvolutiveCategory (F C) where
   n2 _ _ := _root_.Quotient.sound n2
   a _ := _root_.Quotient.sound a
 
-instance freeTwistedCategory : TwistedCategory (F C) where
+instance freeTwistedCategory : TwistedCategory (FreeInvolutiveCategory C) where
   twist X := ⟨⟦Hom.twist_hom X⟧, ⟦Hom.twist_inv X⟧, 
     _root_.Quotient.sound twist_hom_inv, _root_.Quotient.sound twist_inv_hom⟩
   twist_naturality {X Y} := by
@@ -249,111 +249,111 @@ theorem mk_eqToHom {X Y : V} (h : X = Y) :
 -/
 
 @[simp]
-def homMk {X Y : F V} (f : X ⟶ᵐ Y) : categoryFreeTwistedCategory.Hom X Y := ⟦f⟧
+def homMk {X Y : FreeInvolutiveCategory V} (f : X ⟶ᵐ Y) : categoryFreeTwistedCategory.Hom X Y := ⟦f⟧
 
 @[simp]
-theorem mk_comp {X Y Z : F C} (f : X ⟶ᵐ Y) (g : Y ⟶ᵐ Z) :
-    ⟦f.comp g⟧ = @CategoryStruct.comp (F C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+theorem mk_comp {X Y Z : FreeInvolutiveCategory C} (f : X ⟶ᵐ Y) (g : Y ⟶ᵐ Z) :
+    ⟦f.comp g⟧ = @CategoryStruct.comp (FreeInvolutiveCategory C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 @[simp]
-theorem mk_id {X : F C} : ⟦Hom.id X⟧ = 𝟙 X :=
+theorem mk_id {X : FreeInvolutiveCategory C} : ⟦Hom.id X⟧ = 𝟙 X :=
   rfl
 
 open MonoidalCategory
 
 @[simp]
-theorem mk_tensor {X₁ Y₁ X₂ Y₂ : F C} (f : X₁ ⟶ᵐ Y₁) (g : X₂ ⟶ᵐ Y₂) :
-    ⟦f.tensor g⟧ = @MonoidalCategory.tensorHom (F C) _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+theorem mk_tensor {X₁ Y₁ X₂ Y₂ : FreeInvolutiveCategory C} (f : X₁ ⟶ᵐ Y₁) (g : X₂ ⟶ᵐ Y₂) :
+    ⟦f.tensor g⟧ = @MonoidalCategory.tensorHom (FreeInvolutiveCategory C) _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 @[simp]
-theorem mk_whiskerLeft {X Y₁ Y₂ : F C} (f : Y₁ ⟶ᵐ Y₂) :
+theorem mk_whiskerLeft {X Y₁ Y₂ : FreeInvolutiveCategory C} (f : Y₁ ⟶ᵐ Y₂) :
     ⟦f.whiskerLeft X⟧ = X ◁ ⟦f⟧ := rfl
 
 @[simp]
-theorem mk_whiskerRight {X₁ X₂ Y : F C} (f : X₁ ⟶ᵐ X₂) :
+theorem mk_whiskerRight {X₁ X₂ Y : FreeInvolutiveCategory C} (f : X₁ ⟶ᵐ X₂) :
     ⟦f.whiskerRight Y⟧ = ⟦f⟧ ▷ Y := rfl
 
 @[simp]
-theorem mk_α_hom {X Y Z : F C} : ⟦Hom.α_hom X Y Z⟧ = (α_ X Y Z).hom :=
+theorem mk_α_hom {X Y Z : FreeInvolutiveCategory C} : ⟦Hom.α_hom X Y Z⟧ = (α_ X Y Z).hom :=
   rfl
 
 @[simp]
-theorem mk_α_inv {X Y Z : F C} : ⟦Hom.α_inv X Y Z⟧ = (α_ X Y Z).inv :=
+theorem mk_α_inv {X Y Z : FreeInvolutiveCategory C} : ⟦Hom.α_inv X Y Z⟧ = (α_ X Y Z).inv :=
   rfl
 
 @[simp]
-theorem mk_ρ_hom {X : F C} : ⟦Hom.ρ_hom X⟧ = (ρ_ X).hom :=
+theorem mk_ρ_hom {X : FreeInvolutiveCategory C} : ⟦Hom.ρ_hom X⟧ = (ρ_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_ρ_inv {X : F C} : ⟦Hom.ρ_inv X⟧ = (ρ_ X).inv :=
+theorem mk_ρ_inv {X : FreeInvolutiveCategory C} : ⟦Hom.ρ_inv X⟧ = (ρ_ X).inv :=
   rfl
 
 @[simp]
-theorem mk_l_hom {X : F C} : ⟦Hom.l_hom X⟧ = (λ_ X).hom :=
+theorem mk_l_hom {X : FreeInvolutiveCategory C} : ⟦Hom.l_hom X⟧ = (λ_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_l_inv {X : F C} : ⟦Hom.l_inv X⟧ = (λ_ X).inv :=
+theorem mk_l_inv {X : FreeInvolutiveCategory C} : ⟦Hom.l_inv X⟧ = (λ_ X).inv :=
   rfl
 
 @[simp]
-theorem tensor_eq_tensor {X Y : F C} : X.tensor Y = X ⊗ Y :=
+theorem tensor_eq_tensor {X Y : FreeInvolutiveCategory C} : X.tensor Y = X ⊗ Y :=
   rfl
 
 @[simp]
-theorem tensor_eq_tensor' {X Y : F C} : X * Y = X ⊗ Y :=
+theorem tensor_eq_tensor' {X Y : FreeInvolutiveCategory C} : X * Y = X ⊗ Y :=
   rfl
 
 @[simp]
-theorem unit_eq_unit : FreeTwistedCategory.unit = 𝟙_ (F C) :=
+theorem unit_eq_unit : FreeTwistedCategory.unit = 𝟙_ (FreeInvolutiveCategory C) :=
   rfl
 
 @[simp]
-theorem unit_eq_unit' : 1 = 𝟙_ (F C) :=
+theorem unit_eq_unit' : 1 = 𝟙_ (FreeInvolutiveCategory C) :=
   rfl
 
 open InvolutiveCategory
 
 @[simp]
-theorem mk_star {X Y : F C} (f : X ⟶ᵐ Y) :
-    ⟦f.star⟧ = @InvolutiveCategoryStruct.starHom (F C) _ _ _ _ _ ⟦f⟧ :=
+theorem mk_star {X Y : FreeInvolutiveCategory C} (f : X ⟶ᵐ Y) :
+    ⟦f.star⟧ = @InvolutiveCategoryStruct.starHom (FreeInvolutiveCategory C) _ _ _ _ _ ⟦f⟧ :=
   rfl
 
 @[simp]
-theorem mk_ε_hom {X : F C} : ⟦Hom.ε_hom X⟧ = (e_ X).hom :=
+theorem mk_ε_hom {X : FreeInvolutiveCategory C} : ⟦Hom.ε_hom X⟧ = (e_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_ε_inv {X : F C} : ⟦Hom.ε_inv X⟧ = (e_ X).inv :=
+theorem mk_ε_inv {X : FreeInvolutiveCategory C} : ⟦Hom.ε_inv X⟧ = (e_ X).inv :=
   rfl
 
 @[simp]
-theorem mk_χ_hom {X Y : F C} : ⟦Hom.χ_hom X Y⟧ = (χ_ X Y).hom :=
+theorem mk_χ_hom {X Y : FreeInvolutiveCategory C} : ⟦Hom.χ_hom X Y⟧ = (χ_ X Y).hom :=
   rfl
 
 @[simp]
-theorem mk_χ_inv {X Y : F C} : ⟦Hom.χ_inv X Y⟧ = (χ_ X Y).inv :=
+theorem mk_χ_inv {X Y : FreeInvolutiveCategory C} : ⟦Hom.χ_inv X Y⟧ = (χ_ X Y).inv :=
   rfl
 
 @[simp]
-theorem star_eq_star {X : F C} : X.star = X⋆ :=
+theorem star_eq_star {X : FreeInvolutiveCategory C} : X.star = X⋆ :=
   rfl
 
 open TwistedCategory
 
 @[simp]
-theorem mk_ς_hom {X : F C} : ⟦Hom.twist_hom X⟧ = (ς_ X).hom :=
+theorem mk_ς_hom {X : FreeInvolutiveCategory C} : ⟦Hom.twist_hom X⟧ = (ς_ X).hom :=
   rfl
 
 @[simp]
-theorem mk_ς_hom' {X : F C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.twist X).hom :=
+theorem mk_ς_hom' {X : FreeInvolutiveCategory C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.twist X).hom :=
   rfl
 
 @[simp]
-theorem mk_ς_inv {X : F C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
+theorem mk_ς_inv {X : FreeInvolutiveCategory C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
   rfl
 
 macro "simp_mk" : tactic =>
@@ -435,7 +435,7 @@ theorem mk_e_inv {X : V} :
   rfl
 -/
 
-instance : Groupoid.{u} (F C) where
+instance : Groupoid.{u} (FreeInvolutiveCategory C) where
     inv := _root_.Quotient.lift (fun f => ⟦f.inv⟧) <| by
       intros f g h
       simp
@@ -505,11 +505,11 @@ instance : Groupoid.{u} (F C) :=
 -/
 
 @[simp]
-theorem mk_inv {X Y : F V} (f : X ⟶ᵐ Y) : homMk f.inv = Groupoid.inv ⟦f⟧ := by
+theorem mk_inv {X Y : FreeInvolutiveCategory V} (f : X ⟶ᵐ Y) : homMk f.inv = Groupoid.inv ⟦f⟧ := by
   induction f <;> simp_all <;> simp_mk <;> symm <;> cat_disch
 
 @[simp]
-theorem mk_inv' {X Y : F V} (f : X ⟶ᵐ Y) : ⟦f.inv⟧ = Groupoid.inv (homMk f) := by
+theorem mk_inv' {X Y : FreeInvolutiveCategory V} (f : X ⟶ᵐ Y) : ⟦f.inv⟧ = Groupoid.inv (homMk f) := by
   exact mk_inv f
 
 end CategoryTheory.FreeTwistedCategory

@@ -9,31 +9,31 @@ namespace CategoryTheory.FreeTwistedCategory
 
 variable {C : Type u}
 
-inductive Hom : F C → F C → Type max u v
+inductive Hom : FreeInvolutiveCategory C → FreeInvolutiveCategory C → Type max u v
   | id (X) : Hom X X
   | comp {X Y Z} (f : Hom X Y) (g : Hom Y Z) : Hom X Z
-  | whiskerLeft (X : F C) {Y₁ Y₂} (f : Hom Y₁ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂)
-  | whiskerRight {X₁ X₂} (f : Hom X₁ X₂) (Y : F C) : Hom (X₁.tensor Y) (X₂.tensor Y)
+  | whiskerLeft (X : FreeInvolutiveCategory C) {Y₁ Y₂} (f : Hom Y₁ Y₂) : Hom (X.tensor Y₁) (X.tensor Y₂)
+  | whiskerRight {X₁ X₂} (f : Hom X₁ X₂) (Y : FreeInvolutiveCategory C) : Hom (X₁.tensor Y) (X₂.tensor Y)
   | tensor {W X Y Z} (f : Hom W Y) (g : Hom X Z) : Hom (W.tensor X) (Y.tensor Z)
-  | α_hom (X Y Z : F C) : Hom ((X * Y) * Z) (X * (Y * Z))
-  | α_inv (X Y Z : F C) : Hom (X * (Y * Z)) ((X * Y) * Z)
+  | α_hom (X Y Z : FreeInvolutiveCategory C) : Hom ((X * Y) * Z) (X * (Y * Z))
+  | α_inv (X Y Z : FreeInvolutiveCategory C) : Hom (X * (Y * Z)) ((X * Y) * Z)
   | l_hom (X) : Hom (1 * X) X
   | l_inv (X) : Hom X (1 * X)
-  | ρ_hom (X : F C) : Hom (X * 1) X
-  | ρ_inv (X : F C) : Hom X (X * 1)
+  | ρ_hom (X : FreeInvolutiveCategory C) : Hom (X * 1) X
+  | ρ_inv (X : FreeInvolutiveCategory C) : Hom X (X * 1)
   | star {X Y} (f : Hom X Y) : Hom X.star Y.star
-  | χ_hom (X Y : F C) : Hom (X.star * Y.star) (Y * X).star
-  | χ_inv (X Y : F C) : Hom (Y * X).star (X.star * Y.star)
-  | ε_hom (X : F C) : Hom X.star.star X
-  | ε_inv (X : F C) : Hom X X.star.star
-  | twist_hom (X : F C) : Hom X.star X
-  | twist_inv (X : F C) : Hom X X.star
+  | χ_hom (X Y : FreeInvolutiveCategory C) : Hom (X.star * Y.star) (Y * X).star
+  | χ_inv (X Y : FreeInvolutiveCategory C) : Hom (Y * X).star (X.star * Y.star)
+  | ε_hom (X : FreeInvolutiveCategory C) : Hom X.star.star X
+  | ε_inv (X : FreeInvolutiveCategory C) : Hom X X.star.star
+  | twist_hom (X : FreeInvolutiveCategory C) : Hom X.star X
+  | twist_inv (X : FreeInvolutiveCategory C) : Hom X X.star
 
 infixr:10 " ⟶ᵐ " => Hom
 -- TODO notation for 𝟙ᵐ, ≫ᵐ
 
 @[simp]
-def Hom.inv {X Y : F C} : (X ⟶ᵐ Y) → (Y ⟶ᵐ X)
+def Hom.inv {X Y : FreeInvolutiveCategory C} : (X ⟶ᵐ Y) → (Y ⟶ᵐ X)
   | id X => id X
   | comp f g => comp (g.inv) (f.inv)
   | whiskerLeft X f => whiskerLeft X (f.inv)
@@ -53,7 +53,7 @@ def Hom.inv {X Y : F C} : (X ⟶ᵐ Y) → (Y ⟶ᵐ X)
   | twist_hom X => twist_inv X
   | twist_inv X => twist_hom X
 
-inductive HomEquiv : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
+inductive HomEquiv : ∀ {X Y : FreeInvolutiveCategory C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   | refl {X Y} (f : X ⟶ᵐ Y) : HomEquiv f f
   | symm {X Y} (f g : X ⟶ᵐ Y) : HomEquiv f g → HomEquiv g f
   | trans {X Y} {f g h : X ⟶ᵐ Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
@@ -69,10 +69,10 @@ inductive HomEquiv : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
       HomEquiv (f.tensor g) ((f.whiskerRight X₂).comp (g.whiskerLeft Y₁))
   | comp_id {X Y} (f : X ⟶ᵐ Y) : HomEquiv (f.comp (Hom.id _)) f
   | id_comp {X Y} (f : X ⟶ᵐ Y) : HomEquiv ((Hom.id _).comp f) f
-  | assoc {X Y U V : F C} (f : X ⟶ᵐ U) (g : U ⟶ᵐ V) (h : V ⟶ᵐ Y) :
+  | assoc {X Y U V : FreeInvolutiveCategory C} (f : X ⟶ᵐ U) (g : U ⟶ᵐ V) (h : V ⟶ᵐ Y) :
       HomEquiv ((f.comp g).comp h) (f.comp (g.comp h))
   | id_tensorHom_id {X Y} : HomEquiv ((Hom.id X).tensor (Hom.id Y)) (Hom.id _)
-  | tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : F C} (f₁ : X₁ ⟶ᵐ Y₁) (f₂ : X₂ ⟶ᵐ Y₂)
+  | tensorHom_comp_tensorHom {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : FreeInvolutiveCategory C} (f₁ : X₁ ⟶ᵐ Y₁) (f₂ : X₂ ⟶ᵐ Y₂)
       (g₁ : Y₁ ⟶ᵐ Z₁) (g₂ : Y₂ ⟶ᵐ Z₂) :
     HomEquiv ((f₁.tensor f₂).comp (g₁.tensor g₂)) ((f₁.comp g₁).tensor (f₂.comp g₂))
   | whiskerLeft_id (X Y) : HomEquiv ((Hom.id Y).whiskerLeft X) (Hom.id (X.tensor Y))
@@ -101,7 +101,7 @@ inductive HomEquiv : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
   -- START OF NAT'S STUFF
   | star {X Y} {f f' : X ⟶ᵐ Y} : HomEquiv f f' → HomEquiv f.star f'.star
   | starHom_id {X} : HomEquiv (Hom.id X).star (Hom.id X.star)
-  | starHom_comp_starHom {X Y Z : F C} (f : X ⟶ᵐ Y) (g : Y ⟶ᵐ Z) :
+  | starHom_comp_starHom {X Y Z : FreeInvolutiveCategory C} (f : X ⟶ᵐ Y) (g : Y ⟶ᵐ Z) :
     HomEquiv (f.comp g).star (f.star.comp g.star)
   | χ_hom_inv {X Y} : HomEquiv ((Hom.χ_hom X Y).comp (Hom.χ_inv X Y)) (Hom.id _)
   | χ_inv_hom {X Y} : HomEquiv ((Hom.χ_inv X Y).comp (Hom.χ_hom X Y)) (Hom.id _)
@@ -110,21 +110,21 @@ inductive HomEquiv : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
       ((Hom.χ_hom X₁ X₂).comp (g.tensor f).star)
   | ε_hom_inv {X} : HomEquiv ((Hom.ε_hom X).comp (Hom.ε_inv X)) (Hom.id _)
   | ε_inv_hom {X} : HomEquiv ((Hom.ε_inv X).comp (Hom.ε_hom X)) (Hom.id _)
-  | ε_naturality {X Y : F C} (f : X ⟶ᵐ Y) :
+  | ε_naturality {X Y : FreeInvolutiveCategory C} (f : X ⟶ᵐ Y) :
     HomEquiv (f.star.star.comp (Hom.ε_hom Y)) ((Hom.ε_hom X).comp f)
-  | f3 {P Q R : F C} : HomEquiv ((Hom.α_hom P.star Q.star R.star).comp <|
+  | f3 {P Q R : FreeInvolutiveCategory C} : HomEquiv ((Hom.α_hom P.star Q.star R.star).comp <|
     ((Hom.χ_hom Q R).whiskerLeft P.star).comp <|
     (Hom.χ_hom P (R * Q)).comp (Hom.α_hom R Q P).star)
     (((Hom.χ_hom P Q).whiskerRight R.star).comp (Hom.χ_hom (Q * P) R))
-  | n2 {P Q : F C} : HomEquiv ((Hom.χ_hom P.star Q.star).comp <|
+  | n2 {P Q : FreeInvolutiveCategory C} : HomEquiv ((Hom.χ_hom P.star Q.star).comp <|
     (Hom.χ_hom Q P).star.comp (Hom.ε_hom (P * Q)))
     ((Hom.ε_hom P).tensor (Hom.ε_hom Q))
-  | a {R : F C} : HomEquiv (Hom.ε_hom R).star (Hom.ε_hom R.star)
+  | a {R : FreeInvolutiveCategory C} : HomEquiv (Hom.ε_hom R).star (Hom.ε_hom R.star)
   | twist_hom_inv {X} : HomEquiv ((Hom.twist_hom X).comp (Hom.twist_inv X)) (Hom.id _)
   | twist_inv_hom {X} : HomEquiv ((Hom.twist_inv X).comp (Hom.twist_hom X)) (Hom.id _)
-  | twist_naturality {X Y : F C} (f : X ⟶ᵐ Y) :
+  | twist_naturality {X Y : FreeInvolutiveCategory C} (f : X ⟶ᵐ Y) :
     HomEquiv (f.star.comp (Hom.twist_hom Y)) ((Hom.twist_hom X).comp f)
-  | tℓ {P Q R : F C} : HomEquiv
+  | tℓ {P Q R : FreeInvolutiveCategory C} : HomEquiv
     (((Hom.χ_hom P.star Q.star).whiskerRight R.star.star).comp <|
       ((Hom.twist_hom (Q.star * P.star)).whiskerRight R.star.star).comp <|
       (Hom.α_hom Q.star P.star R.star.star).comp <|
@@ -139,7 +139,7 @@ inductive HomEquiv : ∀ {X Y : F C}, (X ⟶ᵐ Y) → (X ⟶ᵐ Y) → Prop
       (Hom.χ_hom (Q * P) R).comp
       (Hom.twist_hom (R * (Q * P))))
 
-def setoidHom (X Y : F C) : Setoid (X ⟶ᵐ Y) :=
+def setoidHom (X Y : FreeInvolutiveCategory C) : Setoid (X ⟶ᵐ Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
 attribute [instance] setoidHom

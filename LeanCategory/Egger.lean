@@ -23,10 +23,28 @@ scoped postfix:max "⋆" => InvolutiveCategoryStruct.starHom
 scoped notation "χ_" => InvolutiveCategoryStruct.skewator
 scoped notation "e_" => InvolutiveCategoryStruct.involutor
 
-#check InvolutiveCategoryStruct.involutor
+variable {C : Type u} [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategoryStruct C]
 
-#check MonoidalCategoryStruct.tensorHom
-#check MonoidalCategory.tensorHom
+-- involutive coherences are isomorphisms made up of the
+-- skewator/involutor, and monoidal associator/unitors.
+-- We define these here so we can "cheat" in the involutive
+-- category definition by stating coherence instead of proving
+-- it from a couple of diagrams. If involutive categories are indeed
+-- coherent (as many have proved by hand), this is equivalent to
+-- the usual definition
+inductive InvolutiveCoherence : {X Y : C} → (X ⟶ Y) → Prop where
+  | id : InvolutiveCoherence (𝟙 X)
+  | comp : InvolutiveCoherence f → InvolutiveCoherence g → InvolutiveCoherence (f ≫ g)
+  | associator_hom : ∀ X Y Z : C, InvolutiveCoherence (α_ X Y Z).hom
+  | associator_inv : ∀ X Y Z : C, InvolutiveCoherence (α_ X Y Z).inv
+  | leftUnitor_hom : ∀ X : C, InvolutiveCoherence (λ_ X).hom
+  | leftUnitor_inv : ∀ X : C, InvolutiveCoherence (λ_ X).inv
+  | rightUnitor_hom : ∀ X : C, InvolutiveCoherence (ρ_ X).hom
+  | rightUnitor_inv : ∀ X : C, InvolutiveCoherence (ρ_ X).inv
+  | skewator_hom : ∀ X Y : C, InvolutiveCoherence (χ_ X Y).hom
+  | skewator_inv : ∀ X Y : C, InvolutiveCoherence (χ_ X Y).inv
+  | involutor_hom : ∀ X : C, InvolutiveCoherence (e_ X).hom
+  | involutor_inv : ∀ X : C, InvolutiveCoherence (e_ X).inv
 
 end InvolutiveCategory
 
@@ -42,14 +60,16 @@ class InvolutiveCategory (C : Type u)
       (f⋆ ⊗ₘ g⋆) ≫ (χ_ Y₁ Y₂).hom = (χ_ X₁ X₂).hom ≫ (g ⊗ₘ f)⋆ := by cat_disch
   involutor_naturality : ∀ {X Y : C} (f : X ⟶ Y),
       f⋆⋆ ≫ (e_ Y).hom = (e_ X).hom ≫ f
-  f3 : ∀ P Q R : C,
-      (α_ P⋆ Q⋆ R⋆).hom ≫ (P⋆ ◁ (χ_ Q R).hom) ≫ (χ_ P (R ⊗ Q)).hom ≫ (α_ R Q P).hom⋆ =
-        ((χ_ P Q).hom ▷ R⋆) ≫ (χ_ (Q ⊗ P) R).hom := by cat_disch
-  n2 : ∀ P Q : C,
-      (χ_ P⋆ Q⋆).hom ≫ (χ_ Q P).hom⋆ ≫ (e_ (P ⊗ Q)).hom =
-        (e_ P).hom ⊗ₘ (e_ Q).hom := by cat_disch
-  a : ∀ R : C,
-      (e_ R).hom⋆ = (e_ R⋆).hom := by cat_disch
+  coherence : ∀ {X Y : C} (f g : X ⟶ Y),
+      InvolutiveCoherence f → InvolutiveCoherence g → f = g := by cat_disch
+  /- f3 : ∀ P Q R : C, -/
+  /-     (α_ P⋆ Q⋆ R⋆).hom ≫ (P⋆ ◁ (χ_ Q R).hom) ≫ (χ_ P (R ⊗ Q)).hom ≫ (α_ R Q P).hom⋆ = -/
+  /-       ((χ_ P Q).hom ▷ R⋆) ≫ (χ_ (Q ⊗ P) R).hom := by cat_disch -/
+  /- n2 : ∀ P Q : C, -/
+  /-     (χ_ P⋆ Q⋆).hom ≫ (χ_ Q P).hom⋆ ≫ (e_ (P ⊗ Q)).hom = -/
+  /-       (e_ P).hom ⊗ₘ (e_ Q).hom := by cat_disch -/
+  /- a : ∀ R : C, -/
+  /-     (e_ R).hom⋆ = (e_ R⋆).hom := by cat_disch -/
 
 /- attribute  MonoidalCategory.tensorHom_def -/
 /- attribute [reassoc, simp] MonoidalCategory.whiskerLeft_id -/
@@ -65,9 +85,9 @@ attribute [reassoc (attr := simp), simp] InvolutiveCategory.starHom_id
 attribute [reassoc (attr := simp), simp] InvolutiveCategory.starHom_comp_starHom
 attribute [reassoc] InvolutiveCategory.skewator_naturality
 attribute [reassoc] InvolutiveCategory.involutor_naturality
-attribute [reassoc (attr := simp), simp] InvolutiveCategory.f3
-attribute [reassoc (attr := simp), simp] InvolutiveCategory.n2
-attribute [reassoc (attr := simp), simp] InvolutiveCategory.a
+/- attribute [reassoc (attr := simp), simp] InvolutiveCategory.f3 -/
+/- attribute [reassoc (attr := simp), simp] InvolutiveCategory.n2 -/
+/- attribute [reassoc (attr := simp), simp] InvolutiveCategory.a -/
 
 
 #check MonoidalCategory
@@ -172,6 +192,9 @@ theorem involutor_conjugation {X X' : C} (f : X ⟶ X') :
     f⋆⋆ = (e_ _).hom ≫ f ≫ (e_ _).inv := by
   rw [involutor_inv_naturality, Iso.hom_inv_id_assoc]
 
+def star_tensorObj : (𝟙_ C)⋆ ≅ 𝟙_ C :=
+  (ρ_ _).symm ≪≫ whiskerLeftIso _ (e_ _).symm ≪≫ χ_ _ _ ≪≫ starIso (ρ_ _) ≪≫ e_ _
+
 /-
   f3 : ∀ P Q R : C,
       (α_ P⋆ Q⋆ R⋆).hom ≫ ((𝟙 P⋆) ⊗ₘ (χ_ Q R).hom) ≫ (χ_ P (R ⊗ Q)).hom ≫ (α_ R Q P).hom⋆ =
@@ -189,26 +212,25 @@ theorem involutor_conjugation {X X' : C} (f : X ⟶ X') :
 /-   sorry -/
 /- #synth IsIso ((e_ c).inv ⊗ₘ (e_ c).inv) -/
 
--- difficult b/c f3 isn't presented in normal form
-@[reassoc (attr := simp), simp]
-theorem f3_inv : ∀ P Q R : C,
-    (α_ R Q P).inv⋆ ≫ (χ_ P (R ⊗ Q)).inv ≫ (P⋆ ◁ (χ_ Q R).inv) ≫ (α_ P⋆ Q⋆ R⋆).inv =
-      (χ_ (Q ⊗ P) R).inv ≫ ((χ_ P Q).inv ▷ R⋆) := by
-  intros P Q R
-  exact eq_of_inv_eq_inv (by simp)
+/- @[reassoc (attr := simp), simp] -/
+/- theorem f3_inv : ∀ P Q R : C, -/
+/-     (α_ R Q P).inv⋆ ≫ (χ_ P (R ⊗ Q)).inv ≫ (P⋆ ◁ (χ_ Q R).inv) ≫ (α_ P⋆ Q⋆ R⋆).inv = -/
+/-       (χ_ (Q ⊗ P) R).inv ≫ ((χ_ P Q).inv ▷ R⋆) := by -/
+/-   intros P Q R -/
+/-   exact eq_of_inv_eq_inv (by simp) -/
 
-@[reassoc (attr := simp), simp]
-theorem n2_inv : ∀ P Q : C,
-      (e_ (P ⊗ Q)).inv ≫ (χ_ Q P).inv⋆ ≫ (χ_ P⋆ Q⋆).inv =
-        (e_ P).inv ⊗ₘ (e_ Q).inv := by
-  intros P Q
-  exact eq_of_inv_eq_inv (by simp)
+/- @[reassoc (attr := simp), simp] -/
+/- theorem n2_inv : ∀ P Q : C, -/
+/-       (e_ (P ⊗ Q)).inv ≫ (χ_ Q P).inv⋆ ≫ (χ_ P⋆ Q⋆).inv = -/
+/-         (e_ P).inv ⊗ₘ (e_ Q).inv := by -/
+/-   intros P Q -/
+/-   exact eq_of_inv_eq_inv (by simp) -/
 
-@[reassoc (attr := simp), simp]
-theorem a_inv : ∀ R : C,
-    (e_ R).inv⋆ = (e_ R⋆).inv := by
-  intros R
-  exact eq_of_inv_eq_inv (by simp)
+/- @[reassoc (attr := simp), simp] -/
+/- theorem a_inv : ∀ R : C, -/
+/-     (e_ R).inv⋆ = (e_ R⋆).inv := by -/
+/-   intros R -/
+/-   exact eq_of_inv_eq_inv (by simp) -/
 
 /-
   skewator_naturality : ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
@@ -247,6 +269,7 @@ def braid (X Y : C) : X ⊗ Y ≅ Y ⊗ X where
     (χ_ _ _).inv ≫
     ((ς_ _).hom ⊗ₘ (ς_ _).hom)
 
+-- TODO show braid has hexagon identity (follows from tℓ)
 scoped notation "σ_" => braid
 
 end TwistedCategory
