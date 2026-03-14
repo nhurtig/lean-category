@@ -414,5 +414,37 @@ theorem mk_inv {X Y : T C} (f : X ⟶t Y) : homMk f.inv = Groupoid.inv ⟦f⟧ :
 theorem mk_inv' {X Y : T C} (f : X ⟶t Y) : ⟦f.inv⟧ = Groupoid.inv (homMk f) := by
   exact mk_inv f
 
+section
+
+variable {C : Type u} {D : Type u'} (m : C → D)
+
+open MonoidalCategory InvolutiveCategory
+
+@[simp] lemma map_tensorUnit : map m (𝟙_ _) = 𝟙_ _ := rfl
+@[simp] lemma map_tensorObj (X Y : T C) : map m (X ⊗ Y) = map m X ⊗ map m Y := rfl
+@[simp] lemma map_starObj (X : T C) : map m X⋆ = (map m X)⋆ := rfl
+
+variable [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
+
+@[simp] lemma projectObj_tensorUnit : projectObj m (𝟙_ _)= 𝟙_ _ := rfl
+@[simp] lemma projectObj_tensorObj (X Y : T C) :
+    projectObj m (X ⊗ Y) = projectObj m X ⊗ projectObj m Y := rfl
+@[simp] lemma projectObj_starObj (X : T C) : projectObj m X⋆ = (projectObj m X)⋆ := rfl
+
+end
+
+section
+
+variable {C : Type u} {D : Type u'}
+
+@[simp]
+lemma projectObj_of_map (m : C → D) : ∀ (X : T C),
+    projectObj (fun c ↦ (of (m c))) X =
+      X.map m := by
+  intro X
+  induction X using recOn' <;> simp_all
+
+end
+
 end CategoryTheory.FreeTwistedCategory
 

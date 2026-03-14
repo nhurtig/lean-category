@@ -230,8 +230,6 @@ instance : TwistedCategory (TQ C) where
     apply _root_.Quotient.sound
     constructor
 
--- preparation for groupoid: simplifying lemmas
-
 @[simp]
 def homMk {X Y : TQ C} (f : X ⟶tq Y) : X ⟶ Y := ⟦f⟧
 
@@ -367,6 +365,48 @@ macro "simp_mk" : tactic =>
       | fail "Nothing to do!"
     )
   )
+
+
+section
+
+variable {C : Type u} [Quiver.{v} (T C)] {D : Type u'} (m : C → D)
+
+open MonoidalCategory InvolutiveCategory
+
+@[simp] lemma map_tensorUnit : map m (𝟙_ _) = unit := rfl
+@[simp] lemma map_tensorObj (X Y : TQ C) : map m (X ⊗ Y) = (map m X).tensor (map m Y) := rfl
+@[simp] lemma map_starObj (X : TQ C) : map m X⋆ = (map m X).star := rfl
+
+variable [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
+
+open MonoidalCategory InvolutiveCategory
+
+@[simp] lemma projectObj_tensorUnit : projectObj m (𝟙_ _)= 𝟙_ _ := rfl
+@[simp] lemma projectObj_tensorObj (X Y : TQ C) :
+    projectObj m (X ⊗ Y) = projectObj m X ⊗ projectObj m Y := rfl
+@[simp] lemma projectObj_starObj (X : TQ C) : projectObj m X⋆ = (projectObj m X)⋆ := rfl
+
+end
+
+section
+
+variable {C : Type u} {D : Type u'} [Quiver.{v'} (T D)]
+
+@[simp]
+lemma projectObj_of_map (m : C → D) : ∀ (X : TQ C),
+    projectObj (fun c ↦ (of (m c))) X =
+      X.map m := by
+  intro X
+  induction X using recOn' <;> simp_all
+
+@[simp]
+lemma projectObj_of_map' (m : C → D) : ∀ (X : T C),
+    X.projectObj (fun c ↦ (of (m c))) =
+      ⟨X.map m⟩ := by
+  intro X
+  induction X using FreeTwistedCategory.recOn' <;> simp_all <;> rfl
+
+end
 
 end CategoryTheory.FreeTwistedCategoryQuiver
 

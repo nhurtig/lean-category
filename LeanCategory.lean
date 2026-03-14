@@ -1,13 +1,10 @@
--- import LeanCategory.MonoidalWord
--- import LeanCategory.Morphisms
--- import LeanCategory.Relations
--- import LeanCategory.Instances
--- import LeanCategory.Inverse
--- import LeanCategory.Projection
--- import LeanCategory.CatMorphisms
--- import LeanCategory.CatRelations
--- import LeanCategory.Enrich
--- import LeanCategory.LayerGroupoid
--- import LeanCategory.FreeMonoidal
 import LeanCategory.Egger
--- import Mathlib
+import LeanCategory.FreeInvolutiveCategoryBase
+import LeanCategory.FreeTwistedCategoryQuiverBase
+import LeanCategory.FreeTwistedFunctor
+import LeanCategory.FreeTwistedCategoryBase
+import LeanCategory.FreeTwistedFunctorQuiver
+import LeanCategory.FreeTwistedCategoryQuiver
+import LeanCategory.FreeTwistedCategory
+import LeanCategory.FreeInvolutiveCategory
+

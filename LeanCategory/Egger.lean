@@ -1,4 +1,7 @@
 import Mathlib
+import LeanCategory.FreeInvolutiveCategoryBase
+import LeanCategory.FreeTwistedCategoryBase
+import LeanCategory.FreeTwistedCategoryQuiverBase
 
 open CategoryTheory
 
@@ -253,5 +256,52 @@ theorem tℓ_inv : ∀ P Q R : C,
   exact eq_of_inv_eq_inv (by simp)
 
 end TwistedCategory
+
+variable {C : Type u} {D : Type u'} [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
+namespace FreeInvolutiveCategory
+
+def projectObj (m : C → D) : I C → D
+  | of c => m c
+  | unit => 𝟙_ _
+  | tensor X Y => X.projectObj m ⊗ Y.projectObj m
+  | star X => (X.projectObj m)⋆
+
+@[simp] lemma projectObj_of (m : C → D) (c : C) : projectObj m (of c) = m c := rfl
+@[simp] lemma projectObj_unit (m : C → D) : projectObj m unit = 𝟙_ D := rfl
+@[simp] lemma projectObj_tensor (m : C → D) (X Y : I C) :
+    projectObj m (tensor X Y) = projectObj m X ⊗ projectObj m Y := rfl
+@[simp] lemma projectObj_star (m : C → D) (X : I C) :
+    projectObj m (star X) = (projectObj m X)⋆ := rfl
+
+end FreeInvolutiveCategory
+
+namespace FreeTwistedCategory
+
+def projectObj (m : C → D) (X : T C) : D := X.as.projectObj m
+
+@[simp] lemma projectObj_of (m : C → D) : projectObj m (of c) = m c := rfl
+@[simp] lemma projectObj_unit (m : C → D) : projectObj m (unit : T C) = 𝟙_ D := rfl
+@[simp] lemma projectObj_tensor (m : C → D) (X Y : T C) :
+    projectObj m (tensor X Y) = projectObj m X ⊗ projectObj m Y := rfl
+@[simp] lemma projectObj_star (m : C → D) (X : T C) :
+    projectObj m (star X) = (projectObj m X)⋆ := rfl
+@[simp] lemma projectObj_as (m : C → D) (X : T C) : X.as.projectObj m = projectObj m X := rfl
+
+end FreeTwistedCategory
+
+namespace FreeTwistedCategoryQuiver
+
+def projectObj (m : C → D) (X : TQ C) : D := X.as.projectObj m
+
+@[simp] lemma projectObj_of (m : C → D) : projectObj m (of c) = m c := rfl
+@[simp] lemma projectObj_unit (m : C → D) : projectObj m (unit : TQ C) = 𝟙_ D := rfl
+@[simp] lemma projectObj_tensor (m : C → D) (X Y : TQ C) :
+    projectObj m (tensor X Y) = projectObj m X ⊗ projectObj m Y := rfl
+@[simp] lemma projectObj_star (m : C → D) (X : TQ C) :
+    projectObj m (star X) = (projectObj m X)⋆ := rfl
+@[simp] lemma projectObj_as (m : C → D) (X : TQ C) : X.as.projectObj m = projectObj m X := rfl
+
+end FreeTwistedCategoryQuiver
+
 end CategoryTheory
 

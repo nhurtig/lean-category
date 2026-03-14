@@ -24,6 +24,14 @@ variable {C : Type u}
 
 scoped notation "I" => FreeInvolutiveCategory
 
+@[simp]
+def map (f : C → D) : I C → I D
+  | of X => of (f X)
+  | unit => unit
+  | tensor X Y => tensor (map f X) (map f Y)
+  | star X => star (map f X)
+
+@[simp]
 def sizeOf : I C → ℕ
   | of _ => 0
   | unit => 0

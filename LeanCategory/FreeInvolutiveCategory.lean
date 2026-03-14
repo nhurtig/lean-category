@@ -78,6 +78,25 @@ instance : InvolutiveCategory (FreeInvolutiveCategory C) where
   involutor_naturality := by intros; exact coherence
   coherence := by intros; exact coherence
 
+section
+
+variable {C : Type u} {D : Type u'} (m : C → D)
+
+open MonoidalCategory InvolutiveCategory
+
+@[simp] lemma map_tensorUnit : map m (𝟙_ _) = 𝟙_ _ := rfl
+@[simp] lemma map_tensorObj (X Y : I C) : map m (X ⊗ Y) = map m X ⊗ map m Y := rfl
+@[simp] lemma map_starObj (X : I C) : map m X⋆ = (map m X)⋆ := rfl
+
+variable [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
+
+@[simp] lemma projectObj_tensorUnit : projectObj m (𝟙_ _)= 𝟙_ _ := rfl
+@[simp] lemma projectObj_tensorObj (X Y : I C) :
+    projectObj m (X ⊗ Y) = projectObj m X ⊗ projectObj m Y := rfl
+@[simp] lemma projectObj_starObj (X : I C) : projectObj m X⋆ = (projectObj m X)⋆ := rfl
+
+end
+
 instance : Groupoid (FreeInvolutiveCategory C) where
   inv := Quotient.map Hom.inv (by intros; trivial)
   inv_comp := by intros; exact coherence

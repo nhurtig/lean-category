@@ -1,7 +1,9 @@
 import Mathlib
-open CategoryTheory
+import LeanCategory.FreeInvolutiveCategoryBase
+import LeanCategory.FreeTwistedCategoryBase
+import LeanCategory.FreeTwistedCategoryQuiverBase
 
-open Category MonoidalCategory
+open CategoryTheory Category MonoidalCategory
 
 namespace CategoryTheory
 
@@ -253,5 +255,30 @@ theorem tℓ_inv : ∀ P Q R : C,
   exact eq_of_inv_eq_inv (by simp)
 
 end TwistedCategory
+
+variable {C : Type u} {D : Type u'} [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
+
+namespace FreeInvolutiveCategory
+
+def project (m : C → D) : I C → D
+  | of c => m c
+  | unit => 𝟙_ _
+  | tensor X Y => X.project m ⊗ Y.project m
+  | star X => (X.project m)⋆
+
+end FreeInvolutiveCategory
+
+namespace FreeTwistedCategory
+
+def project (m : C → D) (X : T C) : D := X.as.project m
+
+end FreeTwistedCategory
+
+namespace FreeTwistedCategoryQuiver
+
+def project (m : C → D) (X : TQ C) : D := X.as.project m
+
+end FreeTwistedCategoryQuiver
+
 end CategoryTheory
 
