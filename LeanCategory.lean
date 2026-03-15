@@ -4,4 +4,5 @@ import LeanCategory.FreeInvolutive.InvolutiveComp
 import LeanCategory.FreeInvolutive.Functor
 import LeanCategory.FreeTwisted.Functor
 import LeanCategory.FreeTwistedQuiver.Functor
+import LeanCategory.NatDefinition.Layer
 
