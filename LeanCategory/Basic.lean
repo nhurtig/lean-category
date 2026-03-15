@@ -122,7 +122,7 @@ theorem inv_hom_star' {X Y : C} (f : X ⟶ Y) [IsIso f] :
   simp
 
 @[simps!]
-def starIso {X Y : C} (f : X ≅ Y) : X⋆≅ Y⋆ where
+def starIso {X Y : C} (f : X ≅ Y) : X⋆ ≅ Y⋆ where
   hom := f.hom⋆
   inv := f.inv⋆
 

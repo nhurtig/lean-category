@@ -127,8 +127,6 @@ def project : T C ⥤ D where
 
 variable {D : Type u'} (m : C → D)
 
-variable (M : {X Y : T C} → (X ⟶ Y) → ((X.map m) ⟶ (Y.map m)))
-
 def projectFree : T C ⥤ T D := project (fun c ↦ (of (m c)))
 
 open FreeTwistedCategoryQuiver

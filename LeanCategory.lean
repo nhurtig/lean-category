@@ -1,5 +1,7 @@
 import LeanCategory.Basic
-import LeanCategory.FreeInvolutive.Instance
+import LeanCategory.FreeInvolutive.CoherenceTactic
+import LeanCategory.FreeInvolutive.InvolutiveComp
+import LeanCategory.FreeInvolutive.Functor
 import LeanCategory.FreeTwisted.Functor
 import LeanCategory.FreeTwistedQuiver.Functor
 
