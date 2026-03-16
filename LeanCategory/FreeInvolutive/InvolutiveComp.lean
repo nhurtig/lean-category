@@ -144,14 +144,14 @@ instance assoc' (W X Y Z : C) [InvolutiveCoherence W (X ⊗ (Y ⊗ Z))] :
 -- TODO Nat believes these are complete, but isn't entirely sure
 
 @[simps]
-instance skew (W X Y : C) [InvolutiveCoherence (Y ⊗ X)⋆ W] :
-    InvolutiveCoherence (X⋆ ⊗ Y⋆) W :=
-  ⟨(χ_ X Y ) ≪≫ ⊗⋆𝟙⟩
+instance skew (W X Y : C) [InvolutiveCoherence (X⋆ ⊗ Y⋆) W] :
+    InvolutiveCoherence (Y ⊗ X)⋆ W :=
+  ⟨(χ_ X Y ).symm ≪≫ ⊗⋆𝟙⟩
 
 @[simps]
-instance skew' (W X Y : C) [InvolutiveCoherence W (Y ⊗ X)⋆] :
-    InvolutiveCoherence W (X⋆ ⊗ Y⋆) :=
-  ⟨⊗⋆𝟙 ≪≫ (χ_ X Y).symm⟩
+instance skew' (W X Y : C) [InvolutiveCoherence W (X⋆ ⊗ Y⋆)] :
+    InvolutiveCoherence W (Y ⊗ X)⋆ :=
+  ⟨⊗⋆𝟙 ≪≫ (χ_ X Y)⟩
 
 @[simps]
 instance involute (W X : C) [InvolutiveCoherence X W] :
@@ -163,10 +163,37 @@ instance involute' (W X : C) [InvolutiveCoherence W X] :
     InvolutiveCoherence W X⋆⋆ :=
   ⟨⊗⋆𝟙 ≪≫ (e_ X).symm⟩
 
+-- TODO these might be too powerful?
+
+@[simp]
+instance tensor_skew_left (W X Y Z : C) [InvolutiveCoherence ((X⋆ ⊗ Y⋆) ⊗ Z) W] :
+    InvolutiveCoherence ((Y ⊗ X)⋆ ⊗ Z) W :=
+  ⟨(whiskerRightIso (χ_ X Y ).symm Z) ≪≫ ⊗⋆𝟙⟩
+
+@[simp]
+instance tensor_skew_left' (W X Y Z : C) [InvolutiveCoherence W ((X⋆ ⊗ Y⋆) ⊗ Z)] :
+    InvolutiveCoherence W ((Y ⊗ X)⋆ ⊗ Z) :=
+  ⟨⊗⋆𝟙 ≪≫ (whiskerRightIso (χ_ X Y ) Z) ⟩
+
+/- @[simps] -/
+/- instance tensor_ignore_left (X Y Z : C) [InvolutiveCoherence Y Z] : -/
+/-     InvolutiveCoherence (X ⊗ Y) (X ⊗ Z) := -/
+/-   ⟨(whiskerLeftIso X ⊗⋆𝟙)⟩ -/
+
+/- @[simps] -/
+/- instance tensor_ignore_right (X Y Z : C) [InvolutiveCoherence X Y] : -/
+/-     InvolutiveCoherence (X ⊗ Z) (Y ⊗ Z) := -/
+/-   ⟨(whiskerRightIso ⊗⋆𝟙 Z)⟩ -/
+
 end InvolutiveCoherence
 
 @[simp] lemma involutiveComp_refl {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z) :
     f ⊗⋆≫ g = f ≫ g := by
+  simp [involutiveComp]
+
+@[simp] lemma involuteComp_assoc {W X Y Z : C} [InvolutiveCoherence X X']
+  (f : W ⟶ X) (g : X' ⟶ Y) (h : Y ⟶ Z) :
+    (f ⊗⋆≫ g) ≫ h = f ⊗⋆≫ (g ≫ h) := by
   simp [involutiveComp]
 
 end CategoryTheory

@@ -108,12 +108,13 @@ def exception' (msg : MessageData) : TacticM Unit := do
 
 #check CategoryTheory.FreeInvolutiveCategory.map
 #check CategoryTheory.FreeInvolutiveCategory.projectMap
+#check CategoryTheory.FreeMonoidalCategory.projectMap
 /-- Auxiliary definition for `involutive_coherence`. -/
 -- We could construct this expression directly without using `elabTerm`,
 -- but it would require preparing many implicit arguments by hand.
 def mkProjectMapExpr (e : Expr) : TermElabM Expr := do
   Term.elabTerm
-    (← ``(FreeInvolutiveCategory.projectMap _root_.id _ _ (LiftHom.lift $(← Term.exprToSyntax e))))
+    (← ``(FreeInvolutiveCategory.projectMap _root_.id (LiftHom.lift $(← Term.exprToSyntax e))))
     none
 
 #check MonoidalCoherence.iso
@@ -135,8 +136,8 @@ def involutive_coherence (g : MVarId) : TermElabM Unit := g.withContext do
   let g₁ ← g.change (← mkEq projectMap_lhs projectMap_rhs)
   let [g₂] ← g₁.applyConst ``congrArg
     | exception g "congrArg failed in coherence"
-  let [] ← g₂.applyConst ``Subsingleton.elim
-    | exception g "This shouldn't happen; Subsingleton.elim does not create goals."
+  /- let [] ← g₂.applyConst ``Subsingleton.elim -/
+  /-   | exception g "This shouldn't happen; Subsingleton.elim does not create goals." -/
 
 /-- Coherence tactic for monoidal categories.
 Use `pure_coherence` instead, which is a frontend to this one. -/
@@ -177,6 +178,8 @@ lemma assoc_liftHom {W X Y Z : C} [LiftObj W] [LiftObj X] [LiftObj Y]
   (Category.assoc _ _ _).symm
 
 #check monoidalComp
+#check MonoidalCoherence.iso
+#check InvolutiveCoherence.iso
 /--
 Internal tactic used in `coherence`.
 
@@ -190,7 +193,7 @@ elab (name := liftable_prefixes) "liftable_prefixes" : tactic => do
   evalTactic (← `(tactic|
     (simp -failIfUnchanged only
       [involutiveComp, monoidalComp, bicategoricalComp, Category.assoc, BicategoricalCoherence.iso,
-      MonoidalCoherence.iso, InvolutiveCoherence.Iso, Iso.trans, Iso.symm, Iso.refl,
+      MonoidalCoherence.iso, InvolutiveCoherence.iso, Iso.trans, Iso.symm, Iso.refl,
       MonoidalCategory.whiskerRightIso, MonoidalCategory.whiskerLeftIso, InvolutiveCategory.starIso,
       Bicategory.whiskerRightIso, Bicategory.whiskerLeftIso]) <;>
     (apply (cancel_epi (𝟙 _)).1 <;> try infer_instance) <;>
