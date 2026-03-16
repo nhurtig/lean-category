@@ -76,7 +76,7 @@ namespace InvolutiveCategory
 variable {C : Type u} [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C]
 
 @[reassoc]
-theorem skewator_inv_naturality :
+theorem skewator_inv_naturality : 
     ∀ {X₁ X₂ Y₁ Y₂ : C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂),
       (g ⊗ₘ f)⋆ ≫ (χ_ Y₁ Y₂).inv = (χ_ X₁ X₂).inv ≫ (f⋆ ⊗ₘ g⋆) := by
   intros _ _ _ _ f g
@@ -152,6 +152,16 @@ theorem starHom_whiskerLeft {X X' Y : C} (f : X ⟶ X') :
 theorem starHom_whiskerRight {X X' Y : C} (f : X ⟶ X') :
     (f ▷ Y)⋆ = (χ_ _ _).inv ≫ ((InvolutiveCategoryStruct.starObj Y) ◁ f⋆) ≫ (χ_ _ _).hom := by
   rw [← tensorHom_id, starHom_tensorHom]
+  simp
+
+theorem whiskerRight_star {W X Y Z : C} (f : W ⟶ Z) :
+    f ▷ (X ⊗ Y)⋆ = _ ◁ (χ_ _ _).inv ≫ f ▷ (Y⋆ ⊗ X⋆) ≫ _ ◁ (χ_ _ _).hom := by
+  rw [← whisker_exchange]
+  simp
+
+theorem whiskerLeft_star {W X Y Z : C} (f : W ⟶ Z) :
+    (X ⊗ Y)⋆ ◁ f = (χ_ _ _).inv ▷ _ ≫ _ ◁ f ≫ (χ_ _ _).hom ▷ _ := by
+  rw [whisker_exchange]
   simp
 
 @[reassoc (attr := simp), simp]
@@ -268,6 +278,22 @@ theorem tℓ_inv : ∀ P Q R : C,
   intros P Q R
   exact eq_of_inv_eq_inv (by simp)
 
+theorem twist_triple {P Q R : C} : (ς_ (R ⊗ Q ⊗ P)).hom =
+    (χ_ (Q ⊗ P) R).inv ≫
+      (χ_ P Q).inv ▷ R⋆ ≫
+        (((ς_ P⋆).inv ⊗ₘ (ς_ Q⋆).inv) ⊗ₘ (ς_ R⋆).inv) ≫ 
+          (χ_ P⋆ Q⋆).hom ▷ R⋆⋆ ≫ (ς_ (Q⋆ ⊗ P⋆)).hom ▷ R⋆⋆ ≫ (α_ Q⋆ P⋆ R⋆⋆).hom ≫
+                 Q⋆ ◁ (χ_ P R⋆).hom ≫ Q⋆ ◁ (ς_ (R⋆ ⊗ P)).hom ≫ (α_ Q⋆ R⋆ P).inv ≫
+                 (χ_ Q R).hom ▷ P ≫ (ς_ (R ⊗ Q)).hom ▷ P ≫ (α_ R Q P).hom := by
+  simp
+
+theorem twist_triple_inv {P Q R : C} : (ς_ (R ⊗ Q ⊗ P)).inv =
+    (α_ R Q P).inv ≫ (ς_ (R ⊗ Q)).inv ▷ P ≫ (χ_ Q R).inv ▷ P ≫ (α_ Q⋆ R⋆ P).hom ≫
+       Q⋆ ◁ (ς_ (R⋆ ⊗ P)).inv ≫ Q⋆ ◁ (χ_ P R⋆).inv ≫ (α_ Q⋆ P⋆ R⋆⋆).inv ≫
+       (ς_ (Q⋆ ⊗ P⋆)).inv ▷ R⋆⋆ ≫ (χ_ P⋆ Q⋆).inv ▷ R⋆⋆ ≫
+       (((ς_ P⋆).hom ⊗ₘ (ς_ Q⋆).hom) ⊗ₘ (ς_ R⋆).hom) ≫ ((χ_ P Q).hom ▷ R⋆) ≫
+        (χ_ (Q ⊗ P) R).hom := by
+  simp
 
 @[simp, reassoc (attr := simp)]
 theorem twist_star_hom : ∀ X : C, (ς_ X).hom⋆ = (ς_ X⋆).hom := by

@@ -607,5 +607,167 @@ instance : InvolutiveCategory (N C) where
     apply _root_.Quotient.sound
     constructor <;> assumption
 
+open TwistedCategory
+
+attribute [-simp] tℓ tℓ_assoc tℓ_inv tℓ_inv_assoc
+attribute [simp] whiskerLeft_star whiskerRight_star
+
+@[simp]
+lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
+    mkBraid (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ (ς_ (R ⊗ (X^⋆s) ⊗ L)).hom ⊗⋆≫ 𝟙 _) ≫
+      mkLayer R s x L ≫
+        mkBraid (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ (ς_ (R ⊗ (Y^⋆s) ⊗ L)).inv ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      · apply Layer.Hom.comp Layer.Hom.twist_hom
+        · apply Layer.Hom.comp (Layer.Hom.freeLeft <| (ς_ _).hom ≫ (λ_ _).inv)
+          · apply Layer.Hom.comp <| Layer.Hom.strand_box_hom _ _ _ _ _ _
+            · apply Layer.Hom.comp <| Layer.Hom.freeRight <| (σ_ _ _).hom ≫ ((ς_ _).hom ▷ _)
+              · apply Layer.Hom.comp <| Layer.Hom.box_strand_hom _ _ _ _ _ _
+                exact Layer.Hom.freeLeft (C := C) <| (λ_ _).hom
+  simp [involutiveComp]
+  apply congrArg₂
+  · apply congrArg
+    rw [twist_triple]
+    unfold braid
+    simp [MonoidalCategory.tensorHom_def, repeat_star_succ]
+    repeat1 rw [← comp_whiskerRight_assoc, ← comp_whiskerRight]; simp
+    repeat1 rw [← whiskerLeft_comp_assoc, ← comp_whiskerRight_assoc, ← comp_whiskerRight]; simp
+    rw [← MonoidalCategory.associator_naturality_middle_assoc]
+    repeat1 rw [← comp_whiskerRight_assoc]
+    repeat1 rw [Category.assoc]
+    rw [← twist_naturality]
+    simp
+    handle_braid_step
+    (repeat1 rw [← whiskerLeft_comp_assoc]); rw [← MonoidalCategory.whisker_exchange]; simp
+    rw [← MonoidalCategory.associator_naturality_right_assoc]
+    rw [← MonoidalCategory.whisker_exchange_assoc]
+    simp
+    handle_braid_step
+    rw [← MonoidalCategory.associator_inv_naturality_left_assoc]
+    rw [MonoidalCategory.whisker_exchange_assoc]
+    rw [MonoidalCategory.whisker_exchange_assoc]
+    rw [MonoidalCategory.whisker_exchange_assoc]
+    rw [← MonoidalCategory.associator_naturality_left_assoc]
+    repeat1 rw [← MonoidalCategory.comp_whiskerRight_assoc]
+    repeat1 rw [Category.assoc]
+    rw [← twist_naturality]
+    simp
+    handle_braid_step
+    handle_braid_step
+    handle_braid_step
+    handle_braid_step
+    handle_braid_step
+    handle_braid_step
+    handle_braid_step
+    rw [← whiskerLeft_comp_assoc]; rw [← MonoidalCategory.comp_whiskerRight]; simp
+  my_coherence_step
+  apply congrArg
+  rw [twist_triple_inv]
+  unfold braid
+  simp [MonoidalCategory.tensorHom_def, repeat_star_succ]
+  rw [← whiskerLeft_comp_assoc]; rw [← comp_whiskerRight]; simp
+  handle_braid_step
+  handle_braid_step
+  rw [MonoidalCategory.associator_naturality_left_assoc]
+  rw [← MonoidalCategory.whisker_exchange_assoc]
+  simp
+  handle_braid_step
+  handle_braid_step
+  handle_braid_step
+  rw [← MonoidalCategory.associator_naturality_middle_assoc]
+  rw [← comp_whiskerRight_assoc]
+  rw [← MonoidalCategory.whisker_exchange]
+  simp
+  repeat1 rw [← comp_whiskerRight_assoc]
+  repeat1 rw [Category.assoc]
+  repeat1 rw [← twist_star_hom]
+  repeat1 rw [← tensorHom_id]
+  repeat1 rw [← InvolutiveCategory.starHom_id]
+  rw [← skewator_inv_naturality]
+  repeat1 rw [MonoidalCategory.tensorHom_def]
+  simp only [InvolutiveCategory.starHom_id, MonoidalCategory.whiskerLeft_id, Category.comp_id,
+    twist_star_hom, comp_whiskerRight, Category.assoc, MonoidalCategory.id_whiskerRight,
+    Category.id_comp]
+  repeat1 rw [← comp_whiskerRight_assoc]
+  rw [← twist_inv_naturality]
+  simp
+  handle_braid_step
+  handle_braid_step
+  repeat1 rw [← MonoidalCategory.associator_naturality_middle_assoc]
+  repeat1 rw [← comp_whiskerRight_assoc]
+  repeat1 rw [Category.assoc]
+  repeat1 rw [← id_tensorHom]
+  repeat1 rw [← twist_star_hom]
+  repeat1 rw [← InvolutiveCategory.starHom_id]
+  rw [← skewator_inv_naturality]
+  simp only [twist_star_hom, id_tensorHom, comp_whiskerRight, whisker_assoc,
+    InvolutiveCategory.starHom_id, Iso.hom_inv_id_assoc, Category.assoc, tensorHom_id]
+  repeat1 rw [← comp_whiskerRight_assoc]
+  rw [← twist_inv_naturality]
+  simp
+  handle_braid_step
+  rw [← MonoidalCategory.associator_naturality_right]
+  rw [← MonoidalCategory.whisker_exchange_assoc]
+  rw [← MonoidalCategory.whisker_exchange_assoc]
+  simp
+  handle_braid_step
+  handle_braid_step
+  handle_braid_step
+  handle_braid_step
+  rw [← associator_inv_naturality_left_assoc]
+  rw [MonoidalCategory.whisker_exchange_assoc]
+  simp
+  repeat rw [← comp_whiskerRight_assoc]; rw [← comp_whiskerRight]; simp
+  rw [← MonoidalCategory.whiskerLeft_comp]; rw [← MonoidalCategory.comp_whiskerRight]; simp
+
+attribute [-simp] whiskerLeft_star whiskerRight_star
+attribute [simp] tℓ tℓ_assoc tℓ_inv tℓ_inv_assoc
+
+@[reassoc]
+lemma twist_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
+    starHom f ≫ mkBraid (ς_ Y.as).hom = mkBraid (ς_ X.as).hom ≫ f := by
+  intros X Y f
+  induction f using Quotient.inductionOn
+  rename_i f
+  unfold starHom
+  simp
+  induction f <;> simp_all
+  case comp f g ih₁ ih₂ =>
+    rw [← Category.assoc]
+    rw [ih₁]
+    simp
+  case layer l =>
+    rcases l with ⟨L, X', Y', s, x, R⟩
+    simp_all
+    my_coherence_step
+    symm
+    apply Eq.trans (Category.comp_id _).symm
+    my_coherence_step
+    my_coherence_step
+  case braid =>
+    rw [TwistedCategory.twist_naturality]
+
+instance : TwistedCategory (N C) where
+  twist X := {
+    hom := mkBraid <| (ς_ X.as).hom
+    inv := mkBraid <| (ς_ X.as).inv
+  }
+  twist_naturality := twist_naturality
+  tℓ := by
+    intros P Q R
+    simp
+    unfold InvolutiveCategoryStruct.skewator
+    unfold instInvolutiveCategory
+    simp
+    unfold MonoidalCategoryStruct.whiskerRight
+    unfold instMonoidalCategory
+    simp
+    apply congrArg
+    have := tℓ (C := T C) P.as Q.as R.as
+    simp at this
+    exact this
+
 end CategoryTheory.NatDefinition
 
