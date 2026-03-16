@@ -67,20 +67,7 @@ macro "pure_iso" : tactic =>
   )
 
 open MonoidalCategory
-/- @[simp, grind] -/
-/- def Hom.whisker (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → (Z : N C) → -/
-/-     ((X * (Y₁ * Z)) ⟶n (X * (Y₂ * Z))) -/
-/-   | .layer ⟨L, D, C, s, x, R⟩, Z => -/
-/-     (Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp <| -/
-/-     (Hom.layer ⟨X * L, D, C, s, x, R * Z⟩).comp -/
-/-     (.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _) -/
-/-   | .braid b, Z => Hom.braid (↑X ◁ b ▷ ↑Z) -/
-/-   -- | .id Y, Z => 𝟙 (X * Y * Z) -/
-/-   | .comp f g, Z => (whisker X f Z).comp (whisker X g Z) -/
 
-/- #synth Quiver N -/
-
-/- @[simp, grind] -/
 @[simp]
 def Hom.whiskerLeft (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((X.tensor Y₁) ⟶n (X.tensor Y₂))
   | .layer ⟨L, D, C, s, x, R⟩ =>
@@ -130,61 +117,19 @@ inductive HomEquiv : ∀ {X Y : (N C)}, (X ⟶n Y) → (X ⟶n Y) → Prop where
   | swap : HomEquiv
       ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, M ⊗ (X₂^⋆s₂) ⊗ R⟩).comp
         ((Hom.braid (by pure_iso)).comp
-        /- ((Hom.braid (by simp; exact 𝟙 (L ⊗ (Y₁^⋆s₁) ⊗ M ⊗ (X₂^⋆s₂) ⊗ R) ⊗⋆≫ 𝟙 (((L ⊗ Y₁^⋆s₁) ⊗ M) ⊗ (X₂^⋆s₂) ⊗ R))).comp -/
         ((Hom.layer ⟨(L ⊗ (Y₁^⋆s₁)) ⊗ M, X₂, Y₂, s₂, x₂, R⟩))))
-      /- ((Hom.braid <| by simp; exact 𝟙 (L ⊗ (X₁^⋆s₁) ⊗ M ⊗ (X₂^⋆s₂) ⊗ R) ⊗⋆≫ 𝟙 (((L ⊗ X₁^⋆s₁) ⊗ M) ⊗ (X₂^⋆s₂) ⊗ R)).comp -/
       ((Hom.braid <| by pure_iso).comp
         ((Hom.layer ⟨(L ⊗ (X₁^⋆s₁)) ⊗ M, X₂, Y₂, s₂, x₂, R⟩).comp
           ((Hom.braid <| by pure_iso).comp
             ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, M ⊗ (Y₂^⋆s₂) ⊗ R⟩).comp
               (Hom.braid <| by pure_iso)))))
   | layer (f : l₁ ⟶l l₂) : HomEquiv
-      /- ((Hom.layer l₁).comp (Hom.braid <| f.φ .Top)) -/
-      /- ((Hom.braid <| f.φ .Bottom).comp (Hom.layer l₂)) -/
       (Hom.layer l₁)
       ((Hom.braid <| f.φ .Bottom).comp <|
         (Hom.layer l₂).comp <|
         (Hom.braid <| Groupoid.inv <| f.φ .Top))
   | symm (f g) : HomEquiv f g → HomEquiv g f
   | trans {f g h : X ⟶n Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
-
-/- def HomEquiv.swap_nice {L : N C} {x : L ⊗ Nat.repeat FreeTwistedCategory.star s₁ Y₁ ⊗ (M ⊗ Nat.repeat FreeTwistedCategory.star s₂ X₂) ⊗ R ⟶T -/
-/-   ((L ⊗ Nat.repeat FreeTwistedCategory.star s₁ Y₁) ⊗ M) ⊗ Nat.repeat FreeTwistedCategory.star s₂ X₂ ⊗ R} (hx : x = (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) : HomEquiv -/
-/-       ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star X₂)).tensor R⟩).comp -/
-/-         ((Hom.braid x).comp -/
-/-         ((Hom.layer ⟨(L.tensor (s₁.repeat .star Y₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩)))) -/
-/-       ((Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp -/
-/-         ((Hom.layer ⟨(L.tensor (s₁.repeat .star X₁)).tensor M, X₂, Y₂, s₂, x₂, R⟩).comp -/
-/-         ((Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp -/
-/-         ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, (M.tensor (s₂.repeat .star Y₂)).tensor R⟩).comp -/
-/-         (Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _))))) := by -/
-/-   rw [hx] -/
-/-   exact HomEquiv.swap -/
-
-
-/- instance {X Y : N C} : HasEquiv (Hom X Y) where -/
-/-   Equiv := HomEquiv -/
-
-/- instance {X Y : N C} : HasEquiv (X ⟶n Y) where -/
-/-   Equiv := HomEquiv -/
-
-/- attribute [grind →] HomEquiv.comp -/
-
-/- @[grind =_] -/
-/- lemma HomEquiv_def {X Y : N C} {f g : X ⟶n Y} : HomEquiv f g ↔ f ≈ g := by -/
-/-   constructor -/
-/-   all_goals intros h -/
-/-   all_goals exact h -/
-
-/- @[grind =_] -/
-/- lemma HomEquiv_def' {X Y : N C} {f g : Hom X Y} : HomEquiv f g ↔ f ≈ g := by -/
-/-   constructor -/
-/-   all_goals intros h -/
-/-   all_goals exact h -/
-
-/- lemma HomEquiv.braid {X Y : N C} {b b' : X ⟶T Y} : -/
-/-     b = b' → (Hom.braid b) ≈ (Hom.braid b') := by -/
-/-   grind -/
 
 instance mySetoidHom (X Y : N C) : Setoid (X ⟶n Y) :=
 ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
@@ -216,12 +161,10 @@ theorem mk_comp {X Y Z : N C} (f : X ⟶n Y) (g : Y ⟶n Z) :
   rfl
 
 open FreeTwistedCategory
-/- def mkLayer (L : N C) {X Y : N C} (s : ℕ) (x : X.as ⟶ Y.as) (R : N C) : -/
-/-     L.tensor ((X^⋆s).tensor R) ⟶ L.tensor ((Y^⋆s).tensor R) := ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧ -/
-/- def mkLayer (L : T C) {X Y : T C} (s : ℕ) (x : X ⟶ Y) (R : T C) : -/
-/-     ⟨L.as ⊗ (X^⋆s).as ⊗ R.as⟩ ⟶ L.tensor ((Y^⋆s).tensor R) := ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧ -/
-def mkLayer (L : FreeTwistedCategory C) {X Y : T C} (s : ℕ) (x : X ⟶ Y) (R : FreeTwistedCategory C) :
-    (mk <| L ⊗ (X^⋆s) ⊗ R ) ⟶ ⟨L ⊗ (Y^⋆s) ⊗ R⟩ := ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧
+
+def mkLayer (L : FreeTwistedCategory C) {X Y : T C} (s : ℕ) (x : X ⟶ Y)
+    (R : FreeTwistedCategory C) : (mk <| L ⊗ (X^⋆s) ⊗ R ) ⟶ ⟨L ⊗ (Y^⋆s) ⊗ R⟩ :=
+  ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧
 
 @[simp]
 theorem mk_layer {L : T C} {x : X ⟶ Y} : ⟦.layer ⟨L, X, Y, s, x, R⟩⟧ = mkLayer L s x R :=
@@ -255,8 +198,6 @@ theorem unmk_braid_comp_assoc {W X Y Z : N C} (f : W.as ⟶ X.as) (g : X.as ⟶ 
   simp
 
 lemma twist_inv_conjugation {L : T C} :
-    /- ⟦.layer ⟨L, _, _, s, x, R⟩⟧ = mkBraid (L.as ◁ (ς_ _).inv ▷ R) ≫ -/
-    /-   ⟦.layer ⟨L, _, _, s + 1, x, R⟩⟧ ≫ mkBraid (L.as ◁ (ς_ _).hom ▷ R.as) := by -/
     mkLayer L s x R = mkBraid (L ◁ (ς_ _).inv ▷ R) ≫
       mkLayer L (s + 1) x R ≫ mkBraid (L ◁ (ς_ _).hom ▷ R) := by
   apply Eq.trans
@@ -268,8 +209,6 @@ lemma twist_inv_conjugation {L : T C} :
 lemma twist_hom_conjugation_forced {L : T C} {x : X ⟶ Y} :
     mkLayer L s x R = mkBraid (L ◁ ((e_ _).inv ≫ (ς_ _).hom) ▷ R) ≫
       mkLayer L (s + 1) x R ≫ mkBraid (L ◁ ((ς_ _).inv ≫ (e_ _).hom) ▷ R) := by
-    /- ⟦.layer ⟨L, _, _, s + 1, x, R⟩⟧ = mkBraid (L.as ◁ (ς_ _).hom ▷ R.as) ≫ -/
-    /-   ⟦.layer ⟨L, _, _, s, x, R⟩⟧ ≫ mkBraid (L.as ◁ (ς_ _).inv ▷ R.as) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -280,8 +219,6 @@ lemma twist_hom_conjugation_forced {L : T C} {x : X ⟶ Y} :
 lemma twist_hom_conjugation {L : T C} :
     mkLayer L (s + 1) x R = mkBraid (L ◁ (ς_ _).hom ▷ R) ≫
       mkLayer L s x R ≫ mkBraid (L ◁ (ς_ _).inv ▷ R) := by
-    /- ⟦.layer ⟨L, _, _, s + 1, x, R⟩⟧ = mkBraid (L.as ◁ (ς_ _).hom ▷ R.as) ≫ -/
-    /-   ⟦.layer ⟨L, _, _, s, x, R⟩⟧ ≫ mkBraid (L.as ◁ (ς_ _).inv ▷ R.as) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -293,10 +230,6 @@ lemma strand_box_hom_conjugation {L : T C} {x : X ⟶ Y} :
       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ A (X^⋆s)).hom ▷ R ⊗⋆≫ 𝟙 _)) ≫
         mkLayer L s x (A ⊗ R) ≫
           mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ A (Y^⋆s)).inv ▷ R ⊗⋆≫ 𝟙 _)) := by
-    /- ⟦.layer ⟨L.tensor A, X, Y, s, x, R⟩⟧ =  -/
-    /-   mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L.as ◁ (σ_ A.as (X^⋆s).as).hom ▷ R.as ⊗⋆≫ 𝟙 _)) ≫ -/
-    /-     ⟦.layer ⟨L, _, _, s, x, A.tensor R⟩⟧ ≫ -/
-    /-       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L.as ◁ (σ_ A.as (Y^⋆s).as).inv ▷ R.as ⊗⋆≫ 𝟙 _)) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -307,10 +240,6 @@ lemma strand_box_inv_conjugation {L : T C} {x : X ⟶ Y} :
     mkLayer L s x (A ⊗ R) = mkBraid (𝟙 _ ⊗⋆≫ L ◁ (σ_ A (X^⋆s)).inv ▷ R ⊗⋆≫ 𝟙 _) ≫
       mkLayer (L ⊗ A) s x R ≫
         mkBraid (𝟙 _ ⊗⋆≫ L ◁ (σ_ A (Y^⋆s)).hom ▷ R ⊗⋆≫ 𝟙 _) := by
-    /- ⟦.layer ⟨L, X, Y, s, x, A.tensor R⟩⟧ =  -/
-    /-   mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L.as ◁ (σ_ A.as (X^⋆s).as).inv ▷ R.as ⊗⋆≫ 𝟙 _)) ≫ -/
-        /- ⟦.layer ⟨L.tensor A, _, _, s, x, R⟩⟧ ≫ -/
-        /-   mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L.as ◁ (σ_ A.as (Y^⋆s).as).hom ▷ R.as ⊗⋆≫ 𝟙 _)) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -321,10 +250,6 @@ lemma box_strand_hom_conjugation {L : T C} {x : X ⟶ Y} :
     mkLayer L s x (A ⊗ R) = mkBraid (𝟙 _ ⊗⋆≫ L ◁ (σ_ (X^⋆s) A).hom ▷ R ⊗⋆≫ 𝟙 _) ≫
       mkLayer (L ⊗ A) s x R ≫
         mkBraid (𝟙 _ ⊗⋆≫ L ◁ (σ_ (Y^⋆s) A).inv ▷ R ⊗⋆≫ 𝟙 _) := by
-    /- ⟦.layer ⟨L, X, Y, s, x, A.tensor R⟩⟧ =  -/
-    /-   mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L.as ◁ (σ_ (X^⋆s).as A.as).hom ▷ R.as ⊗⋆≫ 𝟙 _)) ≫ -/
-    /-     ⟦.layer ⟨L.tensor A, _, _, s, x, R⟩⟧ ≫ -/
-    /-       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L.as ◁ (σ_ (Y^⋆s).as A.as).inv ▷ R.as ⊗⋆≫ 𝟙 _)) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -332,10 +257,6 @@ lemma box_strand_hom_conjugation {L : T C} {x : X ⟶ Y} :
   simp [involutiveComp]
 
 lemma box_strand_inv_conjugation {L : T C} {x : X ⟶ Y} :
-    /- ⟦.layer ⟨L ⊗ A, X, Y, s, x, R⟩⟧ =  -/
-    /-   mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ (X^⋆s) A).inv ▷ R ⊗⋆≫ 𝟙 _)) ≫ -/
-    /-     ⟦.layer ⟨L, _, _, s, x, A ⊗ R⟩⟧ ≫ -/
-    /-       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ (Y^⋆s) A).hom ▷ R ⊗⋆≫ 𝟙 _)) := by -/
     mkLayer (L ⊗ A) s x R =
       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ (X^⋆s) A).inv ▷ R ⊗⋆≫ 𝟙 _)) ≫
         mkLayer L s x (A ⊗ R) ≫
@@ -348,18 +269,10 @@ lemma box_strand_inv_conjugation {L : T C} {x : X ⟶ Y} :
 
 @[simp]
 lemma associator_conjugation_left {L₁ L₂ : T C} :
-    /- ⟦.layer ⟨L₁.tensor (L₂.tensor L₃), _, _, s, x, R⟩⟧ =  -/
-    /-   mkBraid ((α_ _ _ _).inv ▷ _) ≫ -/
-    /-     ⟦.layer ⟨(L₁.tensor L₂).tensor L₃, _, _, s, x, R⟩⟧ ≫ -/
-    /-       mkBraid ((α_ _ _ _).hom ▷ _) := by -/
       mkLayer (L₁ ⊗ (L₂ ⊗ L₃)) s x R =
         mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
           mkLayer ((L₁ ⊗ L₂) ⊗ L₃) s x R ≫
             mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
-    /- ⟦.layer ⟨L₁.tensor (L₂.tensor L₃), _, _, s, x, R⟩⟧ =  -/
-      /- mkBraid ((α_ _ _ _).inv ▷ _) ≫ -/
-      /-   ⟦.layer ⟨(L₁.tensor L₂).tensor L₃, _, _, s, x, R⟩⟧ ≫ -/
-      /-     mkBraid ((α_ _ _ _).hom ▷ _) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -373,10 +286,6 @@ lemma associator_conjugation_right {R₁ L : T C} :
       mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
         mkLayer L s x (R₁ ⊗ (R₂ ⊗ R₃)) ≫
           mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
-    /- ⟦.layer ⟨L, _, _, s, x, ((R₁.tensor R₂).tensor R₃)⟩⟧ = -/
-    /-   mkBraid (_ ◁ _ ◁ (α_ _ _ _).hom) ≫ -/
-    /-     ⟦.layer ⟨L, _, _, s, x, (R₁.tensor (R₂.tensor R₃))⟩⟧ ≫ -/
-    /-       mkBraid (_ ◁ _ ◁ (α_ _ _ _).inv) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -385,11 +294,33 @@ lemma associator_conjugation_right {R₁ L : T C} :
   simp [involutiveComp]
 
 @[simp]
+lemma skewator_conjugation_left {L₁ L₂ : T C} :
+      mkLayer (L₁ ⊗ L₂)⋆ s x R =
+        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
+          mkLayer (L₂⋆ ⊗ L₁⋆) s x R ≫
+            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      apply Layer.Hom.freeLeft
+      exact (χ_ _ _).inv
+  simp [involutiveComp]
+
+@[simp]
+lemma skewator_conjugation_right {L : T C} :
+      mkLayer L s x (R₁ ⊗ R₂)⋆ =
+        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
+          mkLayer L s x (R₂⋆ ⊗ R₁⋆) ≫
+            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      apply Layer.Hom.freeRight
+      exact (χ_ _ _).inv
+  simp [involutiveComp]
+
+@[simp]
 lemma involutor_conjugation {L : T C} :
-    /- ⟦.layer ⟨L, _, _, s + 2, x, R⟩⟧ = -/
-    /-   mkBraid (_ ◁ (e_ _).hom ▷ _) ≫ -/
-    /-     ⟦.layer ⟨L, _, _, s, x, R⟩⟧ ≫ -/
-    /-       mkBraid (_ ◁ (e_ _).inv ▷ _) := by -/
     mkLayer L (s + 2) x  R =
       mkBraid (_ ◁ (e_ _).hom ▷ _) ≫
         mkLayer L s x R ≫
@@ -401,10 +332,6 @@ lemma involutor_conjugation {L : T C} :
   simp
 
 lemma braid_conjugation_left {L₁ L₂ : T C} (b : L₁ ⟶ L₂) :
-    /- ⟦.layer ⟨L₁, _, _, s, x, R⟩⟧ = -/
-    /-   mkBraid (b ▷ (_ ⊗ _)) ≫ -/
-    /-     ⟦.layer ⟨L₂, _, _, s, x, R⟩⟧ ≫ -/
-    /-       mkBraid (inv b ▷ (_ ⊗ _)) := by -/
     mkLayer L₁ s x R =
       mkBraid (b ▷ (_ ⊗ _)) ≫
         mkLayer L₂ s x R ≫
@@ -421,10 +348,6 @@ lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶ R₂) :
       mkBraid (_ ◁ _ ◁ b) ≫
         mkLayer L s x R₂ ≫
           mkBraid (_ ◁ _ ◁ inv b) := by
-    /- ⟦.layer ⟨L, _, _, s, x, R₁⟩⟧ = -/
-    /-   mkBraid (_ ◁ _ ◁ b) ≫ -/
-    /-     ⟦.layer ⟨L, _, _, s, x, R₂⟩⟧ ≫ -/
-    /-       mkBraid (_ ◁ _ ◁ inv b) := by -/
   apply Eq.trans
   · apply _root_.Quotient.sound
     · apply HomEquiv.layer
@@ -454,15 +377,16 @@ lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶ X.as} {f : X ⟶ Y} {b₂ : Y.
   simp at h
   exact h
 
-def HomEquiv.swap_nice' {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _} (hx : x = (by pure_iso)) :
-    (mkLayer L s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R)) ≫
-      (mkBraid x) ≫
-        (mkLayer ((L ⊗ (Y₁^⋆s₁)) ⊗ M) s₂ x₂ R) =
-    (mkBraid (by pure_iso)) ≫
-      (mkLayer ((L ⊗ (X₁^⋆s₁)) ⊗ M) s₂ x₂ R) ≫
-        (mkBraid (by pure_iso)) ≫
-          (mkLayer L s₁ x₁ (M ⊗ (Y₂^⋆s₂) ⊗ R)) ≫
-            (mkBraid (by pure_iso)) := by
+def HomEquiv.swap_coherent {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _}
+    (hx : x = (by pure_iso)) :
+      (mkLayer L s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R)) ≫
+        (mkBraid x) ≫
+          (mkLayer ((L ⊗ (Y₁^⋆s₁)) ⊗ M) s₂ x₂ R) =
+      (mkBraid (by pure_iso)) ≫
+        (mkLayer ((L ⊗ (X₁^⋆s₁)) ⊗ M) s₂ x₂ R) ≫
+          (mkBraid (by pure_iso)) ≫
+            (mkLayer L s₁ x₁ (M ⊗ (Y₂^⋆s₂) ⊗ R)) ≫
+              (mkBraid (by pure_iso)) := by
   rw [hx]
   clear x hx
   simp_all
@@ -472,46 +396,33 @@ def HomEquiv.swap_nice' {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} 
   simp at hrw
   rw [hrw]
 
-def HomEquiv.swap_nice''' {L : N C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _} (hx : x = (by simp; pure_iso)) :
-    (mkLayer L s₁ x₁ (M ⊗ (s₂.repeat .star X₂) ⊗ R)) ≫
-      (mkBraid x) ≫
-      (mkLayer ((L ⊗ (s₁.repeat .star Y₁)) ⊗ M) s₂ x₂ R) =
-    (mkBraid (by simp; pure_iso)) ≫
-    (mkLayer ((L ⊗ (s₁.repeat .star X₁)) ⊗ M) s₂ x₂ R) ≫
-      (mkBraid (by simp; pure_iso)) ≫
-      (mkLayer L s₁ x₁ (M ⊗ ((s₂.repeat .star Y₂) ⊗ R))) ≫
-      (mkBraid (by simp; pure_iso)) := by
+def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _}
+    (hx : x = (by pure_iso)) :
+      (mkLayer L (s₁ + 1) x₁ (M ⊗ (X₂^⋆s₂)⋆ ⊗ R)) ≫
+        (mkBraid x) ≫
+          (mkLayer ((L ⊗ (Y₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) =
+      (mkBraid (by pure_iso)) ≫
+        (mkLayer ((L ⊗ (X₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) ≫
+          (mkBraid (by pure_iso)) ≫
+            (mkLayer L (s₁ + 1) x₁ (M ⊗ (Y₂^⋆s₂)⋆ ⊗ R)) ≫
+              (mkBraid (by pure_iso)) := by
   rw [hx]
   clear x hx
   simp_all
   have hrw :=
-    @Quotient.sound _ (mySetoidHom _ _) _ _ <|
-      HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁) (s₂ := s₂) (x₁ := x₁) (x₂ := x₂)
+    @_root_.Quotient.sound _ (mySetoidHom _ _) _ _ <|
+      HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁ + 1) (s₂ := s₂ + 1) (x₁ := x₁) (x₂ := x₂)
   simp at hrw
-  have hrw := stripBraidLeft hrw
-  simp at hrw
-  repeat1 rw [← whiskerLeft_comp_assoc] at hrw
-  repeat1 rw [← whiskerLeft_comp] at hrw
-  repeat1 rw [Iso.inv_hom_id] at hrw
-  simp at hrw
+  simp [repeat_star_succ] at hrw ⊢
   rw [hrw]
-
--- it helps the real category and our "category" play nice to NOT
--- have separate definitions for objects (TODO make sure it's similar
--- with the star)
-/- def tensorObj : N C → N C → N C := (· ⊗ ·) -/
-/- scoped infixr:70 " ⊗N " => tensorObj -/
-
-
-lemma my_silly {X Y Z : N C} (f₁ f₂ : X ⟶ Y) (g₁ g₂ : Y ⟶ Z) : f₁ ≫ g₁ = f₂ ≫ g₂ :=
-  sorry
 
 macro "handle_braid_step" : tactic =>
   `(tactic|
     first
       | rfl -- just non-pures
       | apply congrArg₂ _ rfl -- starting w/ impure
-      | (apply Eq.trans ((Category.comp_id _).symm) ; apply congrArg₂ _ rfl) -- f = f ≫ pure-coherent
+       -- f = f ≫ pure-coherent:
+      | (apply Eq.trans ((Category.comp_id _).symm) ; apply congrArg₂ _ rfl)
       | liftable_prefixes; apply congrArg₂ _ (by coherence) -- starting w/ Braid
       | coherence -- just braids
       | fail "IDK what to do -- braid step")
@@ -542,57 +453,6 @@ macro "my_coherence" : tactic =>
 
 open Layer
 open scoped Layer
-def HomEquiv.swap_nice'''' {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : L ⊗ (Y₁^⋆s₁) ⊗ (M ⊗ (X₂^⋆s₂) ⊗ R) ⟶T ((L ⊗ (Y₁^⋆s₁)) ⊗ M) ⊗ (X₂^⋆s₂) ⊗ R} (hx : x = 𝟙 (L ⊗ (Y₁^⋆s₁) ⊗ (M ⊗ (X₂^⋆s₂) ⊗ R)) ⊗⋆≫ 𝟙 (((L ⊗ (Y₁^⋆s₁)) ⊗ M) ⊗ (X₂^⋆s₂) ⊗ R)) :
-    mkLayer L s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R) ≫
-      mkBraid x ≫
-        mkLayer ((L ⊗ (Y₁^⋆s₁)) ⊗ M) s₂ x₂ R =
-    mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _) ≫
-      mkLayer ((L ⊗ (X₁^⋆s₁)) ⊗ M) s₂ x₂ R ≫
-        mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _) ≫
-          mkLayer L s₁ x₁ (M ⊗ (Y₂^⋆s₂) ⊗ R) ≫
-            mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 (((L ⊗ (Y₁^⋆s₁)) ⊗ M) ⊗ (Y₂^⋆s₂) ⊗ R)) 
-            := by
-    /- (mkLayer L s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R)) ≫ -/
-    /-   (mkBraid x) ≫ -/
-    /-   (mkLayer ((L ⊗ (Y₁^⋆s₁)) ⊗ M) s₂ x₂ R) = -/
-    /- (mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) ≫ -/
-    /- (mkLayer ((L ⊗ (X₁^⋆s₁)) ⊗ M) s₂ x₂ R) ≫ -/
-    /-   (mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) ≫ -/
-    /-   (mkLayer L s₁ x₁ (M ⊗ ((Y₂^⋆s₂) ⊗ R))) ≫ -/
-    /-   (mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) := by -/
-  rw [hx]
-  clear x hx
-  simp_all
-  #check @HomEquiv.swap
-  /- #check @HomEquiv.swap C L _ _ s₁ x₁ M R _ _ s₂ x₂ -/
-  have hrw := @HomEquiv.swap C L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂
-  #check @_root_.Quotient.sound
-  have hrw := @_root_.Quotient.sound _ (mySetoidHom _ _) _ _ <| hrw
-  simp at hrw
-  /- have hrw := stripBraidLeft hrw -/
-  /- simp at hrw -/
-  simp [involutiveComp] at hrw ⊢
-  /- repeat1 rw [← whiskerLeft_comp_assoc] at hrw -/
-  /- repeat1 rw [← whiskerLeft_comp] at hrw -/
-  /- repeat1 rw [Iso.inv_hom_id] at hrw -/
-  /- simp at hrw -/
-  rw [hrw]
-  my_coherence
-      /- HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁) (s₂ := s₂) (x₁ := x₁) (x₂ := x₂) -/
-
-def swap_nice'' {L : T C} {X : N C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {s₁ s₂ : ℕ} :
-    mkLayer (X.as ⊗ L) s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R) ≫
-      mkBraid (𝟙 ((X.as ⊗ L) ⊗ (Y₁^⋆s₁) ⊗ M ⊗ (X₂^⋆s₂) ⊗ R) ⊗⋆≫ 𝟙 ((((X.as ⊗ L) ⊗ Y₁^⋆s₁) ⊗ M) ⊗ (X₂^⋆s₂) ⊗ R)) ≫
-        mkLayer (((X.as ⊗ L) ⊗ Y₁^⋆s₁) ⊗ M) s₂ x₂ R =
-    mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
-      mkLayer (((X.as ⊗ L) ⊗ X₁^⋆s₁) ⊗ M) s₂ x₂ R ≫
-        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
-          mkLayer (X.as ⊗ L) s₁ x₁ (M ⊗ (Y₂^⋆s₂) ⊗ R) ≫
-            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := sorry
-  /- mkLayer (X.as ⊗ L) s₁ x₁ (M ⊗ (Y₂^⋆X₂) ⊗ s₂) ≫ -/
-  /-     mkBraid (𝟙 ((X.as ⊗ L) ⊗ (Y₁^⋆s₁) ⊗ M ⊗ (Y₂^⋆X₂) ⊗ s₂) ⊗⋆≫ 𝟙 ((((X.as ⊗ L) ⊗ Y₁^⋆s₁) ⊗ M) ⊗ (Y₂^⋆X₂) ⊗ s₂)) ≫ -/
-  /-       mkLayer (((X.as ⊗ L) ⊗ Y₁^⋆s₁) ⊗ M) X₂ R s₂ = -/
-
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁ ⟶ X.tensor Y₂) := --by
@@ -647,7 +507,7 @@ def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁
         repeat rewrite [← Category.assoc]
         apply congrArg (· ≫ _)
         · simp
-          apply HomEquiv.swap_nice'
+          apply HomEquiv.swap_coherent
           handle_braid
       simp
       rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
@@ -706,136 +566,11 @@ def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor 
         repeat rewrite [← Category.assoc]
         apply congrArg (· ≫ _)
         · simp
-          apply HomEquiv.swap_nice'
+          apply HomEquiv.swap_coherent
           handle_braid
       simp
       rewrite [braid_conjugation_right (_ ◁ (α_ _ _ _).inv)]
       my_coherence
-
-#check whiskerLeft
-
-
-set_option maxHeartbeats 10000000 in -- big simp_all
-def whiskerRight  {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) (X : N C) : (Y₁ ⊗ X ⟶ Y₂ ⊗ X) := --by
-  Quotient.liftOn f (⟦·.whiskerRight X⟧) <| by
-    clear f
-    rintro f g h
-    simp
-    induction h <;> simp_all
-    case layer l₁ l₂ f =>
-      induction f
-      case comp ih₁ ih₂ =>
-        have ih₂ := stripBraid ih₂
-        simp_all
-      all_goals simp_all
-      case freeLeft b =>
-        rw [Layer_braid_conjugation_left b]
-        my_coherence
-      case freeRight b =>
-        rw [Layer_braid_conjugation_right (b ▷ _)]
-        my_coherence
-      case box_strand_hom =>
-        rw [Layer_box_strand_inv_conjugation]
-        my_coherence
-      case box_strand_inv =>
-        rw [Layer_box_strand_hom_conjugation]
-        my_coherence
-      case strand_box_hom =>
-        rw [Layer_strand_box_inv_conjugation]
-        my_coherence
-      case strand_box_inv =>
-        rw [Layer_strand_box_hom_conjugation]
-        my_coherence
-      case twist_hom =>
-        rw [Layer_twist_inv_conjugation]
-        my_coherence
-      case twist_inv =>
-        rw [Layer_twist_hom_conjugation_forced]
-        my_coherence
-      case ε_inv =>
-        -- monoidal coherence doesn't like the involutor
-        -- we'll do it ourselves
-        repeat rw [← whiskerLeft_comp_assoc]
-        repeat rw [Category.assoc]
-        repeat rw [← comp_whiskerRight]
-        my_coherence
-    case swap L X₁ Y₁ s₁ x₁ M X₂ Y₂ s₂ x₂ R =>
-      -- forget about the final braid (so we can apply swap_nice w/o assoc):
-      apply Eq.trans
-      · repeat rewrite [← assoc]
-        apply congrArg (· ≫ _)
-        · simp
-
-          -- do the swap:
-          rw [HomEquiv.swap_nice' (by coherence)]
-
-      -- simp up; simp doesn't handle rewriting internal monoidal stuff
-      my_coherence
-
-
-/-
-macro "my_coherence_step" : tactic =>
-  `(tactic|
-    first
-      | rfl -- just Layer
-      | apply congrArg _ <| by coherence -- just Braid
-      | apply congrArg₂ _ (congrArg _ (by coherence)) -- starting w/ Braid
-      | apply congrArg₂ _ rfl -- starting w/ Layer
-      | fail "IDK what to do"
-  )
-
-macro "my_coherence" : tactic =>
-  `(tactic|
-    first
-      | simp ; done
-      | ((try simp) ; (repeat1 my_coherence_step))
-  )
--/
-
-@[simp]
-lemma skewator_conjugation_left {L₁ L₂ : T C} :
-      mkLayer (L₁ ⊗ L₂)⋆ s x R =
-        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
-          mkLayer (L₂⋆ ⊗ L₁⋆) s x R ≫
-            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
-  apply Eq.trans
-  · apply _root_.Quotient.sound
-    · apply HomEquiv.layer
-      apply Layer.Hom.freeLeft
-      exact (χ_ _ _).inv
-  simp [involutiveComp]
-
-@[simp]
-lemma skewator_conjugation_right {L : T C} :
-      mkLayer L s x (R₁ ⊗ R₂)⋆ =
-        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
-          mkLayer L s x (R₂⋆ ⊗ R₁⋆) ≫
-            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
-  apply Eq.trans
-  · apply _root_.Quotient.sound
-    · apply HomEquiv.layer
-      apply Layer.Hom.freeRight
-      exact (χ_ _ _).inv
-  simp [involutiveComp]
-
-def HomEquiv.swap_nice_starred' {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _} (hx : x = (by pure_iso)) :
-    (mkLayer L (s₁ + 1) x₁ (M ⊗ (X₂^⋆s₂)⋆ ⊗ R)) ≫
-      (mkBraid x) ≫
-        (mkLayer ((L ⊗ (Y₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) =
-    (mkBraid (by pure_iso)) ≫
-      (mkLayer ((L ⊗ (X₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) ≫
-        (mkBraid (by pure_iso)) ≫
-          (mkLayer L (s₁ + 1) x₁ (M ⊗ (Y₂^⋆s₂)⋆ ⊗ R)) ≫
-            (mkBraid (by pure_iso)) := by
-  rw [hx]
-  clear x hx
-  simp_all
-  have hrw :=
-    @_root_.Quotient.sound _ (mySetoidHom _ _) _ _ <|
-      HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁ + 1) (s₂ := s₂ + 1) (x₁ := x₁) (x₂ := x₂)
-  simp at hrw
-  simp [repeat_star_succ] at hrw ⊢
-  rw [hrw]
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
@@ -893,12 +628,15 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
         repeat rewrite [← Category.assoc]
         apply congrArg (· ≫ _)
         · simp
-          apply HomEquiv.swap_nice_starred'
+          apply HomEquiv.swap_coherent_starred
           handle_braid
       rewrite [braid_conjugation_left ((χ_ _ _).hom ▷ _)]
       rewrite [braid_conjugation_right (_ ◁ (χ_ _ _).hom)]
       my_coherence
 
+end CategoryTheory.NatDefinition
+
+/-
 #check Nat
 
 #check MonoidalCategory
@@ -1639,6 +1377,7 @@ instance : MonoidalCategory N where
 -- then an isomorphism of categories between the one on N and the one on S C
 
 #check Functor.Monoidal
+-/
 -/
 -/
 
