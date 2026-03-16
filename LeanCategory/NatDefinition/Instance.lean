@@ -5,8 +5,10 @@ namespace CategoryTheory.NatDefinition
 
 open MonoidalCategory InvolutiveCategory FreeTwistedCategory
 
+variable {C : Type u} [Quiver.{v} (T C)]
+
 @[simp]
-lemma whiskerLeft_mkBraid : ∀ {X Y₁ Y₂ : N C} (b : Y₁.as ⟶ Y₂.as),
+lemma whiskerLeft_mkBraid : ∀ {X Y₁ Y₂ : N C} (b : Y₁.as ⟶T Y₂.as),
     whiskerLeft X (mkBraid b) = mkBraid (X.as ◁ b) := by
   intros
   unfold whiskerLeft mkBraid
@@ -14,7 +16,7 @@ lemma whiskerLeft_mkBraid : ∀ {X Y₁ Y₂ : N C} (b : Y₁.as ⟶ Y₂.as),
   simp
 
 @[simp]
-lemma whiskerLeft_mkLayer : whiskerLeft X (mkLayer L s x R) =
+lemma whiskerLeft_mkLayer {X : N C} : whiskerLeft X (mkLayer L s x R) =
     (mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _)) ≫ mkLayer (X.as ⊗ L) s x R ≫ (mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _)) := by
   unfold whiskerLeft mkLayer
   rw [Quotient.liftOn_mk]
@@ -39,7 +41,7 @@ lemma whiskerLeft_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C)
   simp
 
 @[simp]
-lemma whiskerRight_mkBraid : ∀ {X₁ X₂ Y : N C} (b : X₁.as ⟶ X₂.as),
+lemma whiskerRight_mkBraid : ∀ {X₁ X₂ Y : N C} (b : X₁.as ⟶T X₂.as),
     whiskerRight (mkBraid b) Y = mkBraid (b ▷ Y.as) := by
   intros
   unfold whiskerRight mkBraid
@@ -47,7 +49,7 @@ lemma whiskerRight_mkBraid : ∀ {X₁ X₂ Y : N C} (b : X₁.as ⟶ X₂.as),
   simp
 
 @[simp]
-lemma whiskerRight_mkLayer : whiskerRight (mkLayer L s x R) Y =
+lemma whiskerRight_mkLayer {L : T C} : whiskerRight (mkLayer L s x R) Y =
     (mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ 𝟙 _))) ≫ mkLayer L s x (R ⊗ Y.as) ≫
       (mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ 𝟙 _))) := by
   unfold whiskerRight mkLayer
@@ -72,14 +74,14 @@ lemma whiskerRight_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C
   simp
 
 @[simp]
-lemma starHom_mkBraid : ∀ {X Y : N C} (b : X.as ⟶ Y.as), starHom (mkBraid b) = mkBraid b⋆ := by
+lemma starHom_mkBraid : ∀ {X Y : N C} (b : X.as ⟶T Y.as), starHom (mkBraid b) = mkBraid b⋆ := by
   intros
   unfold starHom mkBraid
   rw [Quotient.liftOn_mk]
   simp
 
 @[simp]
-lemma starHom_mkLayer : starHom (mkLayer L s x R) =
+lemma starHom_mkLayer {L : T C} : starHom (mkLayer L s x R) =
     mkBraid (by simp [repeat_star_succ]; exact (𝟙 _ ⊗⋆≫ 𝟙 _)) ≫
       mkLayer R⋆ (s + 1) x L⋆ ≫ mkBraid (by simp [repeat_star_succ]; exact (𝟙 _ ⊗⋆≫ 𝟙 _)) := by
   unfold starHom mkLayer
@@ -103,7 +105,7 @@ lemma starHom_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z),
   unfold starHom
   simp
 
-@[simp, reassoc (attr := simp)]
+@[simp]
 lemma whiskerLeft_id : ∀ (X Y : N C), whiskerLeft X (𝟙 Y) = (𝟙 <| X.tensor Y) := by
   intros X Y
   unfold CategoryStruct.id instCategory whiskerLeft
@@ -111,7 +113,7 @@ lemma whiskerLeft_id : ∀ (X Y : N C), whiskerLeft X (𝟙 Y) = (𝟙 <| X.tens
   rw [Quotient.liftOn_mk]
   simp
 
-@[simp, reassoc (attr := simp)]
+@[simp]
 lemma id_whiskerRight : ∀ (X Y : N C), whiskerRight (𝟙 X) Y = (𝟙 <| X.tensor Y) := by
   intros X Y
   unfold CategoryStruct.id instCategory whiskerRight
@@ -123,10 +125,18 @@ lemma id_whiskerRight : ∀ (X Y : N C), whiskerRight (𝟙 X) Y = (𝟙 <| X.te
 def tensorHom {X Y : N C} (f : X ⟶ X') (g : Y ⟶ Y') : tensor X Y ⟶ tensor X' Y' :=
   (whiskerRight f _) ≫ (whiskerLeft _ g)
 
-@[simp, reassoc (attr := simp)]
+@[simp]
 lemma id_tensorHom_id : ∀ (X Y : N C), tensorHom (𝟙 X) (𝟙 Y) = 𝟙 (X.tensor Y) := by
   intros X Y
   unfold tensorHom
+  simp
+
+@[simp]
+lemma starHom_id : ∀ (X : N C), starHom (𝟙 X) = 𝟙 X.star := by
+  intro X
+  unfold CategoryStruct.id instCategory starHom
+  simp only
+  rw [Quotient.liftOn_mk]
   simp
 
 @[reassoc]
@@ -365,6 +375,119 @@ lemma associator_naturality : ∀ {X Y Z : N C} (f : X ⟶ X') (g : Y ⟶ Y') (h
   rw [associator_naturality_middle_assoc]
   rw [associator_naturality_left_assoc]
 
+@[simp]
+lemma involutor_conjugation_left {L : T C} :
+      mkLayer L⋆⋆ s x R =
+        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
+          mkLayer L s x R ≫
+            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      apply Layer.Hom.freeLeft
+      exact (e_ _).hom
+  simp [involutiveComp]
+
+@[simp]
+lemma involutor_conjugation_right {L : T C} :
+      mkLayer L s x R⋆⋆ =
+        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
+          mkLayer L s x R ≫
+            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      apply Layer.Hom.freeRight
+      exact (e_ _).hom
+  simp [involutiveComp]
+
+@[reassoc]
+lemma involutor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
+    starHom (starHom f) ≫ mkBraid (e_ Y.as).hom = mkBraid (e_ X.as).hom ≫ f := by
+  intros X Y f
+  induction f using Quotient.inductionOn
+  rename_i f
+  unfold starHom
+  simp
+  induction f <;> simp_all
+  case comp f g ih₁ ih₂ =>
+    rw [← Category.assoc]
+    rw [ih₁]
+    simp
+  case layer l =>
+    cases l
+    my_coherence_step
+    simp_all
+    symm
+    apply Eq.trans (Category.comp_id _).symm
+    my_coherence_step
+    my_coherence_step
+
+@[reassoc]
+lemma skewator_naturality_right : ∀ {X Y Y' : N C} (f : Y ⟶ Y'),
+    (whiskerLeft ⟨X.as⋆⟩ (starHom f)) ≫ mkBraid (χ_ X.as Y'.as).hom =
+      mkBraid (χ_ X.as Y.as).hom ≫ starHom (whiskerRight f X) := by
+  intro X Y Z f
+  induction f using Quotient.inductionOn
+  rename_i f
+  induction f <;> simp_all
+  case layer l =>
+    rcases l with ⟨L, X', Y', s, x, R⟩
+    my_coherence
+  case comp f g ih₁ ih₂ =>
+    rw [← Category.assoc]
+    rw [ih₁]
+    simp
+
+@[reassoc]
+lemma skewator_naturality_left : ∀ {X X' Y : N C} (f : X ⟶ X'),
+    (whiskerRight (starHom f) ⟨Y.as⋆⟩) ≫ mkBraid (χ_ X'.as Y.as).hom =
+      mkBraid (χ_ X.as Y.as).hom ≫ starHom (whiskerLeft Y f) := by
+  intro X Y Z f
+  induction f using Quotient.inductionOn
+  rename_i f
+  induction f <;> simp_all
+  case layer l =>
+    rcases l with ⟨L, X', Y', s, x, R⟩
+    my_coherence
+  case comp f g ih₁ ih₂ =>
+    rw [← Category.assoc]
+    rw [ih₁]
+    simp
+
+@[simp, reassoc (attr := simp)]
+lemma starHom_whiskerLeft : ∀ {X Y : N C} (f : X ⟶ Y) (Z : N C),
+    starHom (whiskerLeft Z f) =
+      mkBraid (χ_ _ _).inv ≫ whiskerRight (starHom f) ⟨Z.as⋆⟩ ≫ mkBraid (χ_ _ _).hom := by
+  intros X Y f Z
+  induction f using Quotient.inductionOn
+  rename_i f
+  unfold starHom whiskerLeft
+  simp
+  induction f <;> simp_all ; my_coherence
+
+@[simp, reassoc (attr := simp)]
+lemma starHom_whiskerRight : ∀ {Y Y' : N C} (f : Y ⟶ Y') (Z : N C),
+    starHom (whiskerRight f Z) =
+      mkBraid (χ_ _ _).inv ≫ whiskerLeft ⟨Z.as⋆⟩ (starHom f) ≫ mkBraid (χ_ _ _).hom := by
+  intros X Y f Z
+  induction f using Quotient.inductionOn
+  rename_i f
+  unfold starHom whiskerRight
+  simp
+  induction f <;> simp_all ; my_coherence
+
+lemma skewator_naturality : ∀ {X X' Y Y' : N C} (f : X ⟶ X') (g : Y ⟶ Y'),
+    tensorHom (starHom f) (starHom g) ≫ mkBraid (χ_ X'.as Y'.as).hom =
+      mkBraid (χ_ X.as Y.as).hom ≫ starHom (tensorHom g f) := by
+  intros X X' Y Y' f g
+  unfold tensorHom
+  simp
+  rw [skewator_naturality_right]
+  rw [skewator_naturality_left_assoc]
+  simp
+  rw [whisker_exchange_assoc]
+
 instance : MonoidalCategory (N C) where
   tensorObj := tensor
   tensorHom := tensorHom
@@ -384,16 +507,105 @@ instance : MonoidalCategory (N C) where
     inv := mkBraid <| (ρ_ X.as).inv
   }
   -- END STRUCT, START PROPERTIES
-  tensorHom_def f g := rfl
-  id_tensorHom_id X Y := by simp
-  whiskerLeft_id f Y := by simp
-  id_whiskerRight X f := by simp
   tensorHom_comp_tensorHom := by simp [tensorHom_comp_tensorHom]
   associator_naturality := associator_naturality
   leftUnitor_naturality := leftUnitor_naturality
   rightUnitor_naturality := rightUnitor_naturality
-  pentagon := by simp
-  triangle := by simp
+
+@[simp]
+lemma tensor_mkBraid : ∀ {X₁ X₂ Y₁ Y₂ : N C} (b₁ : X₁.as ⟶T X₂.as) (b₂ : Y₁.as ⟶T Y₂.as),
+    (mkBraid b₁) ⊗ₘ (mkBraid b₂) = mkBraid (b₁ ⊗ₘ b₂) := by
+  intros
+  conv =>
+    lhs
+    unfold MonoidalCategoryStruct.tensorHom
+    unfold instMonoidalCategory
+    simp only
+  unfold tensorHom
+  simp
+  rw [MonoidalCategory.tensorHom_def]
+
+instance : InvolutiveCategoryStruct (N C) where
+  starObj X := star X
+  starHom f := starHom f
+  skewator X Y := {
+    hom := mkBraid <| (χ_ X.as Y.as).hom
+    inv := mkBraid <| (χ_ X.as Y.as).inv
+  }
+  involutor X := {
+    hom := mkBraid <| (e_ X.as).hom
+    inv := mkBraid <| (e_ X.as).inv
+  }
+
+lemma coherence_mkBraid_Pure : ∀ {X Y : N C} (f : X ⟶ Y),
+    InvolutiveCategory.InvolutiveCoherence f →
+      ∃ f' : X.as ⟶t Y.as, f'.Pure ∧ f = mkBraid ⟦f'⟧ := by
+  intros X Y f h
+  induction h
+  case id => exists .id _
+  case comp f g ih₁ ih₂ =>
+    rcases ih₁ with ⟨f', hf', rfl⟩
+    rcases ih₂ with ⟨g', hg', rfl⟩
+    exists f'.comp g'
+    simp_all
+  case tensor f₁ f₂ ih₁ ih₂ =>
+    rcases ih₁ with ⟨f₁', hf₁', rfl⟩
+    rcases ih₂ with ⟨f₂', hf₂', rfl⟩
+    exists f₁'.tensor f₂'
+    simp_all
+    rfl
+  case whiskerLeft X f ih =>
+    rcases ih with ⟨f', hf', rfl⟩
+    exists f'.whiskerLeft X.as
+  case whiskerRight X f ih =>
+    rcases ih with ⟨f', hf', rfl⟩
+    exists f'.whiskerRight X.as
+  case starHom f ih =>
+    rcases ih with ⟨f', hf', rfl⟩
+    exists f'.star
+  case associator_hom X Y Z =>
+    exists Hom.α_hom X.as Y.as Z.as
+  case associator_inv X Y Z =>
+    exists Hom.α_inv X.as Y.as Z.as
+  case leftUnitor_hom X =>
+    exists Hom.l_hom X.as
+  case leftUnitor_inv X =>
+    exists Hom.l_inv X.as
+  case rightUnitor_hom X =>
+    exists Hom.ρ_hom X.as
+  case rightUnitor_inv X =>
+    exists Hom.ρ_inv X.as
+  case skewator_hom X Y =>
+    exists Hom.χ_hom X.as Y.as
+  case skewator_inv X Y =>
+    exists Hom.χ_inv X.as Y.as
+  case involutor_hom X =>
+    exists Hom.ε_hom X.as
+  case involutor_inv X =>
+    exists Hom.ε_inv X.as
+
+instance : InvolutiveCategory (N C) where
+  starObj X := star X
+  starHom f := starHom f
+  skewator X Y := {
+    hom := mkBraid <| (χ_ X.as Y.as).hom
+    inv := mkBraid <| (χ_ X.as Y.as).inv
+  }
+  involutor X := {
+    hom := mkBraid <| (e_ X.as).hom
+    inv := mkBraid <| (e_ X.as).inv
+  }
+  -- END STRUCT, START PROPERTIES
+  skewator_naturality := skewator_naturality
+  involutor_naturality := involutor_naturality
+  coherence f g hf hg := by
+    have ⟨f', hf', hf⟩ := coherence_mkBraid_Pure f hf
+    have ⟨g', hg', hg⟩ := coherence_mkBraid_Pure g hg
+    subst f
+    subst g
+    apply congrArg
+    apply _root_.Quotient.sound
+    constructor <;> assumption
 
 end CategoryTheory.NatDefinition
 

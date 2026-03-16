@@ -4,8 +4,10 @@ import LeanCategory.FreeInvolutive.CoherenceTactic
 
 namespace CategoryTheory.NatDefinition
 open scoped Layer
+open FreeTwistedCategory
 
-variable {C : Type u}
+universe u
+variable {C : Type u} [Quiver.{v} (T C)]
 
 inductive Hom : N C → N C → Type (max (u + 2) v) where
   | layer : (l : Layer C) →
@@ -166,10 +168,10 @@ def mkLayer (L : FreeTwistedCategory C) {X Y : T C} (s : ℕ) (x : X ⟶ Y)
 theorem mk_layer {L : T C} {x : X ⟶ Y} : ⟦.layer ⟨L, X, Y, s, x, R⟩⟧ = mkLayer L s x R :=
   rfl
 
-def mkBraid {X Y : N C} (b : X.as ⟶ Y.as) : X ⟶ Y := ⟦Hom.braid b⟧
+def mkBraid {X Y : N C} (b : X.as ⟶T Y.as) : X ⟶ Y := ⟦Hom.braid b⟧
 
 @[simp]
-theorem mk_braid {X Y : N C} {b : X.as ⟶ Y.as} : ⟦.braid b⟧ = mkBraid b :=
+theorem mk_braid {X Y : N C} {b : X.as ⟶T Y.as} : ⟦.braid b⟧ = mkBraid b :=
   rfl
 
 @[simp]
@@ -177,17 +179,17 @@ theorem mkBraid_id {X : N C} : mkBraid (𝟙 X.as) = 𝟙 X :=
   rfl
 
 @[simp]
-theorem mkBraid_id' : mkBraid (𝟙 X) = 𝟙 (mk X) :=
+theorem mkBraid_id' : mkBraid (𝟙 X) = @CategoryStruct.id (N C) _ _ :=
   rfl
 
 @[simp]
-theorem unmk_braid_comp {X Y Z : N C} (f : X.as ⟶ Y.as) (g : Y.as ⟶ Z.as) :
+theorem unmk_braid_comp {X Y Z : N C} (f : X.as ⟶T Y.as) (g : Y.as ⟶T Z.as) :
      mkBraid f ≫ mkBraid g = mkBraid (f ≫ g) := by
   apply _root_.Quotient.sound
   constructor
 
 @[simp]
-theorem unmk_braid_comp_assoc {W X Y Z : N C} (f : W.as ⟶ X.as) (g : X.as ⟶ Y.as) (h : Y ⟶ Z) :
+theorem unmk_braid_comp_assoc {W X Y Z : N C} (f : W.as ⟶T X.as) (g : X.as ⟶T Y.as) (h : Y ⟶ Z) :
      mkBraid f ≫ mkBraid g ≫ h = mkBraid (f ≫ g) ≫ h := by
   rw [← Category.assoc]
   apply congrArg (· ≫ _)
@@ -327,7 +329,7 @@ lemma involutor_conjugation {L : T C} :
       exact Layer.Hom.ε_hom
   simp
 
-lemma braid_conjugation_left {L₁ L₂ : T C} (b : L₁ ⟶ L₂) :
+lemma braid_conjugation_left {L₁ L₂ : T C} (b : L₁ ⟶T L₂) :
     mkLayer L₁ s x R =
       mkBraid (b ▷ (_ ⊗ _)) ≫
         mkLayer L₂ s x R ≫
@@ -339,7 +341,7 @@ lemma braid_conjugation_left {L₁ L₂ : T C} (b : L₁ ⟶ L₂) :
       exact b
   simp
 
-lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶ R₂) :
+lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶T R₂) :
     mkLayer L s x R₁ =
       mkBraid (_ ◁ _ ◁ b) ≫
         mkLayer L s x R₂ ≫
@@ -351,21 +353,21 @@ lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶ R₂) :
       exact b
   simp
 
-lemma stripBraidLeft {X Y : N C} {b : X.as ⟶ Y.as} {f : Y ⟶ Z} {g : X ⟶ Z} :
+lemma stripBraidLeft {X Y : N C} {b : X.as ⟶T Y.as} {f : Y ⟶ Z} {g : X ⟶ Z} :
     ⟦(Hom.braid b)⟧ ≫ f = g → f = ⟦(Hom.braid (inv b))⟧ ≫ g := by
   intros h
   trans (⟦Hom.braid (inv b)⟧ ≫ (⟦Hom.braid b⟧ ≫ f))
   · simp
   · rw [h]
 
-lemma stripBraidRight {X Y : N C} {b : Y.as ⟶ Z.as} {f : X ⟶ Y} {g : X ⟶ Z} :
+lemma stripBraidRight {X Y : N C} {b : Y.as ⟶T Z.as} {f : X ⟶ Y} {g : X ⟶ Z} :
     f ≫ mkBraid b = g → f = g ≫ mkBraid (inv b) := by
   intros h
   trans ((f ≫ ⟦Hom.braid b⟧) ≫ ⟦Hom.braid (inv b)⟧)
   · simp
   · simp only [mk_braid]; rw [h]
 
-lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶ X.as} {f : X ⟶ Y} {b₂ : Y.as ⟶ Z.as} {g : W ⟶ Z} :
+lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶T X.as} {f : X ⟶ Y} {b₂ : Y.as ⟶T Z.as} {g : W ⟶ Z} :
     mkBraid b₁ ≫ f ≫ mkBraid b₂ = g → f = mkBraid (inv b₁) ≫ g ≫ mkBraid (inv b₂) := by
   intros h
   have h := stripBraidLeft h
