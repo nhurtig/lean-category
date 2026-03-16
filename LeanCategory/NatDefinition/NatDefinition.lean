@@ -265,6 +265,18 @@ lemma twist_inv_conjugation {L : T C} :
       exact Layer.Hom.twist_inv
   rfl
 
+lemma twist_hom_conjugation_forced {L : T C} {x : X ⟶ Y} :
+    mkLayer L s x R = mkBraid (L ◁ ((e_ _).inv ≫ (ς_ _).hom) ▷ R) ≫
+      mkLayer L (s + 1) x R ≫ mkBraid (L ◁ ((ς_ _).inv ≫ (e_ _).hom) ▷ R) := by
+    /- ⟦.layer ⟨L, _, _, s + 1, x, R⟩⟧ = mkBraid (L.as ◁ (ς_ _).hom ▷ R.as) ≫ -/
+    /-   ⟦.layer ⟨L, _, _, s, x, R⟩⟧ ≫ mkBraid (L.as ◁ (ς_ _).inv ▷ R.as) := by -/
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      exact Layer.Hom.comp Layer.Hom.ε_inv Layer.Hom.twist_hom
+  simp
+  simp [repeat_star_succ]
+
 lemma twist_hom_conjugation {L : T C} :
     mkLayer L (s + 1) x R = mkBraid (L ◁ (ς_ _).hom ▷ R) ≫
       mkLayer L s x R ≫ mkBraid (L ◁ (ς_ _).inv ▷ R) := by
@@ -738,7 +750,7 @@ def whiskerRight  {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) (X : N C) : (Y₁ ⊗ X 
         rw [Layer_twist_inv_conjugation]
         my_coherence
       case twist_inv =>
-        rw [Layer_twist_hom_conjugation]
+        rw [Layer_twist_hom_conjugation_forced]
         my_coherence
       case ε_inv =>
         -- monoidal coherence doesn't like the involutor
@@ -780,15 +792,59 @@ macro "my_coherence" : tactic =>
   )
 -/
 
+@[simp]
+lemma skewator_conjugation_left {L₁ L₂ : T C} :
+      mkLayer (L₁ ⊗ L₂)⋆ s x R =
+        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
+          mkLayer (L₂⋆ ⊗ L₁⋆) s x R ≫
+            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      apply Layer.Hom.freeLeft
+      exact (χ_ _ _).inv
+  simp [involutiveComp]
+
+@[simp]
+lemma skewator_conjugation_right {L : T C} :
+      mkLayer L s x (R₁ ⊗ R₂)⋆ =
+        mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) ≫
+          mkLayer L s x (R₂⋆ ⊗ R₁⋆) ≫
+            mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _) := by
+  apply Eq.trans
+  · apply _root_.Quotient.sound
+    · apply HomEquiv.layer
+      apply Layer.Hom.freeRight
+      exact (χ_ _ _).inv
+  simp [involutiveComp]
+
+def HomEquiv.swap_nice_starred' {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _} (hx : x = (by pure_iso)) :
+    (mkLayer L (s₁ + 1) x₁ (M ⊗ (X₂^⋆s₂)⋆ ⊗ R)) ≫
+      (mkBraid x) ≫
+        (mkLayer ((L ⊗ (Y₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) =
+    (mkBraid (by pure_iso)) ≫
+      (mkLayer ((L ⊗ (X₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) ≫
+        (mkBraid (by pure_iso)) ≫
+          (mkLayer L (s₁ + 1) x₁ (M ⊗ (Y₂^⋆s₂)⋆ ⊗ R)) ≫
+            (mkBraid (by pure_iso)) := by
+  rw [hx]
+  clear x hx
+  simp_all
+  have hrw :=
+    @_root_.Quotient.sound _ (mySetoidHom _ _) _ _ <|
+      HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁ + 1) (s₂ := s₂ + 1) (x₁ := x₁) (x₂ := x₂)
+  simp at hrw
+  simp [repeat_star_succ] at hrw ⊢
+  rw [hrw]
+
 set_option maxHeartbeats 10000000 in -- big simp_all
 def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
   Quotient.liftOn f (⟦·.starHom⟧) <| by
     clear f
     rintro f g h
     simp
-    induction h
+    induction h <;> simp_all
     case layer l₁ l₂ f =>
-      simp_all
       induction f
       case comp ih₁ ih₂ =>
         simp at ih₁ ih₂ ⊢
@@ -796,13 +852,7 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
         my_coherence
-      case box_strand_hom =>
-        simp_all
-        -- TODO use a simplifier to move the star
-        -- outta here by conjugating w/ the skewator
-        rw [box_strand_hom_conjugation]
-        my_coherence
-      all_goals sorry
+      all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_right b⋆]
         simp_all
@@ -810,39 +860,91 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
       case freeRight b =>
         rw [braid_conjugation_left b⋆]
         my_coherence
-      case box_strand_inv L X' Y s R A x =>
-        rw [box_strand_inv_conjugation]
-        my_coherence
-      case strand_box_hom =>
+      case box_strand_hom =>
         rw [strand_box_hom_conjugation]
         my_coherence
-      case strand_box_inv =>
+      case box_strand_inv L X' Y s R A x =>
         rw [strand_box_inv_conjugation]
         my_coherence
+      case strand_box_hom =>
+        rw [box_strand_hom_conjugation]
+        my_coherence
+      case strand_box_inv =>
+        rw [box_strand_inv_conjugation]
+        my_coherence
       case twist_hom =>
-        rw [twist_hom_conjugation]
+        rw [twist_hom_conjugation_forced]
         my_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
         my_coherence
-      case ε_hom =>
+      case ε_hom L X Y s x R =>
         my_coherence
       case ε_inv =>
         my_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
-      sorry
+      symm
+      rewrite [braid_conjugation_left ((χ_ _ _).inv ▷ _)]
+      rewrite [braid_conjugation_right (_ ◁ (χ_ _ _).inv)]
+      simp
       apply Eq.trans
       case h₁ =>
         apply congrArg (_ ≫ ·)
         repeat rewrite [← Category.assoc]
         apply congrArg (· ≫ _)
         · simp
-          apply HomEquiv.swap_nice'
+          apply HomEquiv.swap_nice_starred'
           handle_braid
+      rewrite [braid_conjugation_left ((χ_ _ _).hom ▷ _)]
+      rewrite [braid_conjugation_right (_ ◁ (χ_ _ _).hom)]
       my_coherence
-    all_goals sorry
 
-k
+#check Nat
+
+#check MonoidalCategory
+def tensorHom {X₁ Y₁ X₂ Y₂ : N C} (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂) : (X₁.tensor X₂ ⟶ Y₁.tensor Y₂) :=
+  (whiskerRight f X₂) ≫ (whiskerLeft Y₁ g)
+
+#check Nat
+
+instance : MonoidalCategory (N C) where
+  tensorObj := tensor
+  tensorHom f g := (whiskerRight f _) ≫ (whiskerLeft _ g)
+  tensorUnit := unit
+  whiskerLeft := whiskerLeft
+  whiskerRight := whiskerRight
+  associator X Y Z := {
+    hom := mkBraid <| (α_ X.as Y.as Z.as).hom
+    inv := mkBraid <| (α_ X.as Y.as Z.as).inv
+  }
+  leftUnitor X := {
+    hom := mkBraid <| (λ_ X.as).hom
+    inv := mkBraid <| (λ_ X.as).inv
+  }
+  rightUnitor X := {
+    hom := mkBraid <| (ρ_ X.as).hom
+    inv := mkBraid <| (ρ_ X.as).inv
+  }
+  -- END STRUCT, START PROPERTIES
+  tensorHom_def := sorry
+  id_tensorHom_id X Y := by
+    simp
+    sorry
+  whiskerLeft_id f Y := by
+    sorry
+    /- unfold CategoryStruct.id -/
+    /- unfold instCategory -/
+    /- simp only -/
+    /- simp [Quotient.liftOn_mk] -/
+    /- #check Quotient.liftOn_mk -/
+    sorry
+  id_whiskerRight X f := by sorry
+  tensorHom_comp_tensorHom := sorry
+  associator_naturality := sorry
+  leftUnitor_naturality := sorry
+  rightUnitor_naturality := sorry
+  pentagon := sorry
+  triangle := sorry
 
 def starHom {X Y : N C} (f : X ⟶N Y) : (X⋆ ⟶N Y⋆) := --by
   Quotient.liftOn f (⟦·.starHom⟧) <| by

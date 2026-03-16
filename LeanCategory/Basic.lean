@@ -162,6 +162,19 @@ theorem involutor_conjugation {X X' : C} (f : X ⟶ X') :
 def star_tensorObj : (𝟙_ C)⋆ ≅ 𝟙_ C :=
   (ρ_ _).symm ≪≫ whiskerLeftIso _ (e_ _).symm ≪≫ χ_ _ _ ≪≫ starIso (ρ_ _) ≪≫ e_ _
 
+@[reassoc (attr := simp), simp]
+theorem star_involutor_hom (X : C) : (e_ X).hom⋆ = (e_ X⋆).hom := by
+  apply coherence <;> repeat' constructor
+
+@[reassoc (attr := simp), simp]
+theorem star_involutor_inv (X : C) : (e_ X).inv⋆ = (e_ X⋆).inv := by
+  apply coherence <;> repeat' constructor
+
+@[reassoc (attr := simp), simp]
+theorem star_involutor (X : C) : starIso (e_ X) = (e_ X⋆) := by
+  ext
+  exact star_involutor_hom X
+
 end InvolutiveCategory
 
 namespace TwistedCategory
@@ -254,6 +267,49 @@ theorem tℓ_inv : ∀ P Q R : C,
       (((ς_ P⋆).inv ⊗ₘ (ς_ Q⋆).inv) ⊗ₘ (ς_ R⋆).inv) := by
   intros P Q R
   exact eq_of_inv_eq_inv (by simp)
+
+
+@[simp, reassoc (attr := simp)]
+theorem twist_star_hom : ∀ X : C, (ς_ X).hom⋆ = (ς_ X⋆).hom := by
+  intro X
+  have := twist_naturality (ς_ X).hom
+  simp at this ⊢
+  exact this
+
+@[simp, reassoc (attr := simp)]
+theorem twist_star_inv : ∀ X : C, (ς_ X).inv⋆ = (ς_ X⋆).inv := by
+  intro X
+  have := twist_inv_naturality (ς_ X).inv
+  simp at this ⊢
+  exact this.symm
+
+@[simp, reassoc (attr := simp)]
+theorem twist_star : ∀ X : C, starIso (ς_ X) = (ς_ X⋆) := by
+  intro X
+  ext
+  exact twist_star_hom X
+
+@[simp, reassoc (attr := simp)]
+theorem star_braid_hom : ∀ X Y : C, (σ_ X Y).hom⋆ = (χ_ Y X).inv ≫ (σ_ Y⋆ X⋆).hom ≫ (χ_ X Y).hom := by
+  intro X Y
+  unfold braid
+  simp
+  rw [twist_naturality]
+
+@[simp, reassoc (attr := simp)]
+theorem star_braid_inv : ∀ X Y : C, (σ_ X Y).inv⋆ = (χ_ X Y).inv ≫ (σ_ Y⋆ X⋆).inv ≫ (χ_ Y X).hom := by
+  intro X Y
+  unfold braid
+  simp
+  rw [twist_inv_naturality_assoc]
+
+@[simp, reassoc (attr := simp)]
+theorem star_braid : ∀ X Y : C, starIso (σ_ X Y) = (χ_ Y X).symm ≪≫ (σ_ Y⋆ X⋆) ≪≫ (χ_ X Y) := by
+  intro X Y
+  ext
+  unfold braid
+  simp
+  rw [twist_naturality]
 
 end TwistedCategory
 
