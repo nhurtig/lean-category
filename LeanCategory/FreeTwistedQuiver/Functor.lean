@@ -62,57 +62,28 @@ def projectMap {X Y : TQ C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) 
     | comp_id => dsimp only [projectMapAux]; rw [Category.comp_id]
     | id_comp => dsimp only [projectMapAux]; rw [Category.id_comp]
     | assoc => dsimp only [projectMapAux]; rw [Category.assoc]
-    /- | id_tensorHom_id => dsimp only [projectMapAux]; rw [MonoidalCategory.id_tensorHom_id]; rfl -/
     | tensorHom_comp_tensorHom =>
       dsimp only [projectMapAux]; rw [MonoidalCategory.tensorHom_comp_tensorHom]
     | whiskerLeft_id =>
         dsimp only [projectMapAux]; simp
     | id_whiskerRight =>
         dsimp only [projectMapAux]; simp
-    /- | α_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id] -/
-    /- | α_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id] -/
     | associator_naturality =>
         dsimp only [projectMapAux]; rw [MonoidalCategory.associator_naturality]
-    /- | ρ_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id] -/
-    /- | ρ_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id] -/
     | ρ_naturality f =>
         dsimp only [projectMapAux]; simp
-    /- | l_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id] -/
-    /- | l_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id] -/
     | l_naturality =>
         dsimp only [projectMapAux]; simp
-    /- | pentagon => -/
-    /-     dsimp only [projectMapAux, FreeTwistedCategory.project] -/
-    /-     rw [MonoidalCategory.pentagon] -/
-    /- | triangle => -/
-    /-     dsimp only [projectMapAux, FreeTwistedCategory.project] -/
-    /-     rw [MonoidalCategory.triangle] -/
     -- START NAT'S STUFF
     | star _ hf => dsimp only [projectMapAux]; rw [hf]
     | starHom_comp_starHom _ hf =>
         dsimp only [projectMapAux]; rw [InvolutiveCategory.starHom_comp_starHom]
-    /- | starHom_id => -/
-    /-     dsimp only [projectMapAux, FreeTwistedCategory.project] -/
-    /-     rw [InvolutiveCategory.starHom_id] -/
-    /- | ε_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id] -/
-    /- | ε_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id] -/
     | ε_naturality =>
         dsimp only [projectMapAux]
         exact InvolutiveCategory.involutor_naturality _
-    /- | χ_hom_inv => dsimp only [projectMapAux]; rw [Iso.hom_inv_id] -/
-    /- | χ_inv_hom => dsimp only [projectMapAux]; rw [Iso.inv_hom_id] -/
     | χ_naturality =>
         dsimp only [projectMapAux, projectObj]
         exact InvolutiveCategory.skewator_naturality _ _
-    /- | f3 => -/
-    /-     dsimp only [projectMapAux, FreeTwistedCategory.project] -/
-    /-     exact f3 _ _ _ -/
-    /- | n2 => -/
-    /-     dsimp only [projectMapAux, FreeTwistedCategory.project] -/
-    /-     exact n2 _ _ -/
-    /- | a => -/
-    /-     dsimp only [projectMapAux, FreeTwistedCategory.project] -/
-    /-     exact a _ -/
     | twist_hom_inv => dsimp only [projectMapAux]; simp
     | twist_inv_hom => dsimp only [projectMapAux]; simp
     | twist_naturality =>

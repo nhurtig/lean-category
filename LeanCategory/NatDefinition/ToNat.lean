@@ -11,15 +11,7 @@ variable {C : Type u} [Quiver.{v} (T C)]
 
 open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
--- our categories of interest:
-#synth Category (N C)
-#synth Category (TQ C)
--- and the supporting category of just twists:
-#synth Category (T C)
-
 abbrev mkObj (X : C) : N C := ⟨⟨.of X⟩⟩
-
-#check FreeTwistedCategory.projectObj mkObj
 
 lemma its_just_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X⟩ := by
   induction X using FreeTwistedCategory.recOn'

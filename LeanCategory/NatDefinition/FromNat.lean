@@ -11,14 +11,6 @@ variable {C : Type u} [Quiver.{v} (T C)]
 
 open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
--- our categories of interest:
-#synth Category (N C)
-#synth Category (TQ C)
--- and the supporting category of just twists:
-#synth Category (T C)
-
-#check embed (C := C)
-
 namespace Hom
 
 def boxTwist {X Y : T C} (s : ℕ) (x : X ⟶ Y) : (FreeTwistedCategoryQuiver.mk (X^⋆s) ⟶ ⟨Y^⋆s⟩) :=
@@ -41,17 +33,10 @@ def fromNat {X Y : N C} : (X ⟶n Y) → ((FreeTwistedCategoryQuiver.mk X.as) �
 
 end Hom
 
-/- attribute [-instance] Hom.justBraids -- don't use it anymore -/
-
 open FreeTwistedCategory
-#check mk_α_inv
-
 
 open Hom
 open TwistedCategory
-
-/- scoped notation:max n " =>⋆" => Nat.repeat FreeTwistedCategoryNat.star n -/
-/- scoped notation:max "[[" X "]]" => FtoFQ (X) -/
 
 macro "strip_left" : tactic =>
   `(tactic|
@@ -73,8 +58,10 @@ macro "extract_right" : tactic =>
 
 
 -- TODO find a better name and place for these
-lemma mysimpthingy {X Y : T C} : FreeTwistedCategoryQuiver.mk (X ⊗ Y) = (FreeTwistedCategoryQuiver.mk X) ⊗ (FreeTwistedCategoryQuiver.mk Y) := rfl
-lemma mysimpthingy' {X : T C} : FreeTwistedCategoryQuiver.mk X⋆ = (FreeTwistedCategoryQuiver.mk X)⋆ := rfl
+lemma mysimpthingy {X Y : T C} : FreeTwistedCategoryQuiver.mk (X ⊗ Y) =
+    (FreeTwistedCategoryQuiver.mk X) ⊗ (FreeTwistedCategoryQuiver.mk Y) := rfl
+lemma mysimpthingy' {X : T C} :
+    FreeTwistedCategoryQuiver.mk X⋆ = (FreeTwistedCategoryQuiver.mk X)⋆ := rfl
 
 def fromNat : (N C) ⥤ (TQ C) where
   obj X := ⟨X.as⟩

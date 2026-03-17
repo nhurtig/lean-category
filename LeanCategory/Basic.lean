@@ -316,14 +316,16 @@ theorem twist_star : ∀ X : C, starIso (ς_ X) = (ς_ X⋆) := by
   exact twist_star_hom X
 
 @[simp, reassoc (attr := simp)]
-theorem star_braid_hom : ∀ X Y : C, (σ_ X Y).hom⋆ = (χ_ Y X).inv ≫ (σ_ Y⋆ X⋆).hom ≫ (χ_ X Y).hom := by
+theorem star_braid_hom : ∀ X Y : C,
+    (σ_ X Y).hom⋆ = (χ_ Y X).inv ≫ (σ_ Y⋆ X⋆).hom ≫ (χ_ X Y).hom := by
   intro X Y
   unfold braid
   simp
   rw [twist_naturality]
 
 @[simp, reassoc (attr := simp)]
-theorem star_braid_inv : ∀ X Y : C, (σ_ X Y).inv⋆ = (χ_ X Y).inv ≫ (σ_ Y⋆ X⋆).inv ≫ (χ_ Y X).hom := by
+theorem star_braid_inv : ∀ X Y : C,
+    (σ_ X Y).inv⋆ = (χ_ X Y).inv ≫ (σ_ Y⋆ X⋆).inv ≫ (χ_ Y X).hom := by
   intro X Y
   unfold braid
   simp
