@@ -206,7 +206,7 @@ def braid (X Y : C) : X ⊗ Y ≅ Y ⊗ X where
     (χ_ _ _).inv ≫
     ((ς_ _).hom ⊗ₘ (ς_ _).hom)
 
--- TODO show braid has hexagon identity (follows from tℓ)
+-- could show braid agrees with hexagon identity (it follows from tℓ)
 scoped notation "σ_" => braid
 
 end TwistedCategory

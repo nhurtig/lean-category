@@ -1,6 +1,7 @@
 import Mathlib
 import LeanCategory.Basic
 import LeanCategory.FreeTwistedQuiver.Base
+import LeanCategory.FreeTwisted.Instance
 
 namespace CategoryTheory.FreeTwistedCategoryQuiver
 
@@ -245,6 +246,10 @@ theorem mk_id {X : TQ C} : ⟦Hom.id X⟧ = 𝟙 X :=
 open MonoidalCategory
 
 @[simp]
+lemma mk_tensorObj {X Y : T C} : mk (X ⊗ Y) =
+    ⟨X⟩ ⊗ ⟨Y⟩ := rfl
+
+@[simp]
 theorem mk_tensor {X₁ Y₁ X₂ Y₂ : TQ C} (f : X₁ ⟶tq Y₁) (g : X₂ ⟶tq Y₂) :
     ⟦f.tensor g⟧ = @MonoidalCategory.tensorHom (TQ C) _ _ _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
@@ -315,6 +320,10 @@ theorem mk_χ_inv {X Y : TQ C} : ⟦Hom.χ_inv X Y⟧ = (χ_ X Y).inv :=
 @[simp]
 theorem star_eq_star {X : TQ C} : X.star = X⋆ :=
   rfl
+
+@[simp]
+lemma mk_starObj {X : T C} :
+    mk X⋆ = ⟨X⟩⋆ := rfl
 
 open TwistedCategory
 
@@ -404,7 +413,7 @@ lemma projectObj_of_map' (m : C → D) : ∀ (X : T C),
     X.projectObj (fun c ↦ (of (m c))) =
       ⟨X.map m⟩ := by
   intro X
-  induction X using FreeTwistedCategory.recOn' <;> simp_all <;> rfl
+  induction X using FreeTwistedCategory.recOn' <;> simp_all ; rfl
 
 end
 

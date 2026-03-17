@@ -56,14 +56,6 @@ macro "extract_right" : tactic =>
     ))
   )
 
--- TODO find a better name and place for these
-@[simp]
-lemma mysimpthingy {X Y : T C} : FreeTwistedCategoryQuiver.mk (X ⊗ Y) =
-    (FreeTwistedCategoryQuiver.mk X) ⊗ (FreeTwistedCategoryQuiver.mk Y) := rfl
-@[simp]
-lemma mysimpthingy' {X : T C} :
-    FreeTwistedCategoryQuiver.mk X⋆ = (FreeTwistedCategoryQuiver.mk X)⋆ := rfl
-
 set_option maxHeartbeats 1000000 in -- the simp_all takes a lot of work
 def fromNat : (N C) ⥤ (TQ C) where
   obj X := ⟨X.as⟩
@@ -87,7 +79,7 @@ def fromNat : (N C) ⥤ (TQ C) where
     case layer X Y l₁ l₂ x =>
       clear f g
       induction x <;> simp_all
-      any_goals simp [involutiveComp, mysimpthingy]
+      any_goals simp [involutiveComp]
       case freeLeft L₁ L₂ X Y s x R l =>
         rw [← whisker_assoc_assoc]
         extract_right
@@ -160,7 +152,7 @@ def fromNat : (N C) ⥤ (TQ C) where
         apply congrArg
         simp
         rw [twist_inv_naturality_assoc]
-        simp [repeat_star_succ,  mysimpthingy']
+        simp [repeat_star_succ]
         rw [twist_inv_naturality]
         simp
       case ε_inv =>
@@ -170,7 +162,7 @@ def fromNat : (N C) ⥤ (TQ C) where
         apply congrArg
         simp
         rw [twist_inv_naturality_assoc]
-        simp [repeat_star_succ,  mysimpthingy']
+        simp [repeat_star_succ]
         rw [twist_inv_naturality_assoc]
         simp
   map_comp := by

@@ -154,9 +154,9 @@ def embedMap {X Y : T C} : (X ⟶T Y) → (FreeTwistedCategoryQuiver.mk X ⟶ �
     | tensorHom_comp_tensorHom =>
       dsimp only [embedMapAux]; rw [MonoidalCategory.tensorHom_comp_tensorHom]
     | whiskerLeft_id =>
-        dsimp only [embedMapAux]; simp; rfl
+        dsimp only [embedMapAux]; simp
     | id_whiskerRight =>
-        dsimp only [embedMapAux]; simp; rfl
+        dsimp only [embedMapAux]; simp
     | associator_naturality =>
         dsimp only [embedMapAux]; rw [MonoidalCategory.associator_naturality]
     | ρ_naturality f =>
