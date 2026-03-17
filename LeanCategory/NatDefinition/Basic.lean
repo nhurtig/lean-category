@@ -23,47 +23,6 @@ open MonoidalCategory
 open InvolutiveCategory -- for the ⋆ notation
 open TwistedCategory -- why not
 
-macro "pure_iso_step_forwards" : tactic =>
-  `(tactic|
-    first
-      | exact 𝟙 _
-      | refine ?_ ▷ _
-      | refine _ ◁ ?_
-      | refine (α_ _ _ _).inv ≫ ?_
-      | refine ?_ ≫ (α_ _ _ _).hom
-      | refine (λ_ _).hom ≫ ?_
-      | refine ?_ ≫ (λ_ _).inv
-      | refine (ρ_ _).hom ≫ ?_
-      | refine ?_ ≫ (ρ_ _).inv
-      | refine (χ_ _ _).inv ≫ ?_
-      | refine ?_ ≫ (χ_ _ _).hom
-      | fail "IDK what to do"
-  )
-
--- associator is reversed here
-macro "pure_iso_step_backwards" : tactic =>
-  `(tactic|
-    first
-      | exact 𝟙 _
-      | refine ?_ ▷ _
-      | refine _ ◁ ?_
-      | refine (α_ _ _ _).hom ≫ ?_
-      | refine ?_ ≫ (α_ _ _ _).inv
-      | refine (λ_ _).hom ≫ ?_
-      | refine ?_ ≫ (λ_ _).inv
-      | refine (ρ_ _).hom ≫ ?_
-      | refine ?_ ≫ (ρ_ _).inv
-      | refine (χ_ _ _).inv ≫ ?_
-      | refine ?_ ≫ (χ_ _ _).hom
-      | fail "IDK what to do"
-  )
-
--- the tactic equivalent of smacking a TV to see if that fixes it
-macro "pure_iso" : tactic =>
-  `(tactic|
-      ((repeat pure_iso_step_forwards) ; (repeat pure_iso_step_backwards))
-  )
-
 open MonoidalCategory
 
 @[simp]
@@ -114,13 +73,13 @@ inductive HomEquiv : ∀ {X Y : (N C)}, (X ⟶n Y) → (X ⟶n Y) → Prop where
   -- the paper's rules
   | swap : HomEquiv
       ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, M ⊗ (X₂^⋆s₂) ⊗ R⟩).comp
-        ((Hom.braid (by pure_iso)).comp
+        ((Hom.braid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)).comp
         ((Hom.layer ⟨(L ⊗ (Y₁^⋆s₁)) ⊗ M, X₂, Y₂, s₂, x₂, R⟩))))
-      ((Hom.braid <| by pure_iso).comp
+      ((Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp
         ((Hom.layer ⟨(L ⊗ (X₁^⋆s₁)) ⊗ M, X₂, Y₂, s₂, x₂, R⟩).comp
-          ((Hom.braid <| by pure_iso).comp
+          ((Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp
             ((Hom.layer ⟨L, X₁, Y₁, s₁, x₁, M ⊗ (Y₂^⋆s₂) ⊗ R⟩).comp
-              (Hom.braid <| by pure_iso)))))
+              (Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)))))
   | layer (f : l₁ ⟶l l₂) : HomEquiv
       (Hom.layer l₁)
       ((Hom.braid <| f.φ .Bottom).comp <|
@@ -376,15 +335,15 @@ lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶T X.as} {f : X ⟶ Y} {b₂ : Y
   exact h
 
 def HomEquiv.swap_coherent {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _}
-    (hx : x = (by pure_iso)) :
+    (hx : x = (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) :
       (mkLayer L s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R)) ≫
         (mkBraid x) ≫
           (mkLayer ((L ⊗ (Y₁^⋆s₁)) ⊗ M) s₂ x₂ R) =
-      (mkBraid (by pure_iso)) ≫
+      (mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) ≫
         (mkLayer ((L ⊗ (X₁^⋆s₁)) ⊗ M) s₂ x₂ R) ≫
-          (mkBraid (by pure_iso)) ≫
+          (mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) ≫
             (mkLayer L s₁ x₁ (M ⊗ (Y₂^⋆s₂) ⊗ R)) ≫
-              (mkBraid (by pure_iso)) := by
+              (mkBraid (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) := by
   rw [hx]
   clear x hx
   simp_all
@@ -395,15 +354,15 @@ def HomEquiv.swap_coherent {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y�
   rw [hrw]
 
 def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _}
-    (hx : x = (by pure_iso)) :
+    (hx : x = (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) :
       (mkLayer L (s₁ + 1) x₁ (M ⊗ (X₂^⋆s₂)⋆ ⊗ R)) ≫
         (mkBraid x) ≫
           (mkLayer ((L ⊗ (Y₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) =
-      (mkBraid (by pure_iso)) ≫
+      (mkBraid (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) ≫
         (mkLayer ((L ⊗ (X₁^⋆s₁)⋆) ⊗ M) (s₂ + 1) x₂ R) ≫
-          (mkBraid (by pure_iso)) ≫
+          (mkBraid (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) ≫
             (mkLayer L (s₁ + 1) x₁ (M ⊗ (Y₂^⋆s₂)⋆ ⊗ R)) ≫
-              (mkBraid (by pure_iso)) := by
+              (mkBraid (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) := by
   rw [hx]
   clear x hx
   simp_all
@@ -413,24 +372,6 @@ def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂
   simp at hrw
   simp [repeat_star_succ] at hrw ⊢
   rw [hrw]
-
-/- macro "handle_braid_step" : tactic => -/
-/-   `(tactic| -/
-/-     first -/
-/-       | rfl -- just non-pures -/
-/-       | apply congrArg₂ _ rfl -- starting w/ impure -/
-/-        -- f = f ≫ pure-coherent: -/
-/-       | (apply Eq.trans ((Category.comp_id _).symm) ; apply congrArg₂ _ rfl) -/
-/-       | liftable_prefixes; apply congrArg₂ _ (by inv_coherence) -- starting w/ Braid -/
-/-       | inv_coherence -- just braids -/
-/-       | fail "IDK what to do -- braid step") -/
-
--- call on braids, not mkBraid of the braids
-/- macro "handle_braid" : tactic => -/
-/-   `(tactic| -/
-/-     first -/
-/-       | simp [involutiveComp, repeat_star_succ]; done -/
-/-       | (try simp [involutiveComp, repeat_star_succ]); repeat1 handle_braid_step) -/
 
 macro "nat_coherence_step" : tactic =>
   `(tactic|

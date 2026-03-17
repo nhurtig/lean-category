@@ -71,6 +71,7 @@ def fromNat : (N C) ⥤ (TQ C) where
     rintro f g h
     induction h <;> simp_all -- 10 goals. 2 (swap, layer) are nontrivial
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
+      simp [involutiveComp]
       -- manualy swap the layers by working them through the associators:
       repeat1 rw [← MonoidalCategory.whiskerLeft_comp_assoc]
       repeat1 rw [Category.assoc]
