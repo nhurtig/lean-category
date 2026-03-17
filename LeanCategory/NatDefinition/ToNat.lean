@@ -51,5 +51,10 @@ def mapQuiver {X Y : T C} (x : X ⟶ Y) :
     exact _ ◁ (ρ_ _).hom ≫ (λ_ _).hom
 
 def toNat : TQ C ⥤ N C := project (C := C) (D := N C) mkObj mapQuiver
+
+@[simp] lemma toNat_map_whiskerLeft {X Y : T C} (f : X ⟶ Y) (Z : T C) :
+    toNat.map (f ◁ Z) = (toNat.map f) ◁ (toNat.map Z) := by
+  simp [toNat, mapQuiver]
+
 end CategoryTheory.NatDefinition
 

@@ -194,6 +194,18 @@ def fromNat : (N C) ⥤ (TQ C) where
   induction g using Quotient.inductionOn
   simp
   rfl
+/- @[simp] lemma fromNat_map_whiskerLeft {X Y : N C} (f : X ⟶ Y) (Z : N C) : -/
+/-     fromNat.map (Z ◁ f) = (fromNat.obj Z) ◁ (fromNat.map f) := by -/
+/-   unfold fromNat -/
+/-   unfold MonoidalCategoryStruct.whiskerLeft -/
+/-   unfold instMonoidalCategory -/
+/-   unfold FreeTwistedCategoryQuiver.instMonoidalCategory -/
+/-   unfold whiskerLeft -/
+/-   simp -/
+/-   induction f using Quotient.inductionOn -/
+/-   rename_i f -/
+/-   simp -/
+/-   induction f <;> simp_all -/
 
 end CategoryTheory.NatDefinition
 

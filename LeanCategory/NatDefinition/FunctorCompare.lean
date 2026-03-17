@@ -21,7 +21,7 @@ lemma its_just_mkObj' (X : TQ C) : FreeTwistedCategoryQuiver.projectObj mkObj X 
 
 open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
-theorem comp_eq : toNat ⋙ fromNat = 𝟭 (TQ C) := by
+theorem comp_eq : toNat ⋙  fromNat = 𝟭 (TQ C) := by
   apply CategoryTheory.Functor.ext
   case h_obj =>
     intros X
@@ -35,6 +35,12 @@ theorem comp_eq : toNat ⋙ fromNat = 𝟭 (TQ C) := by
     rename_i f
     simp
     induction f <;> try simp_all
+    /- case whiskerLeft f ih => -/
+    /-   unfold toNat project at ⊢ ih -/
+    /-   simp at ⊢ ih -/
+    /-   unfold fromNat -/
+    /-   simp -/
+    /-   sorry -/
     all_goals sorry
 
 variable {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D]
