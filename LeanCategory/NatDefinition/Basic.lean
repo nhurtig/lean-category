@@ -414,39 +414,39 @@ def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂
   simp [repeat_star_succ] at hrw ⊢
   rw [hrw]
 
-macro "handle_braid_step" : tactic =>
-  `(tactic|
-    first
-      | rfl -- just non-pures
-      | apply congrArg₂ _ rfl -- starting w/ impure
-       -- f = f ≫ pure-coherent:
-      | (apply Eq.trans ((Category.comp_id _).symm) ; apply congrArg₂ _ rfl)
-      | liftable_prefixes; apply congrArg₂ _ (by coherence) -- starting w/ Braid
-      | coherence -- just braids
-      | fail "IDK what to do -- braid step")
+/- macro "handle_braid_step" : tactic => -/
+/-   `(tactic| -/
+/-     first -/
+/-       | rfl -- just non-pures -/
+/-       | apply congrArg₂ _ rfl -- starting w/ impure -/
+/-        -- f = f ≫ pure-coherent: -/
+/-       | (apply Eq.trans ((Category.comp_id _).symm) ; apply congrArg₂ _ rfl) -/
+/-       | liftable_prefixes; apply congrArg₂ _ (by inv_coherence) -- starting w/ Braid -/
+/-       | inv_coherence -- just braids -/
+/-       | fail "IDK what to do -- braid step") -/
 
 -- call on braids, not mkBraid of the braids
-macro "handle_braid" : tactic =>
-  `(tactic|
-    first
-      | simp [involutiveComp, repeat_star_succ]; done
-      | (try simp [involutiveComp, repeat_star_succ]); repeat1 handle_braid_step)
+/- macro "handle_braid" : tactic => -/
+/-   `(tactic| -/
+/-     first -/
+/-       | simp [involutiveComp, repeat_star_succ]; done -/
+/-       | (try simp [involutiveComp, repeat_star_succ]); repeat1 handle_braid_step) -/
 
-macro "my_coherence_step" : tactic =>
+macro "nat_coherence_step" : tactic =>
   `(tactic|
     first
-      | rfl -- just Layer
-      | apply congrArg₂ _ (congrArg _ (by handle_braid)) -- starting w/ Braid
-      | apply congrArg₂ _ rfl -- starting w/ Layer
-      | apply congrArg _ <| by handle_braid -- just Braid
+      | rfl -- just mkLayer
+      | apply congrArg₂ _ (congrArg _ (by inv_coherence)) -- starting w/ mkBraid
+      | apply congrArg₂ _ rfl -- starting w/ mkLayer
+      | apply congrArg _ <| by inv_coherence -- just mkBraid
       | fail "IDK what to do"
   )
 
-macro "my_coherence" : tactic =>
+macro "nat_coherence" : tactic =>
   `(tactic|
     first
       | simp [involutiveComp, repeat_star_succ]; done
-      | (try simp [involutiveComp, repeat_star_succ]); repeat1 my_coherence_step
+      | (try simp [involutiveComp, repeat_star_succ]); repeat1 nat_coherence_step
   )
 
 open Layer
@@ -466,36 +466,36 @@ def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁
         have ih₁ := stripBraid ih₁
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
-        my_coherence
+        nat_coherence
       all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_left (X.as ◁ b)]
-        my_coherence
+        nat_coherence
       case freeRight b =>
         rw [braid_conjugation_right b]
-        my_coherence
+        nat_coherence
       case box_strand_hom =>
         rw [box_strand_hom_conjugation]
-        my_coherence
+        nat_coherence
       case box_strand_inv L X' Y s R A x =>
         rw [box_strand_inv_conjugation]
-        my_coherence
+        nat_coherence
       case strand_box_hom =>
         rw [strand_box_hom_conjugation]
-        my_coherence
+        nat_coherence
       case strand_box_inv =>
         rw [strand_box_inv_conjugation]
-        my_coherence
+        nat_coherence
       case twist_hom =>
         rw [twist_hom_conjugation]
-        my_coherence
+        nat_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
-        my_coherence
+        nat_coherence
       case ε_hom =>
-        my_coherence
+        nat_coherence
       case ε_inv =>
-        my_coherence
+        nat_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
       rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
       simp
@@ -506,10 +506,10 @@ def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁
         apply congrArg (· ≫ _)
         · simp
           apply HomEquiv.swap_coherent
-          handle_braid
+          inv_coherence
       simp
       rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
-      my_coherence
+      nat_coherence
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor Y ⟶ X₂.tensor Y) := --by
@@ -525,36 +525,36 @@ def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor 
         have ih₁ := stripBraid ih₁
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
-        my_coherence
+        nat_coherence
       all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_left b]
-        my_coherence
+        nat_coherence
       case freeRight b =>
         rw [braid_conjugation_right (b ▷ Y.as)]
-        my_coherence
+        nat_coherence
       case box_strand_hom =>
         rw [box_strand_hom_conjugation]
-        my_coherence
+        nat_coherence
       case box_strand_inv L X' Y s R A x =>
         rw [box_strand_inv_conjugation]
-        my_coherence
+        nat_coherence
       case strand_box_hom =>
         rw [strand_box_hom_conjugation]
-        my_coherence
+        nat_coherence
       case strand_box_inv =>
         rw [strand_box_inv_conjugation]
-        my_coherence
+        nat_coherence
       case twist_hom =>
         rw [twist_hom_conjugation]
-        my_coherence
+        nat_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
-        my_coherence
+        nat_coherence
       case ε_hom =>
-        my_coherence
+        nat_coherence
       case ε_inv =>
-        my_coherence
+        nat_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
       rewrite [braid_conjugation_right (_ ◁ (α_ _ _ _).hom)]
       simp
@@ -565,10 +565,10 @@ def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor 
         apply congrArg (· ≫ _)
         · simp
           apply HomEquiv.swap_coherent
-          handle_braid
+          inv_coherence
       simp
       rewrite [braid_conjugation_right (_ ◁ (α_ _ _ _).inv)]
-      my_coherence
+      nat_coherence
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
@@ -584,37 +584,37 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
         have ih₁ := stripBraid ih₁
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
-        my_coherence
+        nat_coherence
       all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_right b⋆]
         simp_all
-        my_coherence
+        nat_coherence
       case freeRight b =>
         rw [braid_conjugation_left b⋆]
-        my_coherence
+        nat_coherence
       case box_strand_hom =>
         rw [strand_box_hom_conjugation]
-        my_coherence
+        nat_coherence
       case box_strand_inv L X' Y s R A x =>
         rw [strand_box_inv_conjugation]
-        my_coherence
+        nat_coherence
       case strand_box_hom =>
         rw [box_strand_hom_conjugation]
-        my_coherence
+        nat_coherence
       case strand_box_inv =>
         rw [box_strand_inv_conjugation]
-        my_coherence
+        nat_coherence
       case twist_hom =>
         rw [twist_hom_conjugation_forced]
-        my_coherence
+        nat_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
-        my_coherence
+        nat_coherence
       case ε_hom L X Y s x R =>
-        my_coherence
+        nat_coherence
       case ε_inv =>
-        my_coherence
+        nat_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
       symm
       rewrite [braid_conjugation_left ((χ_ _ _).inv ▷ _)]
@@ -627,10 +627,10 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
         apply congrArg (· ≫ _)
         · simp
           apply HomEquiv.swap_coherent_starred
-          handle_braid
+          inv_coherence
       rewrite [braid_conjugation_left ((χ_ _ _).hom ▷ _)]
       rewrite [braid_conjugation_right (_ ◁ (χ_ _ _).hom)]
-      my_coherence
+      nat_coherence
 
 end CategoryTheory.NatDefinition
 

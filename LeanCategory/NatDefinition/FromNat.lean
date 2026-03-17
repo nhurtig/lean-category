@@ -56,31 +56,37 @@ macro "extract_right" : tactic =>
     ))
   )
 
-
 -- TODO find a better name and place for these
+@[simp]
 lemma mysimpthingy {X Y : T C} : FreeTwistedCategoryQuiver.mk (X ⊗ Y) =
     (FreeTwistedCategoryQuiver.mk X) ⊗ (FreeTwistedCategoryQuiver.mk Y) := rfl
+@[simp]
 lemma mysimpthingy' {X : T C} :
     FreeTwistedCategoryQuiver.mk X⋆ = (FreeTwistedCategoryQuiver.mk X)⋆ := rfl
 
+set_option maxHeartbeats 1000000 in -- the simp_all takes a lot of work
 def fromNat : (N C) ⥤ (TQ C) where
   obj X := ⟨X.as⟩
   map := _root_.Quotient.lift Hom.fromNat <| by
     rintro f g h
     induction h <;> simp_all -- 10 goals. 2 (swap, layer) are nontrivial
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
+      -- manualy swap the layers by working them through the associators:
+      repeat1 rw [← MonoidalCategory.whiskerLeft_comp_assoc]
+      repeat1 rw [Category.assoc]
+      rw [MonoidalCategory.associator_naturality_left_assoc]
+      rw [MonoidalCategory.associator_naturality_left_assoc]
       rw [MonoidalCategory.associator_inv_naturality_middle_assoc]
-      simp only [mysimpthingy]
-      rw [MonoidalCategory.associator_inv_naturality_left_assoc]
       rw [← MonoidalCategory.whisker_exchange]
+      simp
       -- it's moved! The layers are in the same positions.
       -- b/c monoidal categories are thin, the stuff between
       -- the layers must be the same.
-      simp
+      inv_coherence
     case layer X Y l₁ l₂ x =>
       clear f g
       induction x <;> simp_all
-      all_goals simp [involutiveComp, mysimpthingy]
+      any_goals simp [involutiveComp, mysimpthingy]
       case freeLeft L₁ L₂ X Y s x R l =>
         rw [← whisker_assoc_assoc]
         extract_right
@@ -172,27 +178,6 @@ def fromNat : (N C) ⥤ (TQ C) where
   map_id := by
     rintro _
     rfl
-
-@[simp] lemma fromNat_map_id (X : N C) : fromNat.map (𝟙 X) = 𝟙 (fromNat.obj X) := rfl
-@[simp] lemma fromNat_map_comp {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    fromNat.map (f ≫ g) = (fromNat.map f) ≫ (fromNat.map g) := by
-  unfold fromNat
-  induction f using Quotient.inductionOn
-  induction g using Quotient.inductionOn
-  simp
-  rfl
-/- @[simp] lemma fromNat_map_whiskerLeft {X Y : N C} (f : X ⟶ Y) (Z : N C) : -/
-/-     fromNat.map (Z ◁ f) = (fromNat.obj Z) ◁ (fromNat.map f) := by -/
-/-   unfold fromNat -/
-/-   unfold MonoidalCategoryStruct.whiskerLeft -/
-/-   unfold instMonoidalCategory -/
-/-   unfold FreeTwistedCategoryQuiver.instMonoidalCategory -/
-/-   unfold whiskerLeft -/
-/-   simp -/
-/-   induction f using Quotient.inductionOn -/
-/-   rename_i f -/
-/-   simp -/
-/-   induction f <;> simp_all -/
 
 end CategoryTheory.NatDefinition
 

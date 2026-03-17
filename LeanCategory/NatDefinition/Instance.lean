@@ -21,7 +21,7 @@ lemma whiskerLeft_mkLayer {X : N C} : whiskerLeft X (mkLayer L s x R) =
   unfold whiskerLeft mkLayer
   rw [Quotient.liftOn_mk]
   simp
-  my_coherence
+  nat_coherence
 
 @[simp]
 lemma whiskerLeft_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C),
@@ -139,6 +139,7 @@ lemma starHom_id : ∀ (X : N C), starHom (𝟙 X) = 𝟙 X.star := by
   rw [Quotient.liftOn_mk]
   simp
 
+set_option maxHeartbeats 10000000 in -- big simp_all
 @[reassoc]
 lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
     whiskerRight f Y ≫ whiskerLeft X g = whiskerLeft W g ≫ whiskerRight f Z := by
@@ -162,15 +163,15 @@ lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
       apply congrArg (· ≫ _)
       repeat rewrite [Category.assoc]
       · apply HomEquiv.swap_coherent
-        handle_braid
+        inv_coherence
     simp
     rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
-    my_coherence
+    nat_coherence
   case braid.layer b l =>
     rw [braid_conjugation_left (b ▷ _)]
     simp_all
-    my_coherence_step
-    my_coherence_step
+    nat_coherence_step
+    nat_coherence_step
     -- need to cancel the stuff between the b's:
     apply congrArg
     symm
@@ -181,8 +182,8 @@ lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
   case layer.braid l b =>
     rw [braid_conjugation_right (_ ◁ b)]
     simp_all
-    my_coherence_step
-    my_coherence_step
+    nat_coherence_step
+    nat_coherence_step
     -- need to cancel the stuff between the b's:
     apply congrArg
     simp [involutiveComp]
@@ -298,7 +299,7 @@ lemma leftUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
     simp
   case layer l =>
     rcases l with ⟨L, X, Y, s, x, R⟩
-    my_coherence
+    nat_coherence
 
 @[reassoc]
 lemma rightUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
@@ -314,7 +315,7 @@ lemma rightUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
     rw [ih₁]
     simp
   case layer l =>
-    my_coherence
+    nat_coherence
 
 @[reassoc]
 lemma associator_naturality_right : ∀ {X Y Z : N C} (h : Z ⟶ Z'),
@@ -326,7 +327,7 @@ lemma associator_naturality_right : ∀ {X Y Z : N C} (h : Z ⟶ Z'),
   induction h <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    my_coherence
+    nat_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
@@ -342,7 +343,7 @@ lemma associator_naturality_middle : ∀ {X Y Z : N C} (g : Y ⟶ Y'),
   induction g <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    my_coherence
+    nat_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
@@ -358,7 +359,7 @@ lemma associator_naturality_left : ∀ {X Y Z : N C} (f : X ⟶ X'),
   induction f <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    my_coherence
+    nat_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
@@ -416,12 +417,12 @@ lemma involutor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
     simp
   case layer l =>
     cases l
-    my_coherence_step
-    simp_all
+    simp_all [involutiveComp]
+    nat_coherence_step
     symm
     apply Eq.trans (Category.comp_id _).symm
-    my_coherence_step
-    my_coherence_step
+    nat_coherence_step
+    nat_coherence_step
 
 @[reassoc]
 lemma skewator_naturality_right : ∀ {X Y Y' : N C} (f : Y ⟶ Y'),
@@ -433,7 +434,7 @@ lemma skewator_naturality_right : ∀ {X Y Y' : N C} (f : Y ⟶ Y'),
   induction f <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    my_coherence
+    nat_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
@@ -449,7 +450,7 @@ lemma skewator_naturality_left : ∀ {X X' Y : N C} (f : X ⟶ X'),
   induction f <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    my_coherence
+    nat_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
@@ -464,7 +465,7 @@ lemma starHom_whiskerLeft : ∀ {X Y : N C} (f : X ⟶ Y) (Z : N C),
   rename_i f
   unfold starHom whiskerLeft
   simp
-  induction f <;> simp_all ; my_coherence
+  induction f <;> simp_all ; nat_coherence
 
 @[simp, reassoc (attr := simp)]
 lemma starHom_whiskerRight : ∀ {Y Y' : N C} (f : Y ⟶ Y') (Z : N C),
@@ -475,7 +476,7 @@ lemma starHom_whiskerRight : ∀ {Y Y' : N C} (f : Y ⟶ Y') (Z : N C),
   rename_i f
   unfold starHom whiskerRight
   simp
-  induction f <;> simp_all ; my_coherence
+  induction f <;> simp_all ; nat_coherence
 
 lemma skewator_naturality : ∀ {X X' Y Y' : N C} (f : X ⟶ X') (g : Y ⟶ Y'),
     tensorHom (starHom f) (starHom g) ≫ mkBraid (χ_ X'.as Y'.as).hom =
@@ -639,12 +640,12 @@ lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
     repeat1 rw [Category.assoc]
     rw [← twist_naturality]
     simp
-    handle_braid_step
+    inv_coherence_step
     (repeat1 rw [← whiskerLeft_comp_assoc]); rw [← MonoidalCategory.whisker_exchange]; simp
     rw [← MonoidalCategory.associator_naturality_right_assoc]
     rw [← MonoidalCategory.whisker_exchange_assoc]
     simp
-    handle_braid_step
+    inv_coherence_step
     rw [← MonoidalCategory.associator_inv_naturality_left_assoc]
     rw [MonoidalCategory.whisker_exchange_assoc]
     rw [MonoidalCategory.whisker_exchange_assoc]
@@ -654,28 +655,28 @@ lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
     repeat1 rw [Category.assoc]
     rw [← twist_naturality]
     simp
-    handle_braid_step
-    handle_braid_step
-    handle_braid_step
-    handle_braid_step
-    handle_braid_step
-    handle_braid_step
-    handle_braid_step
+    inv_coherence_step
+    inv_coherence_step
+    inv_coherence_step
+    inv_coherence_step
+    inv_coherence_step
+    inv_coherence_step
+    inv_coherence_step
     rw [← whiskerLeft_comp_assoc]; rw [← MonoidalCategory.comp_whiskerRight]; simp
-  my_coherence_step
+  nat_coherence_step
   apply congrArg
   rw [twist_triple_inv]
   unfold braid
   simp [MonoidalCategory.tensorHom_def, repeat_star_succ]
   rw [← whiskerLeft_comp_assoc]; rw [← comp_whiskerRight]; simp
-  handle_braid_step
-  handle_braid_step
+  inv_coherence_step
+  inv_coherence_step
   rw [MonoidalCategory.associator_naturality_left_assoc]
   rw [← MonoidalCategory.whisker_exchange_assoc]
   simp
-  handle_braid_step
-  handle_braid_step
-  handle_braid_step
+  inv_coherence_step
+  inv_coherence_step
+  inv_coherence_step
   rw [← MonoidalCategory.associator_naturality_middle_assoc]
   rw [← comp_whiskerRight_assoc]
   rw [← MonoidalCategory.whisker_exchange]
@@ -693,8 +694,8 @@ lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
   repeat1 rw [← comp_whiskerRight_assoc]
   rw [← twist_inv_naturality]
   simp
-  handle_braid_step
-  handle_braid_step
+  inv_coherence_step
+  inv_coherence_step
   repeat1 rw [← MonoidalCategory.associator_naturality_middle_assoc]
   repeat1 rw [← comp_whiskerRight_assoc]
   repeat1 rw [Category.assoc]
@@ -707,15 +708,15 @@ lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
   repeat1 rw [← comp_whiskerRight_assoc]
   rw [← twist_inv_naturality]
   simp
-  handle_braid_step
+  inv_coherence_step
   rw [← MonoidalCategory.associator_naturality_right]
   rw [← MonoidalCategory.whisker_exchange_assoc]
   rw [← MonoidalCategory.whisker_exchange_assoc]
   simp
-  handle_braid_step
-  handle_braid_step
-  handle_braid_step
-  handle_braid_step
+  inv_coherence_step
+  inv_coherence_step
+  inv_coherence_step
+  inv_coherence_step
   rw [← associator_inv_naturality_left_assoc]
   rw [MonoidalCategory.whisker_exchange_assoc]
   simp
@@ -740,12 +741,7 @@ lemma twist_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
     simp
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    simp_all
-    my_coherence_step
-    symm
-    apply Eq.trans (Category.comp_id _).symm
-    my_coherence_step
-    my_coherence_step
+    simp_all [involutiveComp]
   case braid =>
     rw [TwistedCategory.twist_naturality]
 

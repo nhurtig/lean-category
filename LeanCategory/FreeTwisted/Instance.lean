@@ -68,9 +68,9 @@ inductive HomEquiv : ∀ {X Y : T C}, (X ⟶t Y) → (X ⟶t Y) → Prop
 instance setoidHom (X Y : T C) : Setoid (X ⟶t Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
-macro "coherence" : tactic =>
+macro "pure_inv_coherence" : tactic =>
   `(tactic|
-    (intros; apply _root_.Quotient.sound; apply HomEquiv.coherence <;> repeat' constructor)
+    (intros; apply _root_.Quotient.sound; constructor <;> repeat' constructor)
   )
 
 instance : Category.{u, u} (T C) where
@@ -100,35 +100,35 @@ instance : MonoidalCategory (T C) where
   associator := fun X Y Z ↦ {
     hom := ⟦Hom.α_hom X Y Z⟧
     inv := ⟦Hom.α_inv X Y Z⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   leftUnitor := fun X ↦ {
     hom := ⟦Hom.l_hom X⟧
     inv := ⟦Hom.l_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   rightUnitor := fun X ↦ {
     hom := ⟦Hom.ρ_hom X⟧
     inv := ⟦Hom.ρ_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   whiskerLeft_id := by intros; apply _root_.Quotient.sound; constructor
   id_whiskerRight := by intros; apply _root_.Quotient.sound; constructor
   tensorHom_def := by
     rintro X₁ Y₁ X₂ Y₂ ⟨f⟩ ⟨g⟩
     apply _root_.Quotient.sound; constructor
-  id_tensorHom_id := by coherence
+  id_tensorHom_id := by pure_inv_coherence
   tensorHom_comp_tensorHom := by
     rintro _ _ _ _ _ _ ⟨f₁⟩ ⟨f₂⟩ ⟨g₁⟩ ⟨g₂⟩; apply _root_.Quotient.sound; constructor
   associator_naturality := by
     rintro _ _ _ _ _ _ ⟨f⟩ ⟨g⟩ ⟨h⟩; apply _root_.Quotient.sound; constructor
   leftUnitor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
   rightUnitor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
-  pentagon := by coherence
-  triangle := by coherence
+  pentagon := by pure_inv_coherence
+  triangle := by pure_inv_coherence
 
 instance : InvolutiveCategoryStruct (T C) where
   starObj := .star
@@ -136,14 +136,14 @@ instance : InvolutiveCategoryStruct (T C) where
   skewator := fun X Y ↦ {
     hom := ⟦Hom.χ_hom X Y⟧
     inv := ⟦Hom.χ_inv X Y⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   involutor := fun X ↦ {
     hom := ⟦Hom.ε_hom X⟧
     inv := ⟦Hom.ε_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
 
 open InvolutiveCategory
@@ -200,7 +200,7 @@ lemma coherence_Pure {X Y : T C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
     exists Hom.ε_inv _
 
 instance : InvolutiveCategory (T C) where
-  starHom_id := by coherence
+  starHom_id := by pure_inv_coherence
   starHom_comp_starHom := by rintro _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
   skewator_naturality := by rintro _ _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
   involutor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor

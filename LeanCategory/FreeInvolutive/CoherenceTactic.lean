@@ -128,6 +128,25 @@ elab (name := liftable_prefixes) "liftable_prefixes" : tactic => do
     (simp -failIfUnchanged only
       [assoc_liftHom, Mathlib.Tactic.BicategoryCoherence.assoc_liftHom₂])))
 
+macro "inv_coherence_step" : tactic =>
+  `(tactic|
+    first
+      | rfl -- handles just impure, identical morphisms
+      | apply congrArg₂ _ rfl -- starting w/ impure, identical morphisms
+       -- edge case: f = f ≫ pure-coherent-ends-up-being-id:
+      | (apply Eq.trans ((Category.comp_id _).symm) ; apply congrArg₂ _ rfl)
+      | liftable_prefixes; apply congrArg₂ _ (by pure_inv_coherence) -- starting w/ pure stuff
+      | pure_inv_coherence -- just pure stuff
+      | fail "IDK what to do"
+  )
+
+macro "inv_coherence" : tactic =>
+  `(tactic|
+    first
+      | simp; done
+      | (try simp); repeat1 inv_coherence_step
+  )
+
 end Coherence
 
 end CategoryTheory.InvolutiveCategory
