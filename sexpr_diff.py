@@ -119,7 +119,7 @@ def compare_trees(a, b, holes, path=""):
 
 def main():
     if len(sys.argv) != 3:
-        print("Usage: python sexp_compare.py file1 file2")
+        print("Usage: python sexpr_diff.py file1 file2")
         sys.exit(1)
     with open(sys.argv[1]) as f1, open(sys.argv[2]) as f2:
         s1 = f1.read()
