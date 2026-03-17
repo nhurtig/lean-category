@@ -1,9 +1,8 @@
 import LeanCategory.Basic
 import LeanCategory.FreeInvolutive.CoherenceTactic
-import LeanCategory.FreeInvolutive.InvolutiveComp
 import LeanCategory.FreeInvolutive.Functor
 import LeanCategory.FreeTwisted.Functor
 import LeanCategory.FreeTwistedQuiver.Functor
 import LeanCategory.NatDefinition.Layer
-import LeanCategory.NatDefinition.FunctorCompare
+import LeanCategory.FunctorCompare
 

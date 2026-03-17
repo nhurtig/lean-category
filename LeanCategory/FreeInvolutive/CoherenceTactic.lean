@@ -1,9 +1,9 @@
 import Mathlib
 import LeanCategory.FreeInvolutive.Instance
 import LeanCategory.FreeInvolutive.Functor
-import LeanCategory.FreeInvolutive.InvolutiveComp
+import LeanCategory.InvolutiveComp
 
-universe v u
+universe u v
 
 open CategoryTheory FreeInvolutiveCategory
 
@@ -16,8 +16,6 @@ noncomputable section lifting
 
 variable [MonoidalCategory C] [InvolutiveCategory C]
 
-/-- A typeclass carrying a choice of lift of an object from `C` to `FreeMonoidalCategory C`.
-It must be the case that `projectObj id (LiftObj.lift x) = x` by defeq. -/
 class LiftObj (X : C) where
   protected lift : I C
 
@@ -31,8 +29,6 @@ instance LiftObj_star (X : C) [LiftObj X] : LiftObj X⋆ where
 
 instance (priority := 100) LiftObj_of (X : C) : LiftObj X := ⟨of X⟩
 
-/-- A typeclass carrying a choice of lift of a morphism from `C` to `FreeMonoidalCategory C`.
-It must be the case that `projectMap id _ _ (LiftHom.lift f) = f` by defeq. -/
 class LiftHom {X Y : C} [LiftObj X] [LiftObj Y] (f : X ⟶ Y) where
   protected lift : LiftObj.lift X ⟶ LiftObj.lift Y
 
@@ -94,27 +90,12 @@ end lifting
 
 open Lean Meta Elab Tactic
 
-/--
-Auxiliary simp lemma for the `coherence` tactic:
-this moves brackets to the left in order to expose a maximal prefix
-built out of unitors and associators.
--/
--- We have unused typeclass arguments here.
--- They are intentional, to ensure that `simp only [assoc_LiftHom]` only left associates
--- monoidal structural morphisms.
 @[nolint unusedArguments]
 lemma assoc_liftHom {W X Y Z : C} [LiftObj W] [LiftObj X] [LiftObj Y]
     (f : W ⟶ X) (g : X ⟶ Y) (h : Y ⟶ Z) [LiftHom f] [LiftHom g] :
     f ≫ (g ≫ h) = (f ≫ g) ≫ h :=
   (Category.assoc _ _ _).symm
 
-/--
-Internal tactic used in `coherence`.
-
-Rewrites an equation `f = g` as `f₀ ≫ f₁ = g₀ ≫ g₁`,
-where `f₀` and `g₀` are maximal prefixes of `f` and `g` (possibly after reassociating)
-which are "liftable" (i.e. expressible as compositions of unitors and associators).
--/
 elab (name := liftable_prefixes) "liftable_prefixes" : tactic => do
   withOptions (fun opts => synthInstance.maxSize.set opts
     (max 256 (synthInstance.maxSize.get opts))) do

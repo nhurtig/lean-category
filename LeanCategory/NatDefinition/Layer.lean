@@ -1,5 +1,5 @@
 import Mathlib
-import LeanCategory.FreeInvolutive.InvolutiveComp
+import LeanCategory.InvolutiveComp
 import LeanCategory.FreeTwisted.Instance
 import LeanCategory.NatDefinition.Base
 
