@@ -88,11 +88,11 @@ inductive HomEquiv : ∀ {X Y : (N C)}, (X ⟶n Y) → (X ⟶n Y) → Prop where
   | symm (f g) : HomEquiv f g → HomEquiv g f
   | trans {f g h : X ⟶n Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 
-instance mySetoidHom (X Y : N C) : Setoid (X ⟶n Y) :=
+instance setoidHom (X Y : N C) : Setoid (X ⟶n Y) :=
 ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
 instance : Category (N C) where
-  Hom X Y := _root_.Quotient (mySetoidHom X Y)
+  Hom X Y := _root_.Quotient (setoidHom X Y)
   id X := ⟦Hom.braid (𝟙 X.as)⟧
   comp := Quotient.map₂ Hom.comp <| fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg
   comp_id := by
@@ -348,7 +348,7 @@ def HomEquiv.swap_coherent {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y�
   clear x hx
   simp_all
   have hrw :=
-    @_root_.Quotient.sound _ (mySetoidHom _ _) _ _ <|
+    @_root_.Quotient.sound _ (setoidHom _ _) _ _ <|
       HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁) (s₂ := s₂) (x₁ := x₁) (x₂ := x₂)
   simp at hrw
   rw [hrw]
@@ -367,7 +367,7 @@ def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂
   clear x hx
   simp_all
   have hrw :=
-    @_root_.Quotient.sound _ (mySetoidHom _ _) _ _ <|
+    @_root_.Quotient.sound _ (setoidHom _ _) _ _ <|
       HomEquiv.swap (L := L) (M := M) (R := R) (s₁ := s₁ + 1) (s₂ := s₂ + 1) (x₁ := x₁) (x₂ := x₂)
   simp at hrw
   simp [repeat_star_succ] at hrw ⊢
