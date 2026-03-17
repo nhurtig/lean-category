@@ -45,7 +45,6 @@ open MonoidalCategory InvolutiveCategory
 @[simp] lemma of_def (c : C) : of c = mk (.of c) := rfl
 @[simp] lemma unit_def : @unit C = mk .unit := rfl
 
-
 /- def recOn' {P : N C → Sort*} (X : N C) (unit : P unit) (of : ∀ c, P (of c)) -/
 /-     (tensor : ∀ X Y, P X → P Y → P (tensor X Y)) (star : ∀ X, P X → P (star X)) : -/
 /-     P X := match X with -/

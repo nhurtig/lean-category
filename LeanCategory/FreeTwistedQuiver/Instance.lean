@@ -375,7 +375,6 @@ macro "simp_mk" : tactic =>
     )
   )
 
-
 section
 
 variable {C : Type u} [Quiver.{v} (T C)] {D : Type u'} (m : C → D)

@@ -9,7 +9,6 @@ open CategoryTheory
 open scoped FreeTwistedCategory
 open scoped NatDefinition
 
-
 variable {C : Type u}
 
 -- the Quiver (T C) will blow away our ability

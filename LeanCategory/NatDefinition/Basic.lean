@@ -575,4 +575,3 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
 
 end CategoryTheory.NatDefinition
 
-
