@@ -6,19 +6,6 @@ namespace CategoryTheory.NatDefinition
 
 open FreeTwistedCategoryQuiver
 
-lemma its_just_mkObj' (X : TQ C) : FreeTwistedCategoryQuiver.projectObj mkObj X = ⟨X.as⟩ := by
-  induction X using FreeTwistedCategoryQuiver.recOn'
-  case unit => rfl
-  case of => rfl
-  case star ih =>
-    simp
-    rw [ih]
-    rfl
-  case tensor ihX ihY =>
-    simp
-    rw [ihX, ihY]
-    rfl
-
 open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
 variable {C : Type u} [Category.{v} C] {D : Type u'} [Category.{v'} D]

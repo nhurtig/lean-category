@@ -13,7 +13,8 @@ open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
 abbrev mkObj (X : C) : N C := ⟨⟨.of X⟩⟩
 
-lemma its_just_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X⟩ := by
+@[simp]
+lemma projectObj_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X⟩ := by
   induction X using FreeTwistedCategory.recOn'
   case unit => rfl
   case of => rfl
@@ -26,10 +27,9 @@ lemma its_just_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X�
     rw [ihX, ihY]
     rfl
 
-/- (FreeTwistedCategory.projectObj mkObj X ⟶ FreeTwistedCategory.projectObj mkObj Y) -/
 def mapQuiver {X Y : T C} (x : X ⟶ Y) :
     (FreeTwistedCategory.projectObj mkObj X ⟶ FreeTwistedCategory.projectObj mkObj Y) := by
-  repeat1 rw [its_just_mkObj, its_just_mkObj]
+  simp
   apply _root_.Quotient.mk
   apply Hom.comp
   · apply Hom.braid
