@@ -74,9 +74,9 @@ macro "extract_right" : tactic =>
 
 -- TODO find a better name and place for these
 lemma mysimpthingy {X Y : T C} : FreeTwistedCategoryQuiver.mk (X ⊗ Y) = (FreeTwistedCategoryQuiver.mk X) ⊗ (FreeTwistedCategoryQuiver.mk Y) := rfl
-lemma mysimpthingy' {X Y : T C} : FreeTwistedCategoryQuiver.mk X⋆ = (FreeTwistedCategoryQuiver.mk X)⋆ := rfl
+lemma mysimpthingy' {X : T C} : FreeTwistedCategoryQuiver.mk X⋆ = (FreeTwistedCategoryQuiver.mk X)⋆ := rfl
 
-instance fromNat : (N C) ⥤ (TQ C) where
+def fromNat : (N C) ⥤ (TQ C) where
   obj X := ⟨X.as⟩
   map := _root_.Quotient.lift Hom.fromNat <| by
     rintro f g h
@@ -185,6 +185,15 @@ instance fromNat : (N C) ⥤ (TQ C) where
   map_id := by
     rintro _
     rfl
+
+@[simp] lemma fromNat_map_id (X : N C) : fromNat.map (𝟙 X) = 𝟙 (fromNat.obj X) := rfl
+@[simp] lemma fromNat_map_comp {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) :
+    fromNat.map (f ≫ g) = (fromNat.map f) ≫ (fromNat.map g) := by
+  unfold fromNat
+  induction f using Quotient.inductionOn
+  induction g using Quotient.inductionOn
+  simp
+  rfl
 
 end CategoryTheory.NatDefinition
 
