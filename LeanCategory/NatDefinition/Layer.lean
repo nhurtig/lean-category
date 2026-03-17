@@ -25,6 +25,9 @@ open InvolutiveCategory
 lemma repeat_star_succ (X : T C) (n : ℕ) :
     (X^⋆(n + 1)) = (X^⋆n)⋆ := rfl
 
+lemma repeat_star_zero (X : T C) :
+    (X^⋆0) = X := rfl
+
 variable [Quiver.{v} (T C)]
 
 section

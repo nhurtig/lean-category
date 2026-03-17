@@ -159,7 +159,7 @@ which can also cope with identities of the form
 `a ≫ f ≫ b ≫ g ≫ c = a' ≫ f ≫ b' ≫ g ≫ c'`
 where `a = a'`, `b = b'`, and `c = c'` can be proved using `pure_coherence`
 -/
-elab (name := pure_coherence) "pure_coherence" : tactic => do
+elab (name := pure_coherence) "pure_coherenceDONTUSE" : tactic => do
   let g ← getMainGoal
   involutive_coherence g <|> bicategory_coherence g
 
