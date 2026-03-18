@@ -11,8 +11,14 @@ variable {C : Type u} [Quiver.{v} (T C)]
 
 open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
+/--
+An abbreviation for turning something of type `C` into an `N C` using `of`
+-/
 abbrev mkObj (X : C) : N C := ⟨⟨.of X⟩⟩
 
+/--
+The object map of our toNat functor is just the `N C` constructor
+-/
 @[simp]
 lemma projectObj_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X⟩ := by
   induction X using FreeTwistedCategory.recOn'
@@ -27,6 +33,10 @@ lemma projectObj_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X
     rw [ihX, ihY]
     rfl
 
+/--
+To turn a quiver morphism into a morphism in Nat's representation, we construct a `Layer`
+with unitors on either side
+-/
 def mapQuiver {X Y : T C} (x : X ⟶ Y) :
     (FreeTwistedCategory.projectObj mkObj X ⟶ FreeTwistedCategory.projectObj mkObj Y) := by
   simp
@@ -42,6 +52,10 @@ def mapQuiver {X Y : T C} (x : X ⟶ Y) :
   · apply Hom.braid
     exact _ ◁ (ρ_ _).hom ≫ (λ_ _).hom
 
+/--
+Because we have a twisted category on N C, we can use `project` to get a functor
+`TQ C ⥤ N C`
+-/
 def toNat : TQ C ⥤ N C := project (C := C) (D := N C) mkObj mapQuiver
 
 end CategoryTheory.NatDefinition

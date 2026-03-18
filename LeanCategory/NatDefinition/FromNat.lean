@@ -13,6 +13,9 @@ open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
 namespace Hom
 
+/--
+A helper function for twisting a box `s` times
+-/
 def boxTwist {X Y : T C} (s : ℕ) (x : X ⟶ Y) : (FreeTwistedCategoryQuiver.mk (X^⋆s) ⟶ ⟨Y^⋆s⟩) :=
   match s with
   | 0 => ⟦.of <| x⟧
@@ -25,6 +28,10 @@ lemma boxTwist_succ {X Y : T C} {x : X ⟶ Y} :
     boxTwist (s + 1) x = (ς_ _).hom ≫ (boxTwist s x) ≫ (ς_ _).inv :=
   rfl
 
+/--
+Auxiliary function for premorphisms, turning Nat's premorphisms into
+morphisms into the free twisted category with a quiver
+-/
 @[simp]
 def fromNat {X Y : N C} : (X ⟶n Y) → ((FreeTwistedCategoryQuiver.mk X.as) ⟶ ⟨Y.as⟩)
   | .braid f => embed.map f
@@ -38,6 +45,10 @@ open FreeTwistedCategory
 open Hom
 open TwistedCategory
 
+/--
+Tactic for stripping off the common left whiskers in a morphism equality,
+ignoring all of them
+-/
 macro "strip_left" : tactic =>
   `(tactic|
     ((repeat1 (first
@@ -47,6 +58,9 @@ macro "strip_left" : tactic =>
     )); apply congrArg; simp)
   )
 
+/--
+Tactic for maximally grouping the right whiskers in a morphism
+-/
 macro "extract_right" : tactic =>
   `(tactic|
     (repeat1 (first
@@ -57,6 +71,10 @@ macro "extract_right" : tactic =>
   )
 
 set_option maxHeartbeats 1000000 in -- the simp_all takes a lot of work
+/--
+Semantics functor for Nat's definition, converting Nat's morphisms into
+morphisms in the free twisted category with a quiver
+-/
 def fromNat : (N C) ⥤ (TQ C) where
   obj X := ⟨X.as⟩
   map := _root_.Quotient.lift Hom.fromNat <| by

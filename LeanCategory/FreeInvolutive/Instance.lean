@@ -4,12 +4,19 @@ import LeanCategory.FreeInvolutive.Base
 
 namespace CategoryTheory.FreeInvolutiveCategory
 
--- assuming coherence really blasts through everything... disappointing
+/--
+The relation that we quotient premorphisms by to get the actual morphisms
+in the free involutive category. Because of coherence, every morphism
+is commutative with every other morphism.
+-/
 def HomEquiv : ∀ {X Y : FreeInvolutiveCategory C}, (X ⟶i Y) → (X ⟶i Y) → Prop := fun _ _ ↦ True
 
 instance setoidHom (X Y : FreeInvolutiveCategory C) : Setoid (X ⟶i Y) :=
   ⟨HomEquiv, ⟨fun _ ↦ True.intro, fun _ ↦ True.intro, fun _ _ ↦ True.intro⟩⟩
 
+/--
+Any two morphisms, after quotienting, with the same source and target are equal.
+-/
 @[simp, aesop safe]
 lemma coherence {X Y : FreeInvolutiveCategory C} {f g : _root_.Quotient (setoidHom X Y)} :
     f = g := by

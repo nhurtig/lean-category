@@ -9,22 +9,33 @@ open FreeTwistedCategory
 universe u
 variable {C : Type u} [Quiver.{v} (T C)]
 
+/--
+The premorphisms in Nat's definition. There are braids in the
+free twisted category without a quiver, and the quiver morphisms
+are represented using layers. Nat proposes that this representation
+is sufficient for the free twisted category with a quiver.
+-/
 inductive Hom : N C → N C → Type (max (u + 2) v) where
   | layer : (l : Layer C) →
       Hom ⟨(l.boundary .Bottom)⟩ ⟨(l.boundary .Top)⟩
   | braid {X Y : N C} : (X.as ⟶T Y.as) → Hom X Y
   | comp {X Y Z : N C} : Hom X Y → Hom Y Z → Hom X Z
 
+@[inherit_doc Hom]
 infixr:10 " ⟶n " => Hom
 
 open CategoryTheory
-
 open MonoidalCategory
 open InvolutiveCategory -- for the ⋆ notation
 open TwistedCategory -- why not
 
-open MonoidalCategory
-
+/--
+Whiskering a premorphism on the left by an
+object. The braid and composition cases are
+simple; the layer case requires composition up
+to involutive coherence to reassociate on
+the left.
+-/
 @[simp]
 def Hom.whiskerLeft (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((X.tensor Y₁) ⟶n (X.tensor Y₂))
   | .layer ⟨L, D, C, s, x, R⟩ =>
@@ -34,6 +45,11 @@ def Hom.whiskerLeft (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((X.tenso
   | .braid b => Hom.braid (X.as ◁ b)
   | .comp f g => (f.whiskerLeft X).comp (g.whiskerLeft X)
 
+/--
+Whiskering a premorphism on the right
+by an object. The layer case uses composition
+up to involutive coherence.
+-/
 @[simp]
 def Hom.whiskerRight (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((Y₁.tensor X) ⟶n (Y₂.tensor X))
   | .layer ⟨L, D, C, s, x, R⟩ =>
@@ -43,14 +59,22 @@ def Hom.whiskerRight (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((Y₁.t
   | .braid b => Hom.braid (b ▷ X.as)
   | .comp f g => (f.whiskerRight X).comp (g.whiskerRight X)
 
+/--
+The tensor product is defined in terms of whiskers.
+This is useful, as we have to prove this fact when
+we define a monoidal category
+-/
 @[simp, grind]
 def Hom.tensor {X₁ X₂ Y₁ Y₂ : N C} (f : X₁ ⟶n Y₁) (g : X₂ ⟶n Y₂) :
     (X₁.tensor X₂) ⟶n (Y₁.tensor Y₂) :=
   (f.whiskerRight X₂).comp (g.whiskerLeft Y₁)
 
+/--
+The star of a premorphism. Again, the layer case uses
+composition up to involutive coherence.
+-/
 @[simp]
 def Hom.starHom {X Y : N C} : (X ⟶n Y) → (X.star ⟶n Y.star)
-  /- | .id _ => .id _ -/
   | .layer ⟨L, X, Y, s, x, R⟩ =>
       (Hom.braid <| by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp <|
         (Hom.layer ⟨R.star, X, Y, s+1, x, L.star⟩).comp <|
@@ -58,12 +82,16 @@ def Hom.starHom {X Y : N C} : (X ⟶n Y) → (X.star ⟶n Y.star)
   | .braid b => .braid b⋆
   | .comp f g => (f.starHom).comp g.starHom
 
+/--
+The equivalence rules (called rewrite rules) in Nat's paper over
+Nat's definition. The two nontrivial cases are the `swap` rule,
+which swaps layers, and the `layer` rule, which rewrites a layer
+according to a `Layer.Hom`.
+-/
 @[grind]
 inductive HomEquiv : ∀ {X Y : (N C)}, (X ⟶n Y) → (X ⟶n Y) → Prop where
   | refl (f) : HomEquiv f f
   | comp {f f' : X ⟶n Y} : HomEquiv f f' → HomEquiv g g' → HomEquiv (f.comp g) (f'.comp g')
-  /- | id_comp : HomEquiv ((Hom.id _).comp f) f -/
-  /- | comp_id : HomEquiv (f.comp <| Hom.id _) f -/
   | id_comp : HomEquiv ((Hom.braid (𝟙 X)).comp f) f
   | comp_id {f : X ⟶n Y} : HomEquiv (f.comp (.braid (𝟙 Y.as))) f
   | assoc {f : _ ⟶n _} {g : _ ⟶n _} {h : _ ⟶n _} :
@@ -119,6 +147,9 @@ theorem mk_comp {X Y Z : N C} (f : X ⟶n Y) (g : Y ⟶n Z) :
 
 open FreeTwistedCategory
 
+/--
+A notational shortcut for the morphism represented by a `Hom.layer`.
+-/
 def mkLayer (L : FreeTwistedCategory C) {X Y : T C} (s : ℕ) (x : X ⟶ Y)
     (R : FreeTwistedCategory C) : (mk <| L ⊗ (X^⋆s) ⊗ R ) ⟶ ⟨L ⊗ (Y^⋆s) ⊗ R⟩ :=
   ⟦Hom.layer ⟨L, X, Y, s, x, R⟩⟧
@@ -127,6 +158,9 @@ def mkLayer (L : FreeTwistedCategory C) {X Y : T C} (s : ℕ) (x : X ⟶ Y)
 theorem mk_layer {L : T C} {x : X ⟶ Y} : ⟦.layer ⟨L, X, Y, s, x, R⟩⟧ = mkLayer L s x R :=
   rfl
 
+/--
+A notational shortcut for the morphism represented by a `Hom.braid`.
+-/
 def mkBraid {X Y : N C} (b : X.as ⟶T Y.as) : X ⟶ Y := ⟦Hom.braid b⟧
 
 @[simp]
@@ -154,6 +188,9 @@ theorem unmk_braid_comp_assoc {W X Y Z : N C} (f : W.as ⟶T X.as) (g : X.as ⟶
   apply congrArg (· ≫ _)
   simp
 
+/--
+A layer can be conjugated by a twist inv below and a twist hom above
+-/
 lemma twist_inv_conjugation {L : T C} :
     mkLayer L s x R = mkBraid (L ◁ (ς_ _).inv ▷ R) ≫
       mkLayer L (s + 1) x R ≫ mkBraid (L ◁ (ς_ _).hom ▷ R) := by
@@ -163,6 +200,9 @@ lemma twist_inv_conjugation {L : T C} :
       exact Layer.Hom.twist_inv
   rfl
 
+/--
+Using the involutor, we can force a twist hom below and a twist inv above
+-/
 lemma twist_hom_conjugation_forced {L : T C} {x : X ⟶ Y} :
     mkLayer L s x R = mkBraid (L ◁ ((e_ _).inv ≫ (ς_ _).hom) ▷ R) ≫
       mkLayer L (s + 1) x R ≫ mkBraid (L ◁ ((ς_ _).inv ≫ (e_ _).hom) ▷ R) := by
@@ -173,6 +213,10 @@ lemma twist_hom_conjugation_forced {L : T C} {x : X ⟶ Y} :
   simp
   simp [repeat_star_succ]
 
+/--
+If a layer has a star already, it can be conjugated by a twist hom below
+and a twist inv above
+-/
 lemma twist_hom_conjugation {L : T C} :
     mkLayer L (s + 1) x R = mkBraid (L ◁ (ς_ _).hom ▷ R) ≫
       mkLayer L s x R ≫ mkBraid (L ◁ (ς_ _).inv ▷ R) := by
@@ -182,6 +226,9 @@ lemma twist_hom_conjugation {L : T C} :
       exact Layer.Hom.twist_hom
   rfl
 
+/--
+Conjugating by a braid move with the box
+-/
 lemma strand_box_hom_conjugation {L : T C} {x : X ⟶ Y} :
     mkLayer (L ⊗ A) s x R =
       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ A (X^⋆s)).hom ▷ R ⊗⋆≫ 𝟙 _)) ≫
@@ -193,6 +240,9 @@ lemma strand_box_hom_conjugation {L : T C} {x : X ⟶ Y} :
       apply Layer.Hom.strand_box_hom
   simp [involutiveComp]
 
+/--
+Conjugating by a braid move with the box
+-/
 lemma strand_box_inv_conjugation {L : T C} {x : X ⟶ Y} :
     mkLayer L s x (A ⊗ R) = mkBraid (𝟙 _ ⊗⋆≫ L ◁ (σ_ A (X^⋆s)).inv ▷ R ⊗⋆≫ 𝟙 _) ≫
       mkLayer (L ⊗ A) s x R ≫
@@ -203,6 +253,9 @@ lemma strand_box_inv_conjugation {L : T C} {x : X ⟶ Y} :
       apply Layer.Hom.strand_box_inv
   simp [involutiveComp]
 
+/--
+Conjugating by a braid move with the box
+-/
 lemma box_strand_hom_conjugation {L : T C} {x : X ⟶ Y} :
     mkLayer L s x (A ⊗ R) = mkBraid (𝟙 _ ⊗⋆≫ L ◁ (σ_ (X^⋆s) A).hom ▷ R ⊗⋆≫ 𝟙 _) ≫
       mkLayer (L ⊗ A) s x R ≫
@@ -213,6 +266,9 @@ lemma box_strand_hom_conjugation {L : T C} {x : X ⟶ Y} :
       apply Layer.Hom.box_strand_hom
   simp [involutiveComp]
 
+/--
+Conjugating by a braid move with the box
+-/
 lemma box_strand_inv_conjugation {L : T C} {x : X ⟶ Y} :
     mkLayer (L ⊗ A) s x R =
       mkBraid (by simp; exact (𝟙 _ ⊗⋆≫ L ◁ (σ_ (X^⋆s) A).inv ▷ R ⊗⋆≫ 𝟙 _)) ≫
@@ -224,6 +280,12 @@ lemma box_strand_inv_conjugation {L : T C} {x : X ⟶ Y} :
       apply Layer.Hom.box_strand_inv
   simp [involutiveComp]
 
+/--
+Simp-registered lemma for left-associating the tensor
+product on the left whisker. Left-association on the
+left is preferred for simp-normal forms to make strand-box
+braids easy to apply
+-/
 @[simp]
 lemma associator_conjugation_left {L₁ L₂ : T C} :
       mkLayer (L₁ ⊗ (L₂ ⊗ L₃)) s x R =
@@ -237,6 +299,12 @@ lemma associator_conjugation_left {L₁ L₂ : T C} :
       exact (α_ _ _ _).inv
   simp [involutiveComp]
 
+/--
+Simp-registered lemma for right-associating the tensor
+product on the right whisker. Right-association on the
+right is preferred for simp-normal forms to make box-strand
+braids easy to apply
+-/
 @[simp]
 lemma associator_conjugation_right {R₁ L : T C} :
     mkLayer L s x ((R₁ ⊗ R₂) ⊗ R₃) =
@@ -250,6 +318,9 @@ lemma associator_conjugation_right {R₁ L : T C} :
       exact (α_ _ _ _).hom
   simp [involutiveComp]
 
+/--
+Simp-registered lemma for distributing a star over a tensor product on the left
+-/
 @[simp]
 lemma skewator_conjugation_left {L₁ L₂ : T C} :
       mkLayer (L₁ ⊗ L₂)⋆ s x R =
@@ -263,6 +334,9 @@ lemma skewator_conjugation_left {L₁ L₂ : T C} :
       exact (χ_ _ _).inv
   simp [involutiveComp]
 
+/--
+Simp-registered lemma for distributing a star over a tensor product on the right
+-/
 @[simp]
 lemma skewator_conjugation_right {L : T C} :
       mkLayer L s x (R₁ ⊗ R₂)⋆ =
@@ -276,6 +350,9 @@ lemma skewator_conjugation_right {L : T C} :
       exact (χ_ _ _).inv
   simp [involutiveComp]
 
+/--
+Simp-registered lemma for involution of the star on the box
+-/
 @[simp]
 lemma involutor_conjugation {L : T C} :
     mkLayer L (s + 2) x  R =
@@ -288,6 +365,10 @@ lemma involutor_conjugation {L : T C} :
       exact Layer.Hom.ε_hom
   simp
 
+/--
+Rewriting a layer by conjugation by a braid on the left
+-/
+@[simp]
 lemma braid_conjugation_left {L₁ L₂ : T C} (b : L₁ ⟶T L₂) :
     mkLayer L₁ s x R =
       mkBraid (b ▷ (_ ⊗ _)) ≫
@@ -300,6 +381,9 @@ lemma braid_conjugation_left {L₁ L₂ : T C} (b : L₁ ⟶T L₂) :
       exact b
   simp
 
+/--
+Rewriting a layer by conjugation by a braid on the right
+-/
 lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶T R₂) :
     mkLayer L s x R₁ =
       mkBraid (_ ◁ _ ◁ b) ≫
@@ -312,6 +396,9 @@ lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶T R₂) :
       exact b
   simp
 
+/--
+Helper lemma to rewrite an equality by moving a braid to the other side while inverting
+-/
 lemma stripBraidLeft {X Y : N C} {b : X.as ⟶T Y.as} {f : Y ⟶ Z} {g : X ⟶ Z} :
     ⟦(Hom.braid b)⟧ ≫ f = g → f = ⟦(Hom.braid (inv b))⟧ ≫ g := by
   intros h
@@ -319,6 +406,9 @@ lemma stripBraidLeft {X Y : N C} {b : X.as ⟶T Y.as} {f : Y ⟶ Z} {g : X ⟶ Z
   · simp
   · rw [h]
 
+/--
+Helper lemma to rewrite an equality by moving a braid to the other side while inverting
+-/
 lemma stripBraidRight {X Y : N C} {b : Y.as ⟶T Z.as} {f : X ⟶ Y} {g : X ⟶ Z} :
     f ≫ mkBraid b = g → f = g ≫ mkBraid (inv b) := by
   intros h
@@ -326,6 +416,9 @@ lemma stripBraidRight {X Y : N C} {b : Y.as ⟶T Z.as} {f : X ⟶ Y} {g : X ⟶ 
   · simp
   · simp only [mk_braid]; rw [h]
 
+/--
+Helper lemma to rewrite an equality by moving braids on both sides to the other while inverting
+-/
 lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶T X.as} {f : X ⟶ Y} {b₂ : Y.as ⟶T Z.as} {g : W ⟶ Z} :
     mkBraid b₁ ≫ f ≫ mkBraid b₂ = g → f = mkBraid (inv b₁) ≫ g ≫ mkBraid (inv b₂) := by
   intros h
@@ -334,6 +427,10 @@ lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶T X.as} {f : X ⟶ Y} {b₂ : Y
   simp at h
   exact h
 
+/--
+A more powerful version of `HomEquiv.swap` that allows for proving
+equality of the middle braid separately
+-/
 def HomEquiv.swap_coherent {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _}
     (hx : x = (by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) :
       (mkLayer L s₁ x₁ (M ⊗ (X₂^⋆s₂) ⊗ R)) ≫
@@ -353,6 +450,11 @@ def HomEquiv.swap_coherent {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y�
   simp at hrw
   rw [hrw]
 
+/--
+A more powerful version of `HomEquiv.swap` that allows for swapping
+layers that have been starred, and proving equality of the middle
+braid separately
+-/
 def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂ ⟶ Y₂} {x : _ ⟶T _}
     (hx : x = (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _)) :
       (mkLayer L (s₁ + 1) x₁ (M ⊗ (X₂^⋆s₂)⋆ ⊗ R)) ≫
@@ -373,6 +475,11 @@ def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂
   simp [repeat_star_succ] at hrw ⊢
   rw [hrw]
 
+/--
+Performs one step of the `nat_coherence` tactic: `rfl` on `mkLayer`s
+that are identical, or handling `mkBraid`s that are equal by
+`inv_coherence`
+-/
 macro "nat_coherence_step" : tactic =>
   `(tactic|
     first
@@ -383,6 +490,11 @@ macro "nat_coherence_step" : tactic =>
       | fail "IDK what to do"
   )
 
+/--
+An analogue of the `inv_coherence` tactic for Nat's definition of category:
+as long as the `mkLayer`s are the same and the non-involutive coherence morphisms
+are in the same spots, this tactic takes care of the rest
+-/
 macro "nat_coherence" : tactic =>
   `(tactic|
     first
@@ -394,6 +506,9 @@ open Layer
 open scoped Layer
 
 set_option maxHeartbeats 10000000 in -- big simp_all
+/--
+Whiskering a morphism on the left by an object in Nat's category
+-/
 def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁ ⟶ X.tensor Y₂) := --by
   Quotient.liftOn f (⟦·.whiskerLeft X⟧) <| by
     clear f
@@ -453,6 +568,9 @@ def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁
       nat_coherence
 
 set_option maxHeartbeats 10000000 in -- big simp_all
+/--
+Whiskering a morphism on the right by an object in Nat's category
+-/
 def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor Y ⟶ X₂.tensor Y) := --by
   Quotient.liftOn f (⟦·.whiskerRight Y⟧) <| by
     clear f
@@ -512,6 +630,9 @@ def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor 
       nat_coherence
 
 set_option maxHeartbeats 10000000 in -- big simp_all
+/--
+Starring a morphism in Nat's category
+-/
 def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
   Quotient.liftOn f (⟦·.starHom⟧) <| by
     clear f

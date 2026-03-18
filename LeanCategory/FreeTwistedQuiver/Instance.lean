@@ -9,6 +9,14 @@ open CategoryTheory.FreeTwistedCategory
 
 variable {C : Type u} [Quiver.{v} (T C)]
 
+/--
+The relation that we quotient premorphisms by to get the actual morphisms
+in the free twisted category with a quiver. These rules closely
+follow the axioms of a twisted category; the only important difference
+is in coherence: this equivalence's coherence rule identifies any
+two premorphisms that are Pure. These are the same rules as the ones in the
+free twisted category.
+-/
 inductive HomEquiv : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X ⟶tq Y) → Prop
   | refl {X Y} (f : X ⟶tq Y) : HomEquiv f f
   | comp {X Y Z} {f f' : X ⟶tq Y} {g g' : Y ⟶tq Z} :
@@ -71,11 +79,6 @@ inductive HomEquiv : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X ⟶tq Y) → Prop
 instance setoidHom (X Y : TQ C) : Setoid (X ⟶tq Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
-macro "coherence" : tactic =>
-  `(tactic|
-    (intros; apply _root_.Quotient.sound; apply HomEquiv.coherence <;> repeat' constructor)
-  )
-
 instance : Category.{max u v, u} (TQ C) where
   Hom := fun X Y ↦ _root_.Quotient (setoidHom X Y)
   id X := ⟦Hom.id X⟧
@@ -103,35 +106,35 @@ instance : MonoidalCategory (TQ C) where
   associator := fun X Y Z ↦ {
     hom := ⟦Hom.α_hom X Y Z⟧
     inv := ⟦Hom.α_inv X Y Z⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   leftUnitor := fun X ↦ {
     hom := ⟦Hom.l_hom X⟧
     inv := ⟦Hom.l_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   rightUnitor := fun X ↦ {
     hom := ⟦Hom.ρ_hom X⟧
     inv := ⟦Hom.ρ_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   whiskerLeft_id := by intros; apply _root_.Quotient.sound; constructor
   id_whiskerRight := by intros; apply _root_.Quotient.sound; constructor
   tensorHom_def := by
     rintro X₁ Y₁ X₂ Y₂ ⟨f⟩ ⟨g⟩
     apply _root_.Quotient.sound; constructor
-  id_tensorHom_id := by coherence
+  id_tensorHom_id := by pure_inv_coherence
   tensorHom_comp_tensorHom := by
     rintro _ _ _ _ _ _ ⟨f₁⟩ ⟨f₂⟩ ⟨g₁⟩ ⟨g₂⟩; apply _root_.Quotient.sound; constructor
   associator_naturality := by
     rintro _ _ _ _ _ _ ⟨f⟩ ⟨g⟩ ⟨h⟩; apply _root_.Quotient.sound; constructor
   leftUnitor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
   rightUnitor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
-  pentagon := by coherence
-  triangle := by coherence
+  pentagon := by pure_inv_coherence
+  triangle := by pure_inv_coherence
 
 instance : InvolutiveCategoryStruct (TQ C) where
   starObj := .star
@@ -139,18 +142,22 @@ instance : InvolutiveCategoryStruct (TQ C) where
   skewator := fun X Y ↦ {
     hom := ⟦Hom.χ_hom X Y⟧
     inv := ⟦Hom.χ_inv X Y⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
   involutor := fun X ↦ {
     hom := ⟦Hom.ε_hom X⟧
     inv := ⟦Hom.ε_inv X⟧
-    hom_inv_id := by coherence
-    inv_hom_id := by coherence
+    hom_inv_id := by pure_inv_coherence
+    inv_hom_id := by pure_inv_coherence
   }
 
 open InvolutiveCategory
 
+/--
+Every involutive coherence in the category on `TQ C` has
+a representative premorphism that is Pure.
+-/
 lemma coherence_Pure {X Y : TQ C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
     ∃ f', f'.Pure ∧ f = ⟦f'⟧ := by
   intros f hf
@@ -203,7 +210,7 @@ lemma coherence_Pure {X Y : TQ C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
     exists Hom.ε_inv _
 
 instance : InvolutiveCategory (TQ C) where
-  starHom_id := by coherence
+  starHom_id := by pure_inv_coherence
   starHom_comp_starHom := by rintro _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
   skewator_naturality := by rintro _ _ _ _ ⟨f⟩ ⟨g⟩; apply _root_.Quotient.sound; constructor
   involutor_naturality := by rintro _ _ ⟨f⟩; apply _root_.Quotient.sound; constructor
@@ -230,6 +237,11 @@ instance : TwistedCategory (TQ C) where
     intros
     apply _root_.Quotient.sound
     constructor
+
+/--
+An alias for `Quotient.mk`, aka `⟦·⟧`, that makes the type
+checker happier.
+-/
 
 @[simp]
 def homMk {X Y : TQ C} (f : X ⟶tq Y) : X ⟶ Y := ⟦f⟧
@@ -339,9 +351,12 @@ theorem mk_ς_hom' {X : TQ C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.t
 theorem mk_ς_inv {X : TQ C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
   rfl
 
--- if you've got a ⟦Hom ...⟧, this breaks
--- it up so we can use category-level rewrites
--- instead of Quotient.sound into HomEquiv
+/--
+Breaks up a `⟦Hom ...⟧` into combinators
+at the quotiented category level of primitive
+Hom constructors, so that we can use category-level rewrites
+instead of `Quotient.sound` into `HomEquiv`.
+-/
 macro "simp_mk" : tactic =>
   `(tactic|
     repeat1 (first
@@ -400,6 +415,10 @@ section
 
 variable {C : Type u} {D : Type u'} [Quiver.{v'} (T D)]
 
+/--
+`projectObj (fun c ↦ (of (m c)))` appears when dealing with functors
+between free categories. This helps simplify it to `map m`.
+-/
 @[simp]
 lemma projectObj_of_map (m : C → D) : ∀ (X : TQ C),
     projectObj (fun c ↦ (of (m c))) X =
@@ -407,6 +426,10 @@ lemma projectObj_of_map (m : C → D) : ∀ (X : TQ C),
   intro X
   induction X using recOn' <;> simp_all
 
+/--
+`projectObj (fun c ↦ (of (m c)))` appears when dealing with functors
+between free categories. This helps simplify it to `map m`.
+-/
 @[simp]
 lemma projectObj_of_map' (m : C → D) : ∀ (X : T C),
     X.projectObj (fun c ↦ (of (m c))) =

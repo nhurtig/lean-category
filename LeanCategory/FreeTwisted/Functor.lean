@@ -14,6 +14,10 @@ open TwistedCategory
 
 open Hom
 
+/--
+Auxiliary definition for the projection functor: maps premorphisms in `T C`
+to morphisms in `D`.
+-/
 @[simp]
 def projectMapAux : ∀ {X Y : T C}, (X ⟶t Y) → (X.projectObj m ⟶ Y.projectObj m)
   | _, _, Hom.id _ => 𝟙 _
@@ -35,12 +39,20 @@ def projectMapAux : ∀ {X Y : T C}, (X ⟶t Y) → (X.projectObj m ⟶ Y.projec
   | _, _, twist_hom _ => (ς_ _).hom
   | _, _, twist_inv _ => (ς_ _).inv
 
+/--
+The projection of a `Pure` premorphism is an involutive coherence.
+Similar to `coherence_Pure`, which states that every involutive
+coherence can be represented by a `Pure` premorphism.
+-/
 lemma projectMapAux_Pure : ∀ {X Y : T C} (f : X ⟶t Y),
     f.Pure → InvolutiveCoherence (projectMapAux m f) := by
   intro X Y f hf
   induction f <;> simp_all
   all_goals constructor <;> assumption
 
+/--
+The morphism map of the projection functor from `T C` to `D`.
+-/
 @[simp]
 def projectMap {X Y : T C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) :=
   _root_.Quotient.lift (projectMapAux m) <| by
@@ -91,6 +103,11 @@ def projectMap {X Y : T C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) :
     | coherence X Y f g hf hg =>
         apply coherence <;> apply projectMapAux_Pure <;> assumption
 
+/--
+Given a function `C → D`, we get a functor `T C ⥤ D` by projecting the free
+twisted category onto the twisted involutive morphisms in `D`, collapsing
+the object structure in `T C` using `D`'s object structure.
+-/
 def project : T C ⥤ D where
   obj := projectObj m
   map := projectMap m
@@ -98,15 +115,29 @@ def project : T C ⥤ D where
 
 variable {D : Type u'} (m : C → D)
 
+/--
+Given a function `C → D`, we get a functor `T C ⥤ T D` by projecting the free
+twisted category onto the twisted involutive morphisms in `D`.
+-/
 def projectFree : T C ⥤ T D := project (fun c ↦ (of (m c)))
 
 open FreeTwistedCategoryQuiver
 
+/--
+The free twisted category on `C`.
+-/
 def Tcat : Category.{u} (T C) := inferInstance
+/--
+Notation for morphisms in the free twisted category on `C`.
+-/
 scoped infixr:10 " ⟶T " => Tcat.Hom
 
 variable [Quiver.{v} (T C)]
 
+/--
+Auxiliary definition for the embedding functor: maps premorphisms in `T C`
+to morphisms in `TQ C`.
+-/
 @[simp]
 def embedMapAux : ∀ {X Y : T C}, (X ⟶t Y) → ((FreeTwistedCategoryQuiver.mk X) ⟶ ⟨Y⟩)
   | _, _, Hom.id _ => 𝟙 _
@@ -128,12 +159,18 @@ def embedMapAux : ∀ {X Y : T C}, (X ⟶t Y) → ((FreeTwistedCategoryQuiver.mk
   | _, _, twist_hom _ => (ς_ _).hom
   | _, _, twist_inv _ => (ς_ _).inv
 
+/--
+The embedding of a `Pure` premorphism is an involutive coherence.
+-/
 lemma embedMapAux_Pure : ∀ {X Y : T C} (f : X ⟶t Y),
     f.Pure → InvolutiveCoherence (embedMapAux f) := by
   intro X Y f hf
   induction f <;> simp_all
   all_goals constructor <;> assumption
 
+/--
+The morphism map of the embedding functor from `T C` to `TQ C`.
+-/
 @[simp]
 def embedMap {X Y : T C} : (X ⟶T Y) → (FreeTwistedCategoryQuiver.mk X ⟶ ⟨Y⟩) :=
   _root_.Quotient.lift embedMapAux <| by
@@ -188,6 +225,14 @@ def embedMap {X Y : T C} : (X ⟶T Y) → (FreeTwistedCategoryQuiver.mk X ⟶ �
     | coherence X Y f g hf hg =>
         apply coherence <;> apply embedMapAux_Pure <;> assumption
 
+/--
+The embedding functor from `T C` to `TQ C`, which sends each object `X` in `T C`
+to the corresponding object `⟨X⟩` in `TQ C`, and does not interact
+with the quiver in `TQ C`. This could be defined using `project`, but we give
+it an explicit definition to exploit definitional equivalence later on.
+Otherwise, we'd have to battle `projectObj`; instead, our object map is
+exactly the object constructor.
+-/
 def embed : T C ⥤ TQ C where
   obj := FreeTwistedCategoryQuiver.mk
   map := embedMap

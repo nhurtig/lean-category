@@ -6,6 +6,14 @@ namespace CategoryTheory.FreeTwistedCategory
 
 variable {C : Type u}
 
+/--
+The relation that we quotient premorphisms by to get the actual morphisms
+in the free twisted category. Unlike the free involutive category, not
+all morphisms are commutative because of the twist. These rules closely
+follow the axioms of a twisted category; the only important difference
+is in coherence: this equivalence's coherence rule identifies any
+two premorphisms that are Pure.
+-/
 inductive HomEquiv : ∀ {X Y : T C}, (X ⟶t Y) → (X ⟶t Y) → Prop
   | refl {X Y} (f : X ⟶t Y) : HomEquiv f f
   | comp {X Y Z} {f f' : X ⟶t Y} {g g' : Y ⟶t Z} :
@@ -68,6 +76,14 @@ inductive HomEquiv : ∀ {X Y : T C}, (X ⟶t Y) → (X ⟶t Y) → Prop
 instance setoidHom (X Y : T C) : Setoid (X ⟶t Y) :=
   ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
+/--
+A tactic to show that any two morphisms that are made of only
+involutive coherences are equal. The first constructor applies the
+`coherence` rule (not explicitly, as we'd like to use this tactic
+for both `FreeTwistedCategory.HomEquiv` and `FreeTwistedCategoryQuiver.HomEquiv`),
+and the repeated constructors continually apply `Pure` constructors to show
+either side is `Pure`.
+-/
 macro "pure_inv_coherence" : tactic =>
   `(tactic|
     (intros; apply _root_.Quotient.sound; constructor <;> repeat' constructor)
@@ -148,6 +164,13 @@ instance : InvolutiveCategoryStruct (T C) where
 
 open InvolutiveCategory
 
+/--
+Every involutive coherence in the category on `T C` has
+a representative premorphism that is Pure. Note that
+there can be not-Pure premorphisms that also represent the same morphism
+(e.g. `twist_hom ≫ twist_inv` and `id`),
+but this lemma says that we can always some Pure one.
+-/
 lemma coherence_Pure {X Y : T C} : ∀ f : X ⟶ Y, InvolutiveCoherence f →
     ∃ f', f'.Pure ∧ f = ⟦f'⟧ := by
   intros f hf
@@ -228,8 +251,12 @@ instance : TwistedCategory (T C) where
     apply _root_.Quotient.sound
     constructor
 
--- preparation for groupoid: simplifying lemmas
+-- preparation for groupoid: simplifying lemmas about Quotient.mk
 
+/--
+An alias for `Quotient.mk`, aka `⟦·⟧`, that makes the type
+checker happier.
+-/
 @[simp]
 def homMk {X Y : T C} (f : X ⟶t Y) : X ⟶ Y := ⟦f⟧
 
@@ -330,9 +357,12 @@ theorem mk_ς_hom' {X : T C} : ⟦Hom.twist_hom X⟧ = (TwistedCategoryStruct.tw
 theorem mk_ς_inv {X : T C} : ⟦Hom.twist_inv X⟧ = (ς_ X).inv :=
   rfl
 
--- if you've got a ⟦Hom ...⟧, this breaks
--- it up so we can use category-level rewrites
--- instead of Quotient.sound into HomEquiv
+/--
+Breaks up a `⟦Hom ...⟧` into combinators
+at the quotiented category level of primitive
+Hom constructors, so that we can use category-level rewrites
+instead of `Quotient.sound` into `HomEquiv`.
+-/
 macro "simp_mk" : tactic =>
   `(tactic|
     repeat1 (first
@@ -437,6 +467,10 @@ section
 
 variable {C : Type u} {D : Type u'}
 
+/--
+`projectObj (fun c ↦ (of (m c)))` appears when dealing with functors
+between free categories. This helps simplify it to `map m`.
+-/
 @[simp]
 lemma projectObj_of_map (m : C → D) : ∀ (X : T C),
     projectObj (fun c ↦ (of (m c))) X =

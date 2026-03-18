@@ -9,6 +9,12 @@ open Category MonoidalCategory
 
 namespace CategoryTheory
 
+/--
+Auxiliary structure for involutive categories that holds just the star functor,
+the skewator, and the involutor. Enables us to define notation and explicitly
+list out all the morphisms that should be coherent. Doesn't contain any of the
+properties that an involutive category should satisfy.
+-/
 class InvolutiveCategoryStruct (C : Type u) [Category.{v} C] [MonoidalCategory C] where
   starObj : C → C
   starHom : (X ⟶ Y) → (starObj X ⟶ starObj Y)
@@ -19,18 +25,28 @@ namespace InvolutiveCategory
 
 scoped postfix:max "⋆" => InvolutiveCategoryStruct.starObj
 scoped postfix:max "⋆" => InvolutiveCategoryStruct.starHom
+/--
+The skewator is a witness that flipping an object by 180 degrees (i.e. applying star)
+reverses the order of the tensor product: left becomes right and right becomes left.
+-/
 scoped notation "χ_" => InvolutiveCategoryStruct.skewator
+/--
+The involutor is a witness that flipping an object by 360 degrees (i.e. applying star twice)
+is "the same" as doing nothing.
+-/
 scoped notation "e_" => InvolutiveCategoryStruct.involutor
 
 variable {C : Type u} [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategoryStruct C]
 
--- involutive coherences are isomorphisms made up of the
--- skewator/involutor, and monoidal associator/unitors.
--- We define these here so we can "cheat" in the involutive
--- category definition by stating coherence instead of proving
--- it from a couple of diagrams. If involutive categories are indeed
--- coherent (as many have proved by hand), this is equivalent to
--- the usual definition
+/--
+Involutive coherences are isomorphisms made up of the identity,
+skewator/involutor, and monoidal associator/unitors.
+We define these here so we can "cheat" in the involutive
+category definition by stating coherence instead of proving
+it from a couple of diagrams. If involutive categories are indeed
+coherent (as has been proved by hand), this is equivalent to
+the usual definition.
+-/
 inductive InvolutiveCoherence : {X Y : C} → (X ⟶ Y) → Prop where
   | id : InvolutiveCoherence (𝟙 X)
   | comp : InvolutiveCoherence f → InvolutiveCoherence g → InvolutiveCoherence (f ≫ g)
@@ -53,9 +69,19 @@ end InvolutiveCategory
 
 open InvolutiveCategory
 
+/--
+An involutive category is a monoidal category equipped with a star functor,
+and two natural isomorphisms. The involutor ε represents the idea that
+the star is involutive (i.e. X⋆⋆ ≅ X), and the skewator χ represents the idea that
+the tensor product ⊗ is reversed by star (i.e. (X ⊗ Y)⋆ ≅ Y⋆ ⊗ X⋆).
+These natural isomorphisms are also coherent: any composition of the identity,
+skewator/involutor, and monoidal associator/unitors that have the same source is
+equal to any other. This statement is usually proved from a couple of diagrams
+akin to the pentagon and triangle diagrams for monoidal categories, but we instead
+define it directly because we don't want to prove coherence from those diagrams.
+-/
 class InvolutiveCategory (C : Type u)
     [Category.{v} C] [MonoidalCategory C] extends InvolutiveCategoryStruct C where
-  -- starObj on monoidal identity 𝟙_?
   starHom_id : ∀ X : C, (𝟙 X)⋆ = 𝟙 X⋆ := by cat_disch
   starHom_comp_starHom : ∀ {X Y Z : C} (f : X ⟶ Y) (g : Y ⟶ Z),
       (f ≫ g)⋆ = f⋆ ≫ g⋆ := by cat_disch
@@ -72,6 +98,10 @@ attribute [reassoc] InvolutiveCategory.skewator_naturality
 attribute [reassoc] InvolutiveCategory.involutor_naturality
 
 namespace InvolutiveCategory
+
+-- Here comes a bunch of various tiny lemmas about involutive categories.
+-- Lemmas like "involutor_conjugation" are registered with simp to rewrite
+-- morphisms into normal forms.
 
 variable {C : Type u} [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C]
 
@@ -97,25 +127,25 @@ theorem involutor_inv_naturality :
   rw [← involutor_naturality_assoc f]
   simp
 
-@[reassoc (attr := simp)]
+@[simp, reassoc (attr := simp)]
 theorem hom_inv_star {X Y : C} (f : X ≅ Y) :
     f.hom⋆ ≫ f.inv⋆ = 𝟙 X⋆ := by
   rw [← starHom_comp_starHom]
   simp
 
-@[reassoc (attr := simp)]
+@[simp, reassoc (attr := simp)]
 theorem hom_inv_star' {X Y : C} (f : X ⟶ Y) [IsIso f] :
     f⋆ ≫ (inv f)⋆ = 𝟙 X⋆ := by
   rw [← starHom_comp_starHom]
   simp
 
-@[reassoc (attr := simp)]
+@[simp, reassoc (attr := simp)]
 theorem inv_hom_star {X Y : C} (f : X ≅ Y) :
     f.inv⋆ ≫ f.hom⋆ = 𝟙 Y⋆ := by
   rw [← starHom_comp_starHom]
   simp
 
-@[reassoc (attr := simp)]
+@[simp, reassoc (attr := simp)]
 theorem inv_hom_star' {X Y : C} (f : X ⟶ Y) [IsIso f] :
     (inv f)⋆ ≫ f⋆ = 𝟙 Y⋆ := by
   rw [← starHom_comp_starHom]
@@ -189,15 +219,31 @@ end InvolutiveCategory
 
 namespace TwistedCategory
 
+/--
+Auxiliary structure for twisted categories that holds just the twist isomorphism.
+Used to define notation.
+-/
 class TwistedCategoryStruct (C : Type u)
     [Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C] where
   twist : ∀ X : C, InvolutiveCategoryStruct.starObj X ≅ X
 
+/--
+The twist isomorphism can be thought of as twisting an object 180 degrees -- an even amount of
+stars is the front of the object, and an odd amount of stars is the back. It is
+NOT part of the coherent stuff -- two twist homs maps an object to itself, but that
+is not necessarily the identity.
+-/
 scoped notation "ς_" => TwistedCategoryStruct.twist
 
 variable {C : Type u}
     [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C] [TwistedCategoryStruct C]
 
+/--
+The braid isomorphism exchanges two objects in the tensor product
+without twisting them. It does this by twisting both objects (thus
+exchanging them), then individually untwisting each object so their
+twists are the same but their positions are swapped.
+-/
 def braid (X Y : C) : X ⊗ Y ≅ Y ⊗ X where
   hom := ((ς_ _).inv ⊗ₘ (ς_ _).inv) ≫
     (χ_ _ _).hom ≫
@@ -206,13 +252,20 @@ def braid (X Y : C) : X ⊗ Y ≅ Y ⊗ X where
     (χ_ _ _).inv ≫
     ((ς_ _).hom ⊗ₘ (ς_ _).hom)
 
--- could show braid agrees with hexagon identity (it follows from tℓ)
+@[inherit_doc braid]
 scoped notation "σ_" => braid
+
+-- could show braid agrees with hexagon identity (it follows from tℓ)
 
 end TwistedCategory
 
 open TwistedCategory
 
+/--
+A twisted category is an involutive category equipped with a twist
+natural isomorphism. The twist satisfies the tℓ diagram, which
+relates twists on tensors to tensors of twists.
+-/
 class TwistedCategory (C : Type u) [Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C]
     extends TwistedCategoryStruct C where
   twist_naturality : ∀ {X Y : C} (f : X ⟶ Y),
@@ -231,6 +284,8 @@ namespace TwistedCategory
 
 variable {C : Type u}
     [𝒞 : Category.{v} C] [MonoidalCategory C] [InvolutiveCategory C] [TwistedCategory C]
+
+-- Again, many tiny lemmas about twisted categories
 
 @[reassoc]
 theorem twist_inv_naturality :
@@ -344,6 +399,10 @@ end TwistedCategory
 variable {C : Type u} {D : Type u'} [Category.{v'} D] [MonoidalCategory D] [InvolutiveCategory D]
 namespace FreeInvolutiveCategory
 
+/--
+Given a map from C to D, we can project objects in the free involutive category on C
+down to objects in D by applying the map to the generators.
+-/
 def projectObj (m : C → D) : I C → D
   | of c => m c
   | unit => 𝟙_ _
@@ -361,6 +420,10 @@ end FreeInvolutiveCategory
 
 namespace FreeTwistedCategory
 
+/--
+Given a map from C to D, we can project objects in the free twisted category on C
+down to objects in D by applying the map to the generators.
+-/
 def projectObj (m : C → D) (X : T C) : D := X.as.projectObj m
 
 @[simp] lemma projectObj_of (m : C → D) : projectObj m (of c) = m c := rfl
@@ -375,6 +438,10 @@ end FreeTwistedCategory
 
 namespace FreeTwistedCategoryQuiver
 
+/--
+Given a map from C to D, we can project objects in the free twisted category generated
+by a quiver on C down to objects in D by applying the map to the generators.
+-/
 def projectObj (m : C → D) (X : TQ C) : D := X.as.projectObj m
 
 @[simp] lemma projectObj_of (m : C → D) : projectObj m (of c) = m c := rfl

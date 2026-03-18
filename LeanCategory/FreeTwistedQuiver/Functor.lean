@@ -17,6 +17,10 @@ variable (M : {X Y : T C} → (X ⟶ Y) → ((X.projectObj m) ⟶ (Y.projectObj 
 
 open Hom
 
+/--
+Auxiliary definition for the projection functor: maps premorphisms in `T C`
+to morphisms in `D`. It uses `M` to map the morphisms from the free quiver.
+-/
 @[simp]
 def projectMapAux : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X.projectObj m ⟶ Y.projectObj m)
   | _, _, Hom.of f => M f
@@ -39,12 +43,19 @@ def projectMapAux : ∀ {X Y : TQ C}, (X ⟶tq Y) → (X.projectObj m ⟶ Y.proj
   | _, _, twist_hom _ => (ς_ _).hom
   | _, _, twist_inv _ => (ς_ _).inv
 
+/--
+The projection of a `Pure` premorphism is an involutive coherence.
+-/
 lemma projectMapAux_Pure : ∀ {X Y : TQ C} (f : X ⟶tq Y),
     f.Pure → InvolutiveCoherence (projectMapAux m M f) := by
   intro X Y f hf
   induction f <;> simp_all
   all_goals constructor <;> assumption
 
+/--
+The morphism map of the projection functor from `T C` to `D`. It uses
+`M` to map the morphisms from the free quiver.
+-/
 @[simp]
 def projectMap {X Y : TQ C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) :=
   _root_.Quotient.lift (projectMapAux m M) <| by
@@ -95,6 +106,13 @@ def projectMap {X Y : TQ C} : (X ⟶ Y) → (X.projectObj m ⟶ Y.projectObj m) 
     | coherence X Y f g hf hg =>
         apply coherence <;> apply projectMapAux_Pure <;> assumption
 
+/--
+Given a function `m : C → D` and a function on quiver morphisms
+`M`, we get a functor `TQ C ⥤ D` by projecting the free
+twisted category with a quiver
+onto the twisted involutive morphisms in `D`, collapsing
+the object structure in `T C` using `D`'s object structure.
+-/
 def project : TQ C ⥤ D where
   obj := projectObj m
   map := projectMap m M
@@ -104,6 +122,10 @@ variable {D : Type u'} [Quiver.{v'} (T D)] (m : C → D)
 
 variable (M : {X Y : T C} → (X ⟶ Y) → ((X.map m) ⟶ (Y.map m)))
 
+/--
+Given a function `m : C → D` and a map `M` between quivers,
+we get a functor `TQ C ⥤ TQ D`.
+-/
 def projectFree : TQ C ⥤ TQ D := project (fun c ↦ (of (m c))) <| fun f ↦ homMk <| .of <| by
   simp
   exact M f

@@ -121,7 +121,6 @@ lemma id_whiskerRight : ∀ (X Y : N C), whiskerRight (𝟙 X) Y = (𝟙 <| X.te
   rw [Quotient.liftOn_mk]
   simp
 
-/- (whiskerRight f _) ≫ (whiskerLeft _ g) -/
 def tensorHom {X Y : N C} (f : X ⟶ X') (g : Y ⟶ Y') : tensor X Y ⟶ tensor X' Y' :=
   (whiskerRight f _) ≫ (whiskerLeft _ g)
 
@@ -139,6 +138,9 @@ lemma starHom_id : ∀ (X : N C), starHom (𝟙 X) = 𝟙 X.star := by
   rw [Quotient.liftOn_mk]
   simp
 
+/--
+The whisker exchange rule from monoidal categories
+-/
 set_option maxHeartbeats 10000000 in -- big simp_all
 @[reassoc]
 lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
@@ -538,6 +540,10 @@ instance : InvolutiveCategoryStruct (N C) where
     inv := mkBraid <| (e_ X.as).inv
   }
 
+/--
+If a morphism in Nat's definition is an involutive coherence, it has a pure
+braid representative
+-/
 lemma coherence_mkBraid_Pure : ∀ {X Y : N C} (f : X ⟶ Y),
     InvolutiveCategory.InvolutiveCoherence f →
       ∃ f' : X.as ⟶t Y.as, f'.Pure ∧ f = mkBraid ⟦f'⟧ := by
@@ -613,6 +619,10 @@ open TwistedCategory
 attribute [-simp] tℓ tℓ_assoc tℓ_inv tℓ_inv_assoc
 attribute [simp] whiskerLeft_star whiskerRight_star
 
+/--
+A layer can be conjugated entirely by a twist, twisting the box and interchanging
+the left and right strands
+-/
 @[simp]
 lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
     mkBraid (by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ (ς_ (R ⊗ (X^⋆s) ⊗ L)).hom ⊗⋆≫ 𝟙 _) ≫

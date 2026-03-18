@@ -11,29 +11,57 @@ variable {C : Type u} [Category.{v} C]
 
 open scoped MonoidalCategory
 
+/--
+An involutive coherence *should* be made up of compositions/stars/tensors/whiskers
+of the coherence isomorphisms. There's nothing here that enforces that, but we
+only define instances for those isomorphisms. We use this class to use Lean's
+typeclass inference to automatically figure out if there's a coherent isomorphism between
+any two objects, automatically generating a representative of that isomorphism if so.
+If someone were to make more instances, that would break the property and it'd cause
+mayhem... so don't do that.
+-/
 class InvolutiveCoherence (X Y : C) where
   iso : X ≅ Y
 
+/--
+The isomorphism between two objects, if it exists.
+-/
 scoped[CategoryTheory.InvolutiveCategory] notation " ⊗⋆𝟙 " =>
   InvolutiveCoherence.iso
 
 abbrev involutiveIso (X Y : C) [InvolutiveCoherence X Y] : X ≅ Y := InvolutiveCoherence.iso
 
+/--
+Composition of morphisms, up to involutive coherence. Incredibly useful -- it
+"fills in" by rewriting X to Y.
+-/
 def involutiveComp {W X Y Z : C} [InvolutiveCoherence X Y] (f : W ⟶ X) (g : Y ⟶ Z) : W ⟶ Z :=
   f ≫ ⊗⋆𝟙.hom ≫ g
 
+@[inherit_doc involutiveComp]
 scoped[CategoryTheory.InvolutiveCategory] infixr:80 " ⊗⋆≫ " =>
   involutiveComp
 
+/--
+Composition of isomorphisms, up to involutive coherence. Incredibly useful -- it
+"fills in" by rewriting X to Y.
+-/
 def involutiveIsoComp {W X Y Z : C} [InvolutiveCoherence X Y] (f : W ≅ X) (g : Y ≅ Z) : W ≅ Z :=
   f ≪≫ ⊗⋆𝟙 ≪≫ g
 
+@[inherit_doc involutiveIsoComp]
 scoped[CategoryTheory.InvolutiveCategory] infixr:80 " ≪⊗⋆≫ " =>
   involutiveIsoComp
 
 namespace InvolutiveCoherence
 
 variable [MonoidalCategory C] [InvolutiveCategory C]
+
+-- Instances for InvolutiveCoherence. They're constructed
+-- very carefully to help the synthesizer make the right choices
+-- to quickly figure about whether an involutive coherence exists,
+-- in a way that reminds Nat of sequent calculus (as opposed to
+-- natural deduction)
 
 @[simps]
 instance refl (X : C) : InvolutiveCoherence X X := ⟨Iso.refl _⟩
