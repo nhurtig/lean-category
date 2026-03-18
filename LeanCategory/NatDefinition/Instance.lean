@@ -138,10 +138,10 @@ lemma starHom_id : ∀ (X : N C), starHom (𝟙 X) = 𝟙 X.star := by
   rw [Quotient.liftOn_mk]
   simp
 
+set_option maxHeartbeats 10000000 in -- big simp_all
 /--
 The whisker exchange rule from monoidal categories
 -/
-set_option maxHeartbeats 10000000 in -- big simp_all
 @[reassoc]
 lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
     whiskerRight f Y ≫ whiskerLeft X g = whiskerLeft W g ≫ whiskerRight f Z := by
