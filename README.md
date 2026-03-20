@@ -1,10 +1,27 @@
-# lean-category
+# Definitions and alternative definitions for twisted and involutive monoidal categories
 
 This project has a lot of automation, so it'll probably check slower than
 others per line of proof. Once Mathlib is sorted out, it shouldn't take longer
 than 10 minutes, around 5 minutes on my average laptop. Notation, definitions,
 and big lemmas/theorems are documented, so use your LSP's hover feature
 to check them out if confused.
+
+## Interesting stuff (TL;DR)
+
+If you're in a rush, here's the minimal stuff to check out:
+- Lots of code and hundreds of lemmas/theorems (mostly simplifying lemmas though)
+- Extends Mathlib's existing monoidal category theory to involutive and twisted involutive
+monoidal categories, which have not been formalized before ([category definition file](LeanCategory/Basic.lean))
+- Uses instance synthesis to enable a coherence tactic to pull out certain morphisms (not my idea;
+extended from Mathlib's category theory tactics) ([coherence tactic file](LeanCategory/FreeInvolutive/CoherenceTactic.lean))
+([example of use: see `nat_coherence` under `whiskerLeft`](LeanCategory/NatDefinition/Instance.lean))
+([example of nonuse: see `twist_conjugation`'s proof, where I have to move twists around (they aren't coherent)
+to cancel them. Without the coherence tactics, I'd have to do this for every proof of morphism equality
+involving naturality](LeanCategory/NatDefinition/Instance.lean))
+- Represents the complicated category theory premorphisms and equalities
+in [the category definitions file](LeanCategory/Basic.lean) using the [3 variants in `Hom`](LeanCategory/NatDefinition/Basic.lean)
+and [a handful of equalities in `HomEquiv`](LeanCategory/NatDefinition/Basic.lean). Special callout to the `layer`
+rule for equality, which uses the ["side effects" of witnesses of layer equality](LeanCategory/NatDefinition/Layer.lean) to rewrite morphisms.
 
 ## AI usage
 
@@ -25,23 +42,6 @@ nonstrict way is definitely the way to go for proof assistants. I suppose I woul
 have learned this lesson if not for the LLM's advice, but it is a cautionary tale to
 not follow an LLM's advice unless you understand the material it's giving you advice on
 well enough to verify its claims.
-
-## Interesting stuff (TL;DR)
-
-If you're in a rush, here's the minimal stuff to check out:
-- Lots of code and hundreds of lemmas/theorems (mostly simplifying lemmas though)
-- Extends Mathlib's existing monoidal category theory to involutive and twisted involutive
-monoidal categories, which have not been formalized before ([category definition file](LeanCategory/Basic.lean))
-- Uses instance synthesis to enable a coherence tactic to pull out certain morphisms (not my idea;
-extended from Mathlib's category theory tactics) ([coherence tactic file](LeanCategory/FreeInvolutive/CoherenceTactic.lean))
-([example of use: see `nat_coherence` under `whiskerLeft`](LeanCategory/NatDefinition/Instance.lean))
-([example of nonuse: see `twist_conjugation`'s proof, where I have to move twists around (they aren't coherent)
-to cancel them. Without the coherence tactics, I'd have to do this for every proof of morphism equality
-involving naturality](LeanCategory/NatDefinition/Instance.lean))
-- Represents the complicated category theory premorphisms and equalities
-in [the category definitions file](LeanCategory/Basic.lean) using the [3 variants in `Hom`](LeanCategory/NatDefinition/Basic.lean)
-and [a handful of equalities in `HomEquiv`](LeanCategory/NatDefinition/Basic.lean). Special callout to the `layer`
-rule for equality, which uses the ["side effects" of witnesses of layer equality](LeanCategory/NatDefinition/Layer.lean) to rewrite morphisms.
 
 ## Goal of the project
 
