@@ -22,6 +22,9 @@ involving naturality](LeanCategory/NatDefinition/Instance.lean))
 in [the category definitions file](LeanCategory/Basic.lean) using the [3 variants in `Hom`](LeanCategory/NatDefinition/Basic.lean)
 and [a handful of equalities in `HomEquiv`](LeanCategory/NatDefinition/Basic.lean). Special callout to the `layer`
 rule for equality, which uses the ["side effects" of witnesses of layer equality](LeanCategory/NatDefinition/Layer.lean) to rewrite morphisms.
+- [An almost completely LLM-generated silly tool](sexpr_diff.py) for comparing the s-expressions of Lean terms
+in explicit mode, for figuring out why Lean 4 refused to rewrite by an equality (for me, it was often
+universe levels, different synthesized instances, or unsimplifiable expressions in the types)
 
 ## AI usage
 
@@ -113,7 +116,7 @@ monoidal category with a free quiver to Nat's definition using the previous func
 [LeanCategory/NatDefinition/FromNat.lean](LeanCategory/NatDefinition/FromNat.lean) defines the reverse direction functor; the
 "meaning" of Nat's definition in more widely accepted categorical terms.
 
-[LeanCategory/InvolutiveComp](LeanCategory/InvolutiveComp) defines helper definitions/notation for
+[LeanCategory/InvolutiveComp.lean](LeanCategory/InvolutiveComp.lean) defines helper definitions/notation for
 composition of morphisms up to involutive monoidal coherence, which saves lots of time and space
 throughout defining Nat's definition and proving its properties.
 [LeanCategory/FreeInvolutive/CoherenceTactic.lean](LeanCategory/FreeInvolutive/CoherenceTactic.lean) defines
@@ -126,7 +129,7 @@ work of adapting them to involutive monoidal categories.
 Every time I define something as a category or functor, I have to prove many properties -- these are the
 most difficult results that were proved.
 
-[LeanCategory/FunctorComp.lean](LeanCategory/FunctorComp.lean) is the conclusion file; it shows that
+[LeanCategory/FunctorCompare.lean](LeanCategory/FunctorCompare.lean) is the conclusion file; it shows that
 if the functor composition is well-behaved and the paper's stated result is true, then we have efficient,
 decidable equality on the morphisms of the free twisted involutive monoidal category with a free quiver.
 
@@ -140,7 +143,7 @@ but it doesn't get into involutions/twists (only monoidal/braids)](https://arxiv
 
 ## Future work
 
-[LeanCategory/FunctorComp.lean](LeanCategory/FunctorComp.lean) clearly defines the two missing
+[LeanCategory/FunctorCompare.lean](LeanCategory/FunctorCompare.lean) clearly defines the two missing
 pieces for full formalization of the paper:
 - Show the composition of the functors is the identity. This should be very little work (a couple days by my guess);
 just lots of @[simp] lemmas for each case of each functor.
