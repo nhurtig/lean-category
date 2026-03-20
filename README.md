@@ -13,7 +13,18 @@ proofs were very ugly and incredibly long). Possible that it was user error; I d
 at it. Nothing from Aristotle made it into this repo. About
 half the time, I had Copilot suggesting code completions to me. It didn't help
 the mentally hard stuff, but it helped greatly with repetitive code/definition
-(left vs. right cases, skewator vs. involutor, etc.).
+(left vs. right cases, skewator vs. involutor, etc.). I occasionally prompted an
+LLM to ask it for help/tips. Success rate was around 30% for those prompts; bits
+and pieces (a few lines) were copied from those LLM chats into the code.
+
+You might remember from the "talk to an LLM about your project" assignment that my
+LLM told me to use strict definitions for objects, rather than nonstrict, because
+that'd be easier. The LLM was very wrong; the strict definitions get you into dependent
+type theory trouble much easier (proofs of object equality litter the morphisms); the
+nonstrict way is definitely the way to go for proof assistants. I suppose I wouldn't
+have learned this lesson if not for the LLM's advice, but it is a cautionary tale to
+not follow an LLM's advice unless you understand the material it's giving you advice on
+well enough to verify its claims.
 
 ## Interesting stuff (TL;DR)
 
@@ -42,10 +53,7 @@ canonicalization algorithm for the words in that category (incredibly useful for
 optimizations). Stitches are represented by free morphisms, and the braids and twists between stitches are
 natural isomorphisms.
 
-An animation of a topological equivalence of two knitted objects:
-<video width="600" controls>
-  <source src="docs/canon_example.mp4" type="video/mp4">
-</video>
+[An animation of a topological equivalence of two knitted objects](docs/canon_example.mp4)
 
 The proofs in [Nat's paper](https://textiles-lab.github.io/publications/2025-knit-equivalence/) use
 a nonstandard representation for morphisms in their category: stitches are always in "layers", which
@@ -140,6 +148,6 @@ just lots of @[simp] lemmas for each case of each functor.
 through. I wouldn't have to deal with Mathlib's category theory though. The paper nicely separates the proof
 burden into three stages: reordering layers with the "swap" rule, moving around twists using the "layer" rule,
 and canonicalizing the twists between layers. The first two, especially, the "swap" case, will be very difficult.
-The twist canonicalization should be more doable by connecting [Hannah Fetchner's MS thesis](https://www.hannahfechtner.com/finallyyy.pdf),
+The twist canonicalization should be more doable by connecting [Hannah Fechtner's MS thesis](https://www.hannahfechtner.com/finallyyy.pdf),
 which formalizes the canonicalization of the braid group to the twisted setting.
 
