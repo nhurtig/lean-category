@@ -139,3 +139,5 @@ which formalizes the canonicalization of the braid group, to the twisted setting
 It'd also be nice to formalize coherence for involutive monoidal categories, but that's not important for
 machine knitting.
 
+It'd also be nice to remove some of the duplication, but I'm not sure that's a good use of my time.
+
