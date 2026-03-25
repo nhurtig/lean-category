@@ -133,8 +133,8 @@ just lots of @[simp] lemmas for each case of each functor.
 through. I wouldn't have to deal with Mathlib's category theory though. The paper nicely separates the proof
 burden into three stages: reordering layers with the "swap" rule, moving around twists using the "layer" rule,
 and canonicalizing the twists between layers. The first two, especially, the "swap" case, will be very difficult.
-The twist canonicalization should be more doable by connecting [Hannah Fechtner's MS thesis](https://www.hannahfechtner.com/finallyyy.pdf),
-which formalizes the canonicalization of the braid group to the twisted setting.
+The twist canonicalization should be more doable by extending [Hannah Fechtner's MS thesis](https://www.hannahfechtner.com/finallyyy.pdf),
+which formalizes the canonicalization of the braid group, to the twisted setting.
 
 It'd also be nice to formalize coherence for involutive monoidal categories, but that's not important for
 machine knitting.
