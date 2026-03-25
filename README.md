@@ -35,7 +35,7 @@ canonicalization algorithm for the words in that category (incredibly useful for
 optimizations). Stitches are represented by free morphisms, and the braids and twists between stitches are
 natural isomorphisms.
 
-[An animation of a topological equivalence of two knitted objects](docs/canon_example.mp4)
+[An animation of a topological equivalence of two knitted objects](images/canon_example.mp4)
 
 The proofs in [our paper](https://textiles-lab.github.io/publications/2025-knit-equivalence/) use
 a nonstandard representation for morphisms in their category: stitches are always in "layers", which
