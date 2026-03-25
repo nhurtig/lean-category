@@ -1,13 +1,13 @@
 import Mathlib
 import LeanCategory.InvolutiveComp
 import LeanCategory.FreeTwisted.Functor
-import LeanCategory.NatDefinition.Base
+import LeanCategory.FusedBraids.Base
 
-namespace CategoryTheory.NatDefinition
+namespace CategoryTheory.FusedBraids
 
 open CategoryTheory
 open scoped FreeTwistedCategory
-open scoped NatDefinition
+open scoped FusedBraids
 
 variable {C : Type u}
 
@@ -120,7 +120,7 @@ open InvolutiveCategory TwistedCategory
 `φ` is a "functor" (not truly a functor, because we haven't made `Layer.Hom` into
 a category) that emits the morphisms in the free twisted category
 that go above and below the layer as it is rewritten by the `Layer.Hom` premorphism.
-See the `layer` rewrite rule in `NatDefinition.Basic` for how this is used.
+See the `layer` rewrite rule in `FusedBraids.Basic` for how this is used.
 -/
 @[simp]
 def φ {l₁ l₂ : Layer C} (b : TopBottom) : (l₁ ⟶l l₂) → ((l₁.boundary b) ⟶T (l₂.boundary b))
@@ -160,5 +160,5 @@ def φ {l₁ l₂ : Layer C} (b : TopBottom) : (l₁ ⟶l l₂) → ((l₁.bound
 
 end Hom
 
-end CategoryTheory.NatDefinition.Layer
+end CategoryTheory.FusedBraids.Layer
 

@@ -1,8 +1,8 @@
 import Mathlib
-import LeanCategory.NatDefinition.Instance
+import LeanCategory.FusedBraids.Instance
 import LeanCategory.FreeTwisted.Functor
 
-namespace CategoryTheory.NatDefinition
+namespace CategoryTheory.FusedBraids
 
 open FreeTwistedCategory
 open FreeTwistedCategoryQuiver
@@ -29,13 +29,13 @@ lemma boxTwist_succ {X Y : T C} {x : X ⟶ Y} :
   rfl
 
 /--
-Auxiliary function for premorphisms, turning Nat's premorphisms into
+Auxiliary function for premorphisms, turning fused braids premorphisms into
 morphisms into the free twisted category with a quiver
 -/
 @[simp]
-def fromNat {X Y : N C} : (X ⟶n Y) → ((FreeTwistedCategoryQuiver.mk X.as) ⟶ ⟨Y.as⟩)
+def fromFusedBraids {X Y : FB C} : (X ⟶fb Y) → ((FreeTwistedCategoryQuiver.mk X.as) ⟶ ⟨Y.as⟩)
   | .braid f => embed.map f
-  | .comp f g => (fromNat f) ≫ (fromNat g)
+  | .comp f g => (fromFusedBraids f) ≫ (fromFusedBraids g)
   | .layer ⟨L, X, Y, s, x, R⟩ => _ ◁ (boxTwist s x) ▷ _
 
 end Hom
@@ -72,12 +72,12 @@ macro "extract_right" : tactic =>
 
 set_option maxHeartbeats 1000000 in -- the simp_all takes a lot of work
 /--
-Semantics functor for Nat's definition, converting Nat's morphisms into
+Semantics functor for fused braids, converting fused braids into
 morphisms in the free twisted category with a quiver
 -/
-def fromNat : (N C) ⥤ (TQ C) where
+def fromFusedBraids : (FB C) ⥤ (TQ C) where
   obj X := ⟨X.as⟩
-  map := _root_.Quotient.lift Hom.fromNat <| by
+  map := _root_.Quotient.lift Hom.fromFusedBraids <| by
     rintro f g h
     induction h <;> simp_all -- 10 goals. 2 (swap, layer) are nontrivial
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
@@ -190,5 +190,5 @@ def fromNat : (N C) ⥤ (TQ C) where
     rintro _
     rfl
 
-end CategoryTheory.NatDefinition
+end CategoryTheory.FusedBraids
 

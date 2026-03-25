@@ -1,8 +1,8 @@
 import Mathlib
-import LeanCategory.NatDefinition.Layer
+import LeanCategory.FusedBraids.Layer
 import LeanCategory.FreeInvolutive.CoherenceTactic
 
-namespace CategoryTheory.NatDefinition
+namespace CategoryTheory.FusedBraids
 open scoped Layer
 open FreeTwistedCategory
 
@@ -10,19 +10,19 @@ universe u
 variable {C : Type u} [Quiver.{v} (T C)]
 
 /--
-The premorphisms in Nat's definition. There are braids in the
+The premorphisms of fused braids. There are braids in the
 free twisted category without a quiver, and the quiver morphisms
 are represented using layers. Nat proposes that this representation
 is sufficient for the free twisted category with a quiver.
 -/
-inductive Hom : N C → N C → Type (max (u + 2) v) where
+inductive Hom : FB C → FB C → Type (max (u + 2) v) where
   | layer : (l : Layer C) →
       Hom ⟨(l.boundary .Bottom)⟩ ⟨(l.boundary .Top)⟩
-  | braid {X Y : N C} : (X.as ⟶T Y.as) → Hom X Y
-  | comp {X Y Z : N C} : Hom X Y → Hom Y Z → Hom X Z
+  | braid {X Y : FB C} : (X.as ⟶T Y.as) → Hom X Y
+  | comp {X Y Z : FB C} : Hom X Y → Hom Y Z → Hom X Z
 
 @[inherit_doc Hom]
-infixr:10 " ⟶n " => Hom
+infixr:10 " ⟶fb " => Hom
 
 open CategoryTheory
 open MonoidalCategory
@@ -37,7 +37,7 @@ to involutive coherence to reassociate on
 the left.
 -/
 @[simp]
-def Hom.whiskerLeft (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((X.tensor Y₁) ⟶n (X.tensor Y₂))
+def Hom.whiskerLeft (X : FB C) {Y₁ Y₂ : FB C} : (Y₁ ⟶fb Y₂) → ((X.tensor Y₁) ⟶fb (X.tensor Y₂))
   | .layer ⟨L, D, C, s, x, R⟩ =>
     (Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp <|
       (Hom.layer ⟨X.as ⊗ L, D, C, s, x, R⟩).comp
@@ -51,7 +51,7 @@ by an object. The layer case uses composition
 up to involutive coherence.
 -/
 @[simp]
-def Hom.whiskerRight (X : N C) {Y₁ Y₂ : N C} : (Y₁ ⟶n Y₂) → ((Y₁.tensor X) ⟶n (Y₂.tensor X))
+def Hom.whiskerRight (X : FB C) {Y₁ Y₂ : FB C} : (Y₁ ⟶fb Y₂) → ((Y₁.tensor X) ⟶fb (Y₂.tensor X))
   | .layer ⟨L, D, C, s, x, R⟩ =>
     (Hom.braid <| by simp; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp <|
       (Hom.layer ⟨L, D, C, s, x, R ⊗ X.as⟩).comp
@@ -65,8 +65,8 @@ This is useful, as we have to prove this fact when
 we define a monoidal category
 -/
 @[simp, grind]
-def Hom.tensor {X₁ X₂ Y₁ Y₂ : N C} (f : X₁ ⟶n Y₁) (g : X₂ ⟶n Y₂) :
-    (X₁.tensor X₂) ⟶n (Y₁.tensor Y₂) :=
+def Hom.tensor {X₁ X₂ Y₁ Y₂ : FB C} (f : X₁ ⟶fb Y₁) (g : X₂ ⟶fb Y₂) :
+    (X₁.tensor X₂) ⟶fb (Y₁.tensor Y₂) :=
   (f.whiskerRight X₂).comp (g.whiskerLeft Y₁)
 
 /--
@@ -74,7 +74,7 @@ The star of a premorphism. Again, the layer case uses
 composition up to involutive coherence.
 -/
 @[simp]
-def Hom.starHom {X Y : N C} : (X ⟶n Y) → (X.star ⟶n Y.star)
+def Hom.starHom {X Y : FB C} : (X ⟶fb Y) → (X.star ⟶fb Y.star)
   | .layer ⟨L, X, Y, s, x, R⟩ =>
       (Hom.braid <| by simp [repeat_star_succ]; exact 𝟙 _ ⊗⋆≫ 𝟙 _).comp <|
         (Hom.layer ⟨R.star, X, Y, s+1, x, L.star⟩).comp <|
@@ -83,18 +83,18 @@ def Hom.starHom {X Y : N C} : (X ⟶n Y) → (X.star ⟶n Y.star)
   | .comp f g => (f.starHom).comp g.starHom
 
 /--
-The equivalence rules (called rewrite rules) in Nat's paper over
-Nat's definition. The two nontrivial cases are the `swap` rule,
+The equivalence rules (called rewrite rules) in our paper over
+fused braids. The two nontrivial cases are the `swap` rule,
 which swaps layers, and the `layer` rule, which rewrites a layer
 according to a `Layer.Hom`.
 -/
 @[grind]
-inductive HomEquiv : ∀ {X Y : (N C)}, (X ⟶n Y) → (X ⟶n Y) → Prop where
+inductive HomEquiv : ∀ {X Y : FB C}, (X ⟶fb Y) → (X ⟶fb Y) → Prop where
   | refl (f) : HomEquiv f f
-  | comp {f f' : X ⟶n Y} : HomEquiv f f' → HomEquiv g g' → HomEquiv (f.comp g) (f'.comp g')
+  | comp {f f' : X ⟶fb Y} : HomEquiv f f' → HomEquiv g g' → HomEquiv (f.comp g) (f'.comp g')
   | id_comp : HomEquiv ((Hom.braid (𝟙 X)).comp f) f
-  | comp_id {f : X ⟶n Y} : HomEquiv (f.comp (.braid (𝟙 Y.as))) f
-  | assoc {f : _ ⟶n _} {g : _ ⟶n _} {h : _ ⟶n _} :
+  | comp_id {f : X ⟶fb Y} : HomEquiv (f.comp (.braid (𝟙 Y.as))) f
+  | assoc {f : _ ⟶fb _} {g : _ ⟶fb _} {h : _ ⟶fb _} :
       HomEquiv ((f.comp g).comp h) (f.comp (g.comp h))
   | merge_braid {b₁ : X ⟶T (Y)} {b₂ : (Y) ⟶T (Z)} :
       HomEquiv ((Hom.braid b₁).comp (.braid b₂)) (.braid (b₁ ≫ b₂))
@@ -114,12 +114,12 @@ inductive HomEquiv : ∀ {X Y : (N C)}, (X ⟶n Y) → (X ⟶n Y) → Prop where
         (Hom.layer l₂).comp <|
         (Hom.braid <| Groupoid.inv <| f.φ .Top))
   | symm (f g) : HomEquiv f g → HomEquiv g f
-  | trans {f g h : X ⟶n Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
+  | trans {f g h : X ⟶fb Y} : HomEquiv f g → HomEquiv g h → HomEquiv f h
 
-instance setoidHom (X Y : N C) : Setoid (X ⟶n Y) :=
+instance setoidHom (X Y : FB C) : Setoid (X ⟶fb Y) :=
 ⟨HomEquiv, ⟨HomEquiv.refl, HomEquiv.symm _ _, HomEquiv.trans⟩⟩
 
-instance : Category (N C) where
+instance : Category (FB C) where
   Hom X Y := _root_.Quotient (setoidHom X Y)
   id X := ⟦Hom.braid (𝟙 X.as)⟧
   comp := Quotient.map₂ Hom.comp <| fun _ _ hf _ _ hg ↦ HomEquiv.comp hf hg
@@ -134,15 +134,15 @@ instance : Category (N C) where
     exact _root_.Quotient.sound .assoc
 
 @[simp]
-def homMk {X Y : N C} (f : X ⟶n Y) : X ⟶ Y := ⟦f⟧
+def homMk {X Y : FB C} (f : X ⟶fb Y) : X ⟶ Y := ⟦f⟧
 
 @[simp]
-theorem mk_id {X : N C} : ⟦.braid (𝟙 X.as)⟧ = 𝟙 X :=
+theorem mk_id {X : FB C} : ⟦.braid (𝟙 X.as)⟧ = 𝟙 X :=
   rfl
 
 @[simp]
-theorem mk_comp {X Y Z : N C} (f : X ⟶n Y) (g : Y ⟶n Z) :
-    ⟦Hom.comp f g⟧ = @CategoryStruct.comp (N C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
+theorem mk_comp {X Y Z : FB C} (f : X ⟶fb Y) (g : Y ⟶fb Z) :
+    ⟦Hom.comp f g⟧ = @CategoryStruct.comp (FB C) _ _ _ _ ⟦f⟧ ⟦g⟧ :=
   rfl
 
 open FreeTwistedCategory
@@ -161,28 +161,28 @@ theorem mk_layer {L : T C} {x : X ⟶ Y} : ⟦.layer ⟨L, X, Y, s, x, R⟩⟧ =
 /--
 A notational shortcut for the morphism represented by a `Hom.braid`.
 -/
-def mkBraid {X Y : N C} (b : X.as ⟶T Y.as) : X ⟶ Y := ⟦Hom.braid b⟧
+def mkBraid {X Y : FB C} (b : X.as ⟶T Y.as) : X ⟶ Y := ⟦Hom.braid b⟧
 
 @[simp]
-theorem mk_braid {X Y : N C} {b : X.as ⟶T Y.as} : ⟦.braid b⟧ = mkBraid b :=
+theorem mk_braid {X Y : FB C} {b : X.as ⟶T Y.as} : ⟦.braid b⟧ = mkBraid b :=
   rfl
 
 @[simp]
-theorem mkBraid_id {X : N C} : mkBraid (𝟙 X.as) = 𝟙 X :=
+theorem mkBraid_id {X : FB C} : mkBraid (𝟙 X.as) = 𝟙 X :=
   rfl
 
 @[simp]
-theorem mkBraid_id' : mkBraid (𝟙 X) = @CategoryStruct.id (N C) _ _ :=
+theorem mkBraid_id' : mkBraid (𝟙 X) = @CategoryStruct.id (FB C) _ _ :=
   rfl
 
 @[simp]
-theorem unmk_braid_comp {X Y Z : N C} (f : X.as ⟶T Y.as) (g : Y.as ⟶T Z.as) :
+theorem unmk_braid_comp {X Y Z : FB C} (f : X.as ⟶T Y.as) (g : Y.as ⟶T Z.as) :
      mkBraid f ≫ mkBraid g = mkBraid (f ≫ g) := by
   apply _root_.Quotient.sound
   constructor
 
 @[simp]
-theorem unmk_braid_comp_assoc {W X Y Z : N C} (f : W.as ⟶T X.as) (g : X.as ⟶T Y.as) (h : Y ⟶ Z) :
+theorem unmk_braid_comp_assoc {W X Y Z : FB C} (f : W.as ⟶T X.as) (g : X.as ⟶T Y.as) (h : Y ⟶ Z) :
      mkBraid f ≫ mkBraid g ≫ h = mkBraid (f ≫ g) ≫ h := by
   rw [← Category.assoc]
   apply congrArg (· ≫ _)
@@ -399,7 +399,7 @@ lemma braid_conjugation_right {R₁ R₂ : T C} (b : R₁ ⟶T R₂) :
 /--
 Helper lemma to rewrite an equality by moving a braid to the other side while inverting
 -/
-lemma stripBraidLeft {X Y : N C} {b : X.as ⟶T Y.as} {f : Y ⟶ Z} {g : X ⟶ Z} :
+lemma stripBraidLeft {X Y : FB C} {b : X.as ⟶T Y.as} {f : Y ⟶ Z} {g : X ⟶ Z} :
     ⟦(Hom.braid b)⟧ ≫ f = g → f = ⟦(Hom.braid (inv b))⟧ ≫ g := by
   intros h
   trans (⟦Hom.braid (inv b)⟧ ≫ (⟦Hom.braid b⟧ ≫ f))
@@ -409,7 +409,7 @@ lemma stripBraidLeft {X Y : N C} {b : X.as ⟶T Y.as} {f : Y ⟶ Z} {g : X ⟶ Z
 /--
 Helper lemma to rewrite an equality by moving a braid to the other side while inverting
 -/
-lemma stripBraidRight {X Y : N C} {b : Y.as ⟶T Z.as} {f : X ⟶ Y} {g : X ⟶ Z} :
+lemma stripBraidRight {X Y : FB C} {b : Y.as ⟶T Z.as} {f : X ⟶ Y} {g : X ⟶ Z} :
     f ≫ mkBraid b = g → f = g ≫ mkBraid (inv b) := by
   intros h
   trans ((f ≫ ⟦Hom.braid b⟧) ≫ ⟦Hom.braid (inv b)⟧)
@@ -419,7 +419,7 @@ lemma stripBraidRight {X Y : N C} {b : Y.as ⟶T Z.as} {f : X ⟶ Y} {g : X ⟶ 
 /--
 Helper lemma to rewrite an equality by moving braids on both sides to the other while inverting
 -/
-lemma stripBraid {W X Y Z : N C} {b₁ : W.as ⟶T X.as} {f : X ⟶ Y} {b₂ : Y.as ⟶T Z.as} {g : W ⟶ Z} :
+lemma stripBraid {W X Y Z : FB C} {b₁ : W.as ⟶T X.as} {f : X ⟶ Y} {b₂ : Y.as ⟶T Z.as} {g : W ⟶ Z} :
     mkBraid b₁ ≫ f ≫ mkBraid b₂ = g → f = mkBraid (inv b₁) ≫ g ≫ mkBraid (inv b₂) := by
   intros h
   have h := stripBraidLeft h
@@ -476,11 +476,11 @@ def HomEquiv.swap_coherent_starred {L : T C} {x₁ : X₁ ⟶ Y₁} {x₂ : X₂
   rw [hrw]
 
 /--
-Performs one step of the `nat_coherence` tactic: `rfl` on `mkLayer`s
+Performs one step of the `fb_coherence` tactic: `rfl` on `mkLayer`s
 that are identical, or handling `mkBraid`s that are equal by
 `inv_coherence`
 -/
-macro "nat_coherence_step" : tactic =>
+macro "fb_coherence_step" : tactic =>
   `(tactic|
     first
       | rfl -- just mkLayer
@@ -491,15 +491,15 @@ macro "nat_coherence_step" : tactic =>
   )
 
 /--
-An analogue of the `inv_coherence` tactic for Nat's definition of category:
+An analogue of the `inv_coherence` tactic for fused braids:
 as long as the `mkLayer`s are the same and the non-involutive coherence morphisms
 are in the same spots, this tactic takes care of the rest
 -/
-macro "nat_coherence" : tactic =>
+macro "fb_coherence" : tactic =>
   `(tactic|
     first
       | simp [involutiveComp, repeat_star_succ]; done
-      | (try simp [involutiveComp, repeat_star_succ]); repeat1 nat_coherence_step
+      | (try simp [involutiveComp, repeat_star_succ]); repeat1 fb_coherence_step
   )
 
 open Layer
@@ -507,9 +507,9 @@ open scoped Layer
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 /--
-Whiskering a morphism on the left by an object in Nat's category
+Whiskering a morphism on the left by an object in fused braids
 -/
-def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁ ⟶ X.tensor Y₂) := --by
+def whiskerLeft (X : FB C) {Y₁ Y₂ : FB C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁ ⟶ X.tensor Y₂) := --by
   Quotient.liftOn f (⟦·.whiskerLeft X⟧) <| by
     clear f
     rintro f g h
@@ -522,36 +522,36 @@ def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁
         have ih₁ := stripBraid ih₁
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
-        nat_coherence
+        fb_coherence
       all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_left (X.as ◁ b)]
-        nat_coherence
+        fb_coherence
       case freeRight b =>
         rw [braid_conjugation_right b]
-        nat_coherence
+        fb_coherence
       case box_strand_hom =>
         rw [box_strand_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case box_strand_inv L X' Y s R A x =>
         rw [box_strand_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case strand_box_hom =>
         rw [strand_box_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case strand_box_inv =>
         rw [strand_box_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case twist_hom =>
         rw [twist_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case ε_hom =>
-        nat_coherence
+        fb_coherence
       case ε_inv =>
-        nat_coherence
+        fb_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
       rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
       simp
@@ -565,13 +565,13 @@ def whiskerLeft (X : N C) {Y₁ Y₂ : N C} (f : Y₁ ⟶ Y₂) : (X.tensor Y₁
           inv_coherence
       simp
       rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
-      nat_coherence
+      fb_coherence
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 /--
-Whiskering a morphism on the right by an object in Nat's category
+Whiskering a morphism on the right by an object in fused braids
 -/
-def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor Y ⟶ X₂.tensor Y) := --by
+def whiskerRight {X₁ X₂ : FB C} (f : X₁ ⟶ X₂) (Y : FB C) : (X₁.tensor Y ⟶ X₂.tensor Y) := --by
   Quotient.liftOn f (⟦·.whiskerRight Y⟧) <| by
     clear f
     rintro f g h
@@ -584,36 +584,36 @@ def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor 
         have ih₁ := stripBraid ih₁
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
-        nat_coherence
+        fb_coherence
       all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_left b]
-        nat_coherence
+        fb_coherence
       case freeRight b =>
         rw [braid_conjugation_right (b ▷ Y.as)]
-        nat_coherence
+        fb_coherence
       case box_strand_hom =>
         rw [box_strand_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case box_strand_inv L X' Y s R A x =>
         rw [box_strand_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case strand_box_hom =>
         rw [strand_box_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case strand_box_inv =>
         rw [strand_box_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case twist_hom =>
         rw [twist_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case ε_hom =>
-        nat_coherence
+        fb_coherence
       case ε_inv =>
-        nat_coherence
+        fb_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
       rewrite [braid_conjugation_right (_ ◁ (α_ _ _ _).hom)]
       simp
@@ -627,13 +627,13 @@ def whiskerRight {X₁ X₂ : N C} (f : X₁ ⟶ X₂) (Y : N C) : (X₁.tensor 
           inv_coherence
       simp
       rewrite [braid_conjugation_right (_ ◁ (α_ _ _ _).inv)]
-      nat_coherence
+      fb_coherence
 
 set_option maxHeartbeats 10000000 in -- big simp_all
 /--
-Starring a morphism in Nat's category
+Starring a morphism in fused braids
 -/
-def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
+def starHom {X Y : FB C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
   Quotient.liftOn f (⟦·.starHom⟧) <| by
     clear f
     rintro f g h
@@ -646,37 +646,37 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
         have ih₁ := stripBraid ih₁
         have ih₂ := stripBraid ih₂
         rw [ih₁, ih₂]
-        nat_coherence
+        fb_coherence
       all_goals simp_all
       case freeLeft L₁ X' Y s x R L₂ b =>
         rw [braid_conjugation_right b⋆]
         simp_all
-        nat_coherence
+        fb_coherence
       case freeRight b =>
         rw [braid_conjugation_left b⋆]
-        nat_coherence
+        fb_coherence
       case box_strand_hom =>
         rw [strand_box_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case box_strand_inv L X' Y s R A x =>
         rw [strand_box_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case strand_box_hom =>
         rw [box_strand_hom_conjugation]
-        nat_coherence
+        fb_coherence
       case strand_box_inv =>
         rw [box_strand_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case twist_hom =>
         rw [twist_hom_conjugation_forced]
-        nat_coherence
+        fb_coherence
       case twist_inv =>
         rw [twist_inv_conjugation]
-        nat_coherence
+        fb_coherence
       case ε_hom L X Y s x R =>
-        nat_coherence
+        fb_coherence
       case ε_inv =>
-        nat_coherence
+        fb_coherence
     case swap L X₁ Y₁ s₁ x₁ M s₂ X₂ R Y₂ x₂ =>
       symm
       rewrite [braid_conjugation_left ((χ_ _ _).inv ▷ _)]
@@ -692,7 +692,7 @@ def starHom {X Y : N C} (f : X ⟶ Y) : (X.star ⟶ Y.star) := --by
           inv_coherence
       rewrite [braid_conjugation_left ((χ_ _ _).hom ▷ _)]
       rewrite [braid_conjugation_right (_ ◁ (χ_ _ _).hom)]
-      nat_coherence
+      fb_coherence
 
-end CategoryTheory.NatDefinition
+end CategoryTheory.FusedBraids
 

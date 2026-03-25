@@ -1,8 +1,8 @@
 import Mathlib
-import LeanCategory.NatDefinition.Instance
+import LeanCategory.FusedBraids.Instance
 import LeanCategory.FreeTwistedQuiver.Functor
 
-namespace CategoryTheory.NatDefinition
+namespace CategoryTheory.FusedBraids
 
 open FreeTwistedCategory
 open FreeTwistedCategoryQuiver
@@ -12,12 +12,12 @@ variable {C : Type u} [Quiver.{v} (T C)]
 open CategoryTheory MonoidalCategory InvolutiveCategory TwistedCategory
 
 /--
-An abbreviation for turning something of type `C` into an `N C` using `of`
+An abbreviation for turning something of type `C` into an `FB C` using `of`
 -/
-abbrev mkObj (X : C) : N C := ⟨⟨.of X⟩⟩
+abbrev mkObj (X : C) : FB C := ⟨⟨.of X⟩⟩
 
 /--
-The object map of our toNat functor is just the `N C` constructor
+The object map of our toFusedBraids functor is just the `FB C` constructor
 -/
 @[simp]
 lemma projectObj_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X⟩ := by
@@ -34,7 +34,7 @@ lemma projectObj_mkObj (X : T C) : FreeTwistedCategory.projectObj mkObj X = ⟨X
     rfl
 
 /--
-To turn a quiver morphism into a morphism in Nat's representation, we construct a `Layer`
+To turn a quiver morphism into a fused braid, we construct a `Layer`
 with unitors on either side
 -/
 def mapQuiver {X Y : T C} (x : X ⟶ Y) :
@@ -53,10 +53,10 @@ def mapQuiver {X Y : T C} (x : X ⟶ Y) :
     exact _ ◁ (ρ_ _).hom ≫ (λ_ _).hom
 
 /--
-Because we have a twisted category on N C, we can use `project` to get a functor
-`TQ C ⥤ N C`
+Because we have a twisted category on FB C, we can use `project` to get a functor
+`TQ C ⥤ FB C`
 -/
-def toNat : TQ C ⥤ N C := project (C := C) (D := N C) mkObj mapQuiver
+def toFusedBraids : TQ C ⥤ FB C := project (C := C) (D := FB C) mkObj mapQuiver
 
-end CategoryTheory.NatDefinition
+end CategoryTheory.FusedBraids
 

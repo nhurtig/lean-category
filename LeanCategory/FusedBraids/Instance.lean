@@ -1,14 +1,14 @@
 import Mathlib
-import LeanCategory.NatDefinition.Basic
+import LeanCategory.FusedBraids.Basic
 
-namespace CategoryTheory.NatDefinition
+namespace CategoryTheory.FusedBraids
 
 open MonoidalCategory InvolutiveCategory FreeTwistedCategory
 
 variable {C : Type u} [Quiver.{v} (T C)]
 
 @[simp]
-lemma whiskerLeft_mkBraid : ∀ {X Y₁ Y₂ : N C} (b : Y₁.as ⟶T Y₂.as),
+lemma whiskerLeft_mkBraid : ∀ {X Y₁ Y₂ : FB C} (b : Y₁.as ⟶T Y₂.as),
     whiskerLeft X (mkBraid b) = mkBraid (X.as ◁ b) := by
   intros
   unfold whiskerLeft mkBraid
@@ -16,15 +16,15 @@ lemma whiskerLeft_mkBraid : ∀ {X Y₁ Y₂ : N C} (b : Y₁.as ⟶T Y₂.as),
   simp
 
 @[simp]
-lemma whiskerLeft_mkLayer {X : N C} : whiskerLeft X (mkLayer L s x R) =
+lemma whiskerLeft_mkLayer {X : FB C} : whiskerLeft X (mkLayer L s x R) =
     (mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _)) ≫ mkLayer (X.as ⊗ L) s x R ≫ (mkBraid (𝟙 _ ⊗⋆≫ 𝟙 _)) := by
   unfold whiskerLeft mkLayer
   rw [Quotient.liftOn_mk]
   simp
-  nat_coherence
+  fb_coherence
 
 @[simp]
-lemma whiskerLeft_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C),
+lemma whiskerLeft_comp : ∀ {X Y Z : FB C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : FB C),
     whiskerLeft W (f ≫ g) = whiskerLeft W f ≫ whiskerLeft W g := by
   intros X Y Z f g W
   induction f using Quotient.inductionOn
@@ -41,7 +41,7 @@ lemma whiskerLeft_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C)
   simp
 
 @[simp]
-lemma whiskerRight_mkBraid : ∀ {X₁ X₂ Y : N C} (b : X₁.as ⟶T X₂.as),
+lemma whiskerRight_mkBraid : ∀ {X₁ X₂ Y : FB C} (b : X₁.as ⟶T X₂.as),
     whiskerRight (mkBraid b) Y = mkBraid (b ▷ Y.as) := by
   intros
   unfold whiskerRight mkBraid
@@ -57,7 +57,7 @@ lemma whiskerRight_mkLayer {L : T C} : whiskerRight (mkLayer L s x R) Y =
   simp
 
 @[simp]
-lemma whiskerRight_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C),
+lemma whiskerRight_comp : ∀ {X Y Z : FB C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : FB C),
     whiskerRight (f ≫ g) W = whiskerRight f W ≫ whiskerRight g W := by
   intros X Y Z f g W
   induction f using Quotient.inductionOn
@@ -74,7 +74,7 @@ lemma whiskerRight_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z) (W : N C
   simp
 
 @[simp]
-lemma starHom_mkBraid : ∀ {X Y : N C} (b : X.as ⟶T Y.as), starHom (mkBraid b) = mkBraid b⋆ := by
+lemma starHom_mkBraid : ∀ {X Y : FB C} (b : X.as ⟶T Y.as), starHom (mkBraid b) = mkBraid b⋆ := by
   intros
   unfold starHom mkBraid
   rw [Quotient.liftOn_mk]
@@ -89,7 +89,7 @@ lemma starHom_mkLayer {L : T C} : starHom (mkLayer L s x R) =
   simp
 
 @[simp]
-lemma starHom_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z),
+lemma starHom_comp : ∀ {X Y Z : FB C} (f : X ⟶ Y) (g : Y ⟶ Z),
     starHom (f ≫ g) = starHom f ≫ starHom g := by
   intros X Y Z f g
   induction f using Quotient.inductionOn
@@ -106,7 +106,7 @@ lemma starHom_comp : ∀ {X Y Z : N C} (f : X ⟶ Y) (g : Y ⟶ Z),
   simp
 
 @[simp]
-lemma whiskerLeft_id : ∀ (X Y : N C), whiskerLeft X (𝟙 Y) = (𝟙 <| X.tensor Y) := by
+lemma whiskerLeft_id : ∀ (X Y : FB C), whiskerLeft X (𝟙 Y) = (𝟙 <| X.tensor Y) := by
   intros X Y
   unfold CategoryStruct.id instCategory whiskerLeft
   simp only
@@ -114,24 +114,24 @@ lemma whiskerLeft_id : ∀ (X Y : N C), whiskerLeft X (𝟙 Y) = (𝟙 <| X.tens
   simp
 
 @[simp]
-lemma id_whiskerRight : ∀ (X Y : N C), whiskerRight (𝟙 X) Y = (𝟙 <| X.tensor Y) := by
+lemma id_whiskerRight : ∀ (X Y : FB C), whiskerRight (𝟙 X) Y = (𝟙 <| X.tensor Y) := by
   intros X Y
   unfold CategoryStruct.id instCategory whiskerRight
   simp only
   rw [Quotient.liftOn_mk]
   simp
 
-def tensorHom {X Y : N C} (f : X ⟶ X') (g : Y ⟶ Y') : tensor X Y ⟶ tensor X' Y' :=
+def tensorHom {X Y : FB C} (f : X ⟶ X') (g : Y ⟶ Y') : tensor X Y ⟶ tensor X' Y' :=
   (whiskerRight f _) ≫ (whiskerLeft _ g)
 
 @[simp]
-lemma id_tensorHom_id : ∀ (X Y : N C), tensorHom (𝟙 X) (𝟙 Y) = 𝟙 (X.tensor Y) := by
+lemma id_tensorHom_id : ∀ (X Y : FB C), tensorHom (𝟙 X) (𝟙 Y) = 𝟙 (X.tensor Y) := by
   intros X Y
   unfold tensorHom
   simp
 
 @[simp]
-lemma starHom_id : ∀ (X : N C), starHom (𝟙 X) = 𝟙 X.star := by
+lemma starHom_id : ∀ (X : FB C), starHom (𝟙 X) = 𝟙 X.star := by
   intro X
   unfold CategoryStruct.id instCategory starHom
   simp only
@@ -143,7 +143,7 @@ set_option maxHeartbeats 10000000 in -- big simp_all
 The whisker exchange rule from monoidal categories
 -/
 @[reassoc]
-lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
+lemma whisker_exchange {W X Y Z : FB C} (f : W ⟶ X) (g : Y ⟶ Z) :
     whiskerRight f Y ≫ whiskerLeft X g = whiskerLeft W g ≫ whiskerRight f Z := by
   induction f using Quotient.inductionOn
   induction g using Quotient.inductionOn
@@ -168,12 +168,12 @@ lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
         inv_coherence
     simp
     rewrite [braid_conjugation_left ((α_ _ _ _).inv ▷ _)]
-    nat_coherence
+    fb_coherence
   case braid.layer b l =>
     rw [braid_conjugation_left (b ▷ _)]
     simp_all
-    nat_coherence_step
-    nat_coherence_step
+    fb_coherence_step
+    fb_coherence_step
     -- need to cancel the stuff between the b's:
     apply congrArg
     symm
@@ -184,8 +184,8 @@ lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
   case layer.braid l b =>
     rw [braid_conjugation_right (_ ◁ b)]
     simp_all
-    nat_coherence_step
-    nat_coherence_step
+    fb_coherence_step
+    fb_coherence_step
     -- need to cancel the stuff between the b's:
     apply congrArg
     simp [involutiveComp]
@@ -223,7 +223,7 @@ lemma whisker_exchange {W X Y Z : N C} (f : W ⟶ X) (g : Y ⟶ Z) :
     rw [MonoidalCategory.whisker_exchange]
 
 @[reassoc]
-lemma tensorHom_comp_tensorHom : ∀ {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : N C}
+lemma tensorHom_comp_tensorHom : ∀ {X₁ Y₁ Z₁ X₂ Y₂ Z₂ : FB C}
     (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂) (g₁ : Y₁ ⟶ Z₁) (g₂ : Y₂ ⟶ Z₂),
       tensorHom f₁ f₂ ≫ tensorHom g₁ g₂ = tensorHom (f₁ ≫ g₁) (f₂ ≫ g₂) := by
   unfold tensorHom
@@ -287,7 +287,7 @@ lemma rightUnitor_conjugation_right {L : T C} :
   simp [involutiveComp]
 
 @[reassoc]
-lemma leftUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
+lemma leftUnitor_naturality : ∀ {X Y : FB C} (f : X ⟶ Y),
     whiskerLeft _ f ≫ mkBraid (λ_ Y.as).hom = mkBraid (λ_ X.as).hom ≫ f := by
   intros X Y f
   induction f using Quotient.inductionOn
@@ -301,10 +301,10 @@ lemma leftUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
     simp
   case layer l =>
     rcases l with ⟨L, X, Y, s, x, R⟩
-    nat_coherence
+    fb_coherence
 
 @[reassoc]
-lemma rightUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
+lemma rightUnitor_naturality : ∀ {X Y : FB C} (f : X ⟶ Y),
     whiskerRight f _ ≫ mkBraid (ρ_ Y.as).hom = mkBraid (ρ_ X.as).hom ≫ f := by
   intros X Y f
   induction f using Quotient.inductionOn
@@ -317,10 +317,10 @@ lemma rightUnitor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
     rw [ih₁]
     simp
   case layer l =>
-    nat_coherence
+    fb_coherence
 
 @[reassoc]
-lemma associator_naturality_right : ∀ {X Y Z : N C} (h : Z ⟶ Z'),
+lemma associator_naturality_right : ∀ {X Y Z : FB C} (h : Z ⟶ Z'),
     whiskerLeft ⟨X.as ⊗ Y.as⟩ h ≫ mkBraid (α_ X.as Y.as Z'.as).hom =
       mkBraid (α_ X.as Y.as Z.as).hom ≫ whiskerLeft X (whiskerLeft Y h) := by
   intro X Y Z h
@@ -329,14 +329,14 @@ lemma associator_naturality_right : ∀ {X Y Z : N C} (h : Z ⟶ Z'),
   induction h <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    nat_coherence
+    fb_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
     simp
 
 @[reassoc]
-lemma associator_naturality_middle : ∀ {X Y Z : N C} (g : Y ⟶ Y'),
+lemma associator_naturality_middle : ∀ {X Y Z : FB C} (g : Y ⟶ Y'),
     whiskerRight (whiskerLeft X g) Z ≫ mkBraid (α_ X.as Y'.as Z.as).hom =
       mkBraid (α_ X.as Y.as Z.as).hom ≫ whiskerLeft X (whiskerRight g Z) := by
   intro X Y Z g
@@ -345,14 +345,14 @@ lemma associator_naturality_middle : ∀ {X Y Z : N C} (g : Y ⟶ Y'),
   induction g <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    nat_coherence
+    fb_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
     simp
 
 @[reassoc]
-lemma associator_naturality_left : ∀ {X Y Z : N C} (f : X ⟶ X'),
+lemma associator_naturality_left : ∀ {X Y Z : FB C} (f : X ⟶ X'),
     whiskerRight (whiskerRight f Y) Z ≫ mkBraid (α_ X'.as Y.as Z.as).hom =
       mkBraid (α_ X.as Y.as Z.as).hom ≫ whiskerRight f ⟨Y.as ⊗ Z.as⟩ := by
   intro X Y Z f
@@ -361,14 +361,14 @@ lemma associator_naturality_left : ∀ {X Y Z : N C} (f : X ⟶ X'),
   induction f <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    nat_coherence
+    fb_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
     simp
 
 @[reassoc]
-lemma associator_naturality : ∀ {X Y Z : N C} (f : X ⟶ X') (g : Y ⟶ Y') (h : Z ⟶ Z'),
+lemma associator_naturality : ∀ {X Y Z : FB C} (f : X ⟶ X') (g : Y ⟶ Y') (h : Z ⟶ Z'),
   tensorHom (tensorHom f g) h ≫ mkBraid (α_ X'.as Y'.as Z'.as).hom =
     mkBraid (α_ X.as Y.as Z.as).hom ≫ tensorHom f (tensorHom g h) := by
   intros X Y Z f g h
@@ -405,7 +405,7 @@ lemma involutor_conjugation_right {L : T C} :
   simp [involutiveComp]
 
 @[reassoc]
-lemma involutor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
+lemma involutor_naturality : ∀ {X Y : FB C} (f : X ⟶ Y),
     starHom (starHom f) ≫ mkBraid (e_ Y.as).hom = mkBraid (e_ X.as).hom ≫ f := by
   intros X Y f
   induction f using Quotient.inductionOn
@@ -420,14 +420,14 @@ lemma involutor_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
   case layer l =>
     cases l
     simp_all [involutiveComp]
-    nat_coherence_step
+    fb_coherence_step
     symm
     apply Eq.trans (Category.comp_id _).symm
-    nat_coherence_step
-    nat_coherence_step
+    fb_coherence_step
+    fb_coherence_step
 
 @[reassoc]
-lemma skewator_naturality_right : ∀ {X Y Y' : N C} (f : Y ⟶ Y'),
+lemma skewator_naturality_right : ∀ {X Y Y' : FB C} (f : Y ⟶ Y'),
     (whiskerLeft ⟨X.as⋆⟩ (starHom f)) ≫ mkBraid (χ_ X.as Y'.as).hom =
       mkBraid (χ_ X.as Y.as).hom ≫ starHom (whiskerRight f X) := by
   intro X Y Z f
@@ -436,14 +436,14 @@ lemma skewator_naturality_right : ∀ {X Y Y' : N C} (f : Y ⟶ Y'),
   induction f <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    nat_coherence
+    fb_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
     simp
 
 @[reassoc]
-lemma skewator_naturality_left : ∀ {X X' Y : N C} (f : X ⟶ X'),
+lemma skewator_naturality_left : ∀ {X X' Y : FB C} (f : X ⟶ X'),
     (whiskerRight (starHom f) ⟨Y.as⋆⟩) ≫ mkBraid (χ_ X'.as Y.as).hom =
       mkBraid (χ_ X.as Y.as).hom ≫ starHom (whiskerLeft Y f) := by
   intro X Y Z f
@@ -452,14 +452,14 @@ lemma skewator_naturality_left : ∀ {X X' Y : N C} (f : X ⟶ X'),
   induction f <;> simp_all
   case layer l =>
     rcases l with ⟨L, X', Y', s, x, R⟩
-    nat_coherence
+    fb_coherence
   case comp f g ih₁ ih₂ =>
     rw [← Category.assoc]
     rw [ih₁]
     simp
 
 @[simp, reassoc (attr := simp)]
-lemma starHom_whiskerLeft : ∀ {X Y : N C} (f : X ⟶ Y) (Z : N C),
+lemma starHom_whiskerLeft : ∀ {X Y : FB C} (f : X ⟶ Y) (Z : FB C),
     starHom (whiskerLeft Z f) =
       mkBraid (χ_ _ _).inv ≫ whiskerRight (starHom f) ⟨Z.as⋆⟩ ≫ mkBraid (χ_ _ _).hom := by
   intros X Y f Z
@@ -467,10 +467,10 @@ lemma starHom_whiskerLeft : ∀ {X Y : N C} (f : X ⟶ Y) (Z : N C),
   rename_i f
   unfold starHom whiskerLeft
   simp
-  induction f <;> simp_all ; nat_coherence
+  induction f <;> simp_all ; fb_coherence
 
 @[simp, reassoc (attr := simp)]
-lemma starHom_whiskerRight : ∀ {Y Y' : N C} (f : Y ⟶ Y') (Z : N C),
+lemma starHom_whiskerRight : ∀ {Y Y' : FB C} (f : Y ⟶ Y') (Z : FB C),
     starHom (whiskerRight f Z) =
       mkBraid (χ_ _ _).inv ≫ whiskerLeft ⟨Z.as⋆⟩ (starHom f) ≫ mkBraid (χ_ _ _).hom := by
   intros X Y f Z
@@ -478,9 +478,9 @@ lemma starHom_whiskerRight : ∀ {Y Y' : N C} (f : Y ⟶ Y') (Z : N C),
   rename_i f
   unfold starHom whiskerRight
   simp
-  induction f <;> simp_all ; nat_coherence
+  induction f <;> simp_all ; fb_coherence
 
-lemma skewator_naturality : ∀ {X X' Y Y' : N C} (f : X ⟶ X') (g : Y ⟶ Y'),
+lemma skewator_naturality : ∀ {X X' Y Y' : FB C} (f : X ⟶ X') (g : Y ⟶ Y'),
     tensorHom (starHom f) (starHom g) ≫ mkBraid (χ_ X'.as Y'.as).hom =
       mkBraid (χ_ X.as Y.as).hom ≫ starHom (tensorHom g f) := by
   intros X X' Y Y' f g
@@ -491,7 +491,7 @@ lemma skewator_naturality : ∀ {X X' Y Y' : N C} (f : X ⟶ X') (g : Y ⟶ Y'),
   simp
   rw [whisker_exchange_assoc]
 
-instance : MonoidalCategory (N C) where
+instance : MonoidalCategory (FB C) where
   tensorObj := tensor
   tensorHom := tensorHom
   tensorUnit := unit
@@ -516,7 +516,7 @@ instance : MonoidalCategory (N C) where
   rightUnitor_naturality := rightUnitor_naturality
 
 @[simp]
-lemma tensor_mkBraid : ∀ {X₁ X₂ Y₁ Y₂ : N C} (b₁ : X₁.as ⟶T X₂.as) (b₂ : Y₁.as ⟶T Y₂.as),
+lemma tensor_mkBraid : ∀ {X₁ X₂ Y₁ Y₂ : FB C} (b₁ : X₁.as ⟶T X₂.as) (b₂ : Y₁.as ⟶T Y₂.as),
     (mkBraid b₁) ⊗ₘ (mkBraid b₂) = mkBraid (b₁ ⊗ₘ b₂) := by
   intros
   conv =>
@@ -528,7 +528,7 @@ lemma tensor_mkBraid : ∀ {X₁ X₂ Y₁ Y₂ : N C} (b₁ : X₁.as ⟶T X₂
   simp
   rw [MonoidalCategory.tensorHom_def]
 
-instance : InvolutiveCategoryStruct (N C) where
+instance : InvolutiveCategoryStruct (FB C) where
   starObj X := star X
   starHom f := starHom f
   skewator X Y := {
@@ -541,10 +541,10 @@ instance : InvolutiveCategoryStruct (N C) where
   }
 
 /--
-If a morphism in Nat's definition is an involutive coherence, it has a pure
+If a fused braids morphism is an involutive coherence, it has a pure
 braid representative
 -/
-lemma coherence_mkBraid_Pure : ∀ {X Y : N C} (f : X ⟶ Y),
+lemma coherence_mkBraid_Pure : ∀ {X Y : FB C} (f : X ⟶ Y),
     InvolutiveCategory.InvolutiveCoherence f →
       ∃ f' : X.as ⟶t Y.as, f'.Pure ∧ f = mkBraid ⟦f'⟧ := by
   intros X Y f h
@@ -591,7 +591,7 @@ lemma coherence_mkBraid_Pure : ∀ {X Y : N C} (f : X ⟶ Y),
   case involutor_inv X =>
     exists Hom.ε_inv X.as
 
-instance : InvolutiveCategory (N C) where
+instance : InvolutiveCategory (FB C) where
   starObj X := star X
   starHom f := starHom f
   skewator X Y := {
@@ -673,7 +673,7 @@ lemma twist_conjugation {L : T C} {x : X ⟶ Y} : mkLayer L⋆ (s + 1) x R⋆ =
     inv_coherence_step
     inv_coherence_step
     rw [← whiskerLeft_comp_assoc]; rw [← MonoidalCategory.comp_whiskerRight]; simp
-  nat_coherence_step
+  fb_coherence_step
   apply congrArg
   rw [twist_triple_inv]
   unfold braid
@@ -737,7 +737,7 @@ attribute [-simp] whiskerLeft_star whiskerRight_star
 attribute [simp] tℓ tℓ_assoc tℓ_inv tℓ_inv_assoc
 
 @[reassoc]
-lemma twist_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
+lemma twist_naturality : ∀ {X Y : FB C} (f : X ⟶ Y),
     starHom f ≫ mkBraid (ς_ Y.as).hom = mkBraid (ς_ X.as).hom ≫ f := by
   intros X Y f
   induction f using Quotient.inductionOn
@@ -755,7 +755,7 @@ lemma twist_naturality : ∀ {X Y : N C} (f : X ⟶ Y),
   case braid =>
     rw [TwistedCategory.twist_naturality]
 
-instance : TwistedCategory (N C) where
+instance : TwistedCategory (FB C) where
   twist X := {
     hom := mkBraid <| (ς_ X.as).hom
     inv := mkBraid <| (ς_ X.as).inv
@@ -775,5 +775,5 @@ instance : TwistedCategory (N C) where
     simp at this
     exact this
 
-end CategoryTheory.NatDefinition
+end CategoryTheory.FusedBraids
 

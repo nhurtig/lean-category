@@ -3,6 +3,6 @@ import LeanCategory.FreeInvolutive.CoherenceTactic
 import LeanCategory.FreeInvolutive.Functor
 import LeanCategory.FreeTwisted.Functor
 import LeanCategory.FreeTwistedQuiver.Functor
-import LeanCategory.NatDefinition.Layer
+import LeanCategory.FusedBraids.Layer
 import LeanCategory.FunctorCompare
 
